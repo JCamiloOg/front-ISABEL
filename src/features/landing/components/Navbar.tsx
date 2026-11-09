@@ -1,6 +1,7 @@
 import { faMoon, faShoppingCart, faSun, faUser } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import useTheme from "../../../shared/hooks/useTheme";
+import { Link } from "@tanstack/react-router";
 
 export default function Navbar() {
     const { theme, toggleTheme, } = useTheme();
@@ -61,13 +62,13 @@ export default function Navbar() {
                     </button>
 
                     {/* Botón de Inicio de Sesión */}
-                    <button
-                        type="button"
+                    <Link
+                        to="/login"
                         className="btn-ghost"
                     >
                         <FontAwesomeIcon icon={faUser} className="text-brand-royal dark:text-brand-sky" />
                         <span className="hidden sm:inline">Iniciar Sesión</span>
-                    </button>
+                    </Link>
 
                     {/* CTA Primario rápido */}
                     <a
