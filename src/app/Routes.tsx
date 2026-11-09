@@ -4,6 +4,10 @@ import DashboardPage from "../features/dashboard/pages/DashboardPage";
 import DashboardLayout from "../features/dashboard/layout/DashboardLayout";
 import Navbar from "../features/landing/components/Navbar";
 import ClientsPage from "../features/dashboard/pages/ClientsPage";
+import LoginPage from "../features/auth/pages/LoginPage";
+import RegisterPage from "../features/auth/pages/RegisterPage";
+import ForgotPasswordPage from "../features/auth/pages/ForgotPasswordPage";
+import AuthLayout from "../features/auth/layout/AuthLayout";
 
 const rootRoute = createRootRoute({
   component: () =>
@@ -17,7 +21,7 @@ const indexLayout = createRoute({
   id: "indexLayout",
   component: () => <>
     <div className="bg-brand-navy text-xs text-white/90 py-2 px-4 text-center border-b border-brand-royal/20 tracking-wide">
-      <span>Envíos gratuitos a todo el país en pedidos superiores a $200.000 • Calidad hecha con dedicación</span>
+      <span>Tu proveedor de calzado favorito y de confianza</span>
     </div>
     <Navbar />
 
@@ -31,6 +35,29 @@ const indexRoute = createRoute({
   component: () => <IndexPage />,
 });
 
+const authLayout = createRoute({
+  getParentRoute: () => rootRoute,
+  id: "authLayout",
+  component: () => <AuthLayout />
+})
+
+const loginRoute = createRoute({
+  getParentRoute: () => authLayout,
+  path: "/login",
+  component: () => <LoginPage />
+});
+
+const registerRoute = createRoute({
+  getParentRoute: () => authLayout,
+  path: "/register",
+  component: () => <RegisterPage />
+});
+
+const forgotPasswordRoute = createRoute({
+  getParentRoute: () => authLayout,
+  path: "/forgot-password",
+  component: () => <ForgotPasswordPage />
+});
 
 const dashboardLayout = createRoute({
   getParentRoute: () => rootRoute,
@@ -53,6 +80,11 @@ const clientsRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   indexLayout.addChildren([
     indexRoute
+  ]),
+  authLayout.addChildren([
+    loginRoute,
+    registerRoute,
+    forgotPasswordRoute,
   ]),
   dashboardLayout.addChildren([
     dashboardRoute,
