@@ -8,40 +8,41 @@
    ========================================================================== */
 
 :root {
-  --app-bg: #FFFFFF;
-  --app-text: #0E2347;
-  --app-surface: #FFFFFF;
-  --app-surface-alt: #F8FAFC;
-  --app-muted: #64748B;
-  --app-border: #E2E8F0;
+  --app-bg: #ffffff;
+  --app-text: #0e2347;
+  --app-surface: #ffffff;
+  --app-surface-alt: #f8fafc;
+  --app-muted: #64748b;
+  --app-border: #e2e8f0;
 }
 
 html.dark {
-  --app-bg: #071326;           /* Azul noche profundo */
-  --app-text: #F8FAFC;         /* Texto principal claro */
-  --app-surface: #0E2347;      /* Navy oficial Isabel para tarjetas y paneles */
-  --app-surface-alt: #132A54;  /* Navy alternativo más suave */
-  --app-muted: #94A3B8;        /* Texto secundario */
-  --app-border: #1E3A68;       /* Bordes en dark */
+  --app-bg: #071326; /* Azul noche profundo */
+  --app-text: #f8fafc; /* Texto principal claro */
+  --app-surface: #0e2347; /* Navy oficial Isabel para tarjetas y paneles */
+  --app-surface-alt: #132a54; /* Navy alternativo más suave */
+  --app-muted: #94a3b8; /* Texto secundario */
+  --app-border: #1e3a68; /* Bordes en dark */
 }
 
 @theme {
   /* Tipografía */
-  --font-sans: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans:
+    "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
   /* Paleta Oficial Isabel */
-  --color-brand-navy: #0E2347;       /* Azul Marino: Texto, estructura y fondo dark */
-  --color-brand-royal: #2B62D9;      /* Azul Real: Acciones primarias y botones */
-  --color-brand-sky: #52A5E8;        /* Azul Celeste: Acentos, bordes y foco */
-  --color-brand-white: #FFFFFF;      /* Blanco: Superficie y respiro */
+  --color-brand-navy: #0e2347; /* Azul Marino: Texto, estructura y fondo dark */
+  --color-brand-royal: #2b62d9; /* Azul Real: Acciones primarias y botones */
+  --color-brand-sky: #52a5e8; /* Azul Celeste: Acentos, bordes y foco */
+  --color-brand-white: #ffffff; /* Blanco: Superficie y respiro */
 
   /* Variaciones estáticas */
-  --color-isabel-primary: #2B62D9;
-  --color-isabel-primary-hover: #1E4BB3;
-  --color-isabel-dark: #0E2347;
-  --color-isabel-light: #52A5E8;
-  --color-isabel-surface: #FFFFFF;
-  --color-isabel-muted: #64748B;
+  --color-isabel-primary: #2b62d9;
+  --color-isabel-primary-hover: #1e4bb3;
+  --color-isabel-dark: #0e2347;
+  --color-isabel-light: #52a5e8;
+  --color-isabel-surface: #ffffff;
+  --color-isabel-muted: #64748b;
 
   /* Colores dinámicos adaptados a dark/light */
   --color-app-bg: var(--app-bg);
@@ -60,7 +61,9 @@ html.dark {
     font-family: var(--font-sans);
     color: var(--app-text);
     background-color: var(--app-bg);
-    transition: background-color 0.25s ease, color 0.25s ease;
+    transition:
+      background-color 0.25s ease,
+      color 0.25s ease;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -136,4 +139,32 @@ html.dark {
   .isabel-input {
     @apply w-full px-4 py-2.5 rounded-xl bg-app-surface border border-app-border text-app-text placeholder:text-app-muted focus:outline-none focus:border-brand-royal dark:focus:border-brand-sky focus:ring-2 focus:ring-brand-sky/30 transition-all text-sm;
   }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-scaleUp {
+  animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
