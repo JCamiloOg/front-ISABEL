@@ -3,6 +3,7 @@ import IndexPage from "../features/landing/pages/IndexPage";
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
 import DashboardLayout from "../features/dashboard/layout/DashboardLayout";
 import Navbar from "../features/landing/components/Navbar";
+import ClientsPage from "../features/dashboard/pages/ClientsPage";
 
 const rootRoute = createRootRoute({
   component: () =>
@@ -43,12 +44,19 @@ const dashboardRoute = createRoute({
   component: () => <DashboardPage />,
 });
 
+const clientsRoute = createRoute({
+  getParentRoute: () => dashboardLayout,
+  path: "/clients",
+  component: () => <ClientsPage />
+});
+
 const routeTree = rootRoute.addChildren([
   indexLayout.addChildren([
     indexRoute
   ]),
   dashboardLayout.addChildren([
-    dashboardRoute
+    dashboardRoute,
+    clientsRoute
   ])
 ]);
 
