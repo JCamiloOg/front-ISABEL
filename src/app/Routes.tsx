@@ -79,10 +79,86 @@ export const dashboardRoute = createRoute({
 });
 
 export const productsDashboardRoute = createRoute({
-    getParentRoute: () => dashboardLayout,
+  getParentRoute: () => dashboardLayout,
   path: "/products",
   component: () => <ProductsDashboardPage />,
 })
+
+// ── Principal ──
+export const billsRoute = createRoute({
+  getParentRoute: () => dashboardLayout,
+  path: "/bills",
+  component: () => <></>,
+});
+
+export const boxesRoute = createRoute({
+  getParentRoute: () => dashboardLayout,
+  path: "/boxes",
+  component: () => <></>,
+});
+
+// ── Gestión de compras ──
+export const categorySupplierRoute = createRoute({
+  getParentRoute: () => dashboardLayout,
+  path: "/category-supplier",
+  component: () => <></>,
+});
+
+export const supplierRoute = createRoute({
+  getParentRoute: () => dashboardLayout,
+  path: "/supplier",
+  component: () => <></>,
+});
+
+export const shoppingRoute = createRoute({
+  getParentRoute: () => dashboardLayout,
+  path: "/shopping",
+  component: () => <></>,
+});
+
+// ── Gestión de ventas ──
+export const clientsRoute = createRoute({
+  getParentRoute: () => dashboardLayout,
+  path: "/clients",
+  component: () => <></>,
+});
+
+export const ordersRoute = createRoute({
+  getParentRoute: () => dashboardLayout,
+  path: "/orders",
+  component: () => <></>,
+});
+
+export const salesRoute = createRoute({
+  getParentRoute: () => dashboardLayout,
+  path: "/sales",
+  component: () => <></>,
+});
+
+export const returnsRoute = createRoute({
+  getParentRoute: () => dashboardLayout,
+  path: "/returns",
+  component: () => <></>,
+});
+
+// ── Configuración ──
+export const usersRoute = createRoute({
+  getParentRoute: () => dashboardLayout,
+  path: "/users",
+  component: () => <></>,
+});
+
+export const rolesRoute = createRoute({
+  getParentRoute: () => dashboardLayout,
+  path: "/roles",
+  component: () => <></>,
+});
+
+export const permissionsRoute = createRoute({
+  getParentRoute: () => dashboardLayout,
+  path: "/permissions",
+  component: () => <></>,
+});
 
 const routeTree = rootRoute.addChildren([
   indexLayout.addChildren([
@@ -97,7 +173,19 @@ const routeTree = rootRoute.addChildren([
   ]),
   dashboardLayout.addChildren([
     dashboardRoute,
-    productsDashboardRoute
+    productsDashboardRoute,
+    billsRoute,
+    boxesRoute,
+    categorySupplierRoute,
+    supplierRoute,
+    shoppingRoute,
+    clientsRoute,
+    ordersRoute,
+    salesRoute,
+    returnsRoute,
+    usersRoute,
+    rolesRoute,
+    permissionsRoute,
   ])
 ]);
 
