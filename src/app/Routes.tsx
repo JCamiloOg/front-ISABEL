@@ -9,6 +9,7 @@ import AuthLayout from "../features/auth/layout/AuthLayout";
 import ProductPage from "../features/landing/pages/ProductPage";
 import CatalogPage from "../features/landing/pages/CatalogPage";
 import IndexLayout from "../features/landing/layout/IndexLayout";
+import ProductsDashboardPage from "../features/dashboard/pages/ProductsPage";
 
 export const rootRoute = createRootRoute({
   component: () =>
@@ -77,6 +78,12 @@ export const dashboardRoute = createRoute({
   component: () => <DashboardPage />,
 });
 
+export const productsDashboardRoute = createRoute({
+    getParentRoute: () => dashboardLayout,
+  path: "/products",
+  component: () => <ProductsDashboardPage />,
+})
+
 const routeTree = rootRoute.addChildren([
   indexLayout.addChildren([
     indexRoute,
@@ -90,6 +97,7 @@ const routeTree = rootRoute.addChildren([
   ]),
   dashboardLayout.addChildren([
     dashboardRoute,
+    productsDashboardRoute
   ])
 ]);
 
