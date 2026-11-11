@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faEnvelope,
@@ -9,14 +9,34 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import Input from "../../../shared/components/Inputs/Input";
 import Button from "../../../shared/components/Button";
+import { useUser } from "../../../shared/hooks/useUser";
+import { Toast } from "../../../shared/utils/alerts";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [rememberMe, setRememberMe] = useState(false);
+    const { setUser, setAccessToken } = useUser();
+    const navigate = useNavigate();
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        setAccessToken("eaassas,a.sasaassasa");
+        setUser({
+            email,
+            name: "Isabel",
+            lastName: "Rodriguez",
+            role: "Admin"
+        });
+        Toast.fire({
+            icon: "success",
+            title: "Inicio de sesión exitoso",
+            timer: 2000
+        }).then(() => {
+            navigate({
+                to: "/",
+            })
+        })
         // Preparado para conectar con autenticación
     };
 
