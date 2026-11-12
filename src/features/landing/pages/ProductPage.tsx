@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faArrowLeft,
@@ -17,6 +17,9 @@ import { productRoute } from "../../../app/Routes";
 import { MOCK_PRODUCTOS_PRISMA } from "../../../data/products";
 import Button from "../../../shared/components/Button";
 import { Toast } from "../../../shared/utils/alerts";
+import useCart from "../../../shared/hooks/useCart";
+import type { CartItemType } from "../../../shared/context/cart.context";
+import { useUser } from "../../../shared/hooks/useUser";
 
 // Nombres y tonos representativos según idColor
 const COLOR_MAP: Record<number, { name: string; hex: string; border?: string }> = {
@@ -31,6 +34,9 @@ const COLOR_MAP: Record<number, { name: string; hex: string; border?: string }> 
 
 export default function ProductPage() {
     const { SKU } = productRoute.useParams();
+    const { addToCart } = useCart();
+    const { user } = useUser();
+    const navigate = useNavigate();
 
     // Búsqueda del producto por SKU
     const producto = MOCK_PRODUCTOS_PRISMA.find(
@@ -58,11 +64,6 @@ export default function ProductPage() {
 
     // Imagen activa actual
     const imagenActiva = imagenesDelColor[selectedImageIndex] || imagenesDelColor[0];
-
-    // Variante seleccionada según la talla
-    const varianteSeleccionada = variantesDisponibles.find(
-        (v) => v.idTalla === selectedTallaId
-    );
 
     // Si no existe el producto
     if (!producto) {
@@ -96,19 +97,39 @@ export default function ProductPage() {
         );
     }, 0);
 
-    // Formatear precios COP
-    const precioVentaFormateado = new Intl.NumberFormat("es-CO", {
-        style: "currency",
-        currency: "COP",
-        maximumFractionDigits: 0,
-    }).format(producto.precioVenta * 1000);
+    // Variante seleccionada por talla
+    const selectedColor = producto.colores[selectedColorIndex];
+    const varianteSeleccionada = selectedColor?.variantes.find(
+        (v) => v.idVariante === selectedTallaId
+    );
 
-    // Margen sugerido para la tienda comercial (+35%)
-    const precioSugeridoTienda = new Intl.NumberFormat("es-CO", {
-        style: "currency",
-        currency: "COP",
-        maximumFractionDigits: 0,
-    }).format(producto.precioVenta * 1000 * 1.35);
+    // Determinar si hay descuento aplicable (por variante seleccionada o máximo del color actual)
+    const descuentoAplicable = useMemo(() => {
+        if (varianteSeleccionada) {
+            return varianteSeleccionada.descuento || 0;
+        }
+        // Si no hay talla seleccionada, mostrar el mayor descuento disponible en este color si existe
+        return (
+            selectedColor?.variantes.reduce((max, v) => Math.max(max, v.descuento || 0), 0) || 0
+        );
+    }, [varianteSeleccionada, selectedColor]);
+
+    const tieneDescuento = descuentoAplicable > 0;
+    const precioBase = producto.precioVenta;
+    const precioFinal = tieneDescuento
+        ? precioBase - (precioBase * descuentoAplicable) / 100
+        : precioBase;
+
+    // Formatear precios COP
+    const formatCOP = (val: number) =>
+        new Intl.NumberFormat("es-CO", {
+            style: "currency",
+            currency: "COP",
+            maximumFractionDigits: 0,
+        }).format(val);
+
+    const precioVentaFormateado = formatCOP(precioFinal);
+    const precioOriginalFormateado = formatCOP(precioBase);
 
     // Cambio de color: actualiza el índice y resetea la imagen a la primera del nuevo color
     const handleColorChange = (index: number) => {
@@ -139,10 +160,36 @@ export default function ProductPage() {
             });
             return;
         }
+        const selectedColor = producto.colores[selectedColorIndex];
+        const selectedSize = selectedColor.variantes.find(variante => variante.idVariante === selectedTallaId);
+
+        if (!selectedSize) return Toast.fire({
+            icon: "error",
+            title: "Error al añadir el producto."
+        });
+
+        const productCart: CartItemType = {
+            idProducto: producto.idProducto,
+            nombreProducto: producto.nombre,
+            color: COLOR_MAP[selectedColor.idColor].name,
+            idProductoColor: selectedColor.idColor,
+            imagen: selectedColor.imagenes[0],
+            idVariante: selectedTallaId,
+            descuento: selectedSize.descuento,
+            stockDisponible: selectedSize.stockActual,
+            talla: selectedSize.talla.numeroTalla,
+            precioVenta: producto.precioVenta,
+            cantidad: quantity,
+            sku: producto.sku
+        }
+
+        addToCart(productCart);
+
 
         Toast.fire({
             icon: "success",
             title: `${quantity} ${quantity === 1 ? "par añadido" : "pares añadidos"} al pedido`,
+            timer: 1500
         });
     };
 
@@ -373,32 +420,45 @@ export default function ProductPage() {
                             </div>
                         </div>
 
-                        {/* Bloque de Precios (Bodega vs Sugerido) */}
+                        {/* Bloque de Precios Directo al Consumidor */}
                         <div className="p-4 sm:p-5 rounded-3xl bg-brand-sky/10 dark:bg-brand-surface-alt border border-brand-sky/25 space-y-2">
-                            <div className="flex items-baseline justify-between">
+                            <div className="flex items-center justify-between gap-4 flex-wrap">
                                 <div>
                                     <span className="text-[10px] uppercase font-bold text-app-muted block tracking-wider">
-                                        Precio Directo de Bodega
+                                        Precio
                                     </span>
-                                    <span className="text-2xl sm:text-3xl font-extrabold text-brand-royal dark:text-brand-sky tracking-tight">
-                                        {precioVentaFormateado}
-                                    </span>
-                                    <span className="text-[10px] text-app-muted block">
-                                        (Impuestos incluidos • Sin mínimos de compra)
+                                    <div className="flex items-baseline gap-2.5 flex-wrap">
+                                        <span className="text-2xl sm:text-3xl font-extrabold text-brand-royal dark:text-brand-sky tracking-tight">
+                                            {precioVentaFormateado}
+                                        </span>
+
+                                        {tieneDescuento && (
+                                            <span className="text-base sm:text-lg font-bold text-app-muted line-through decoration-rose-500/70">
+                                                {precioOriginalFormateado}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <span className="text-[10px] text-app-muted block mt-0.5">
+                                        IVA incluido &bull; Envío disponible a todo el país
                                     </span>
                                 </div>
 
-                                <div className="text-right">
-                                    <span className="text-[10px] uppercase font-semibold text-app-muted block">
-                                        PVP Sugerido en Tienda
-                                    </span>
-                                    <span className="text-sm font-bold text-app-text line-through opacity-70">
-                                        {precioSugeridoTienda}
-                                    </span>
-                                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 block">
-                                        ~35% Margen Estimado
-                                    </span>
-                                </div>
+                                {tieneDescuento ? (
+                                    <div className="text-right flex flex-col items-end">
+                                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-rose-500 text-white shadow-xs">
+                                            -{descuentoAplicable}% OFF
+                                        </span>
+                                        <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+                                            Ahorras {formatCOP(precioBase - precioFinal)}
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <div className="text-right">
+                                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-brand-sky/20 text-brand-royal dark:text-brand-sky border border-brand-sky/30">
+                                            Precio directo de fábrica
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -418,14 +478,14 @@ export default function ProductPage() {
                             <div className="grid grid-cols-4 sm:grid-cols-5 gap-2.5">
                                 {variantesDisponibles.map((variante) => {
                                     const isOutOfStock = variante.stockActual <= 0;
-                                    const isSelected = selectedTallaId === variante.idTalla;
+                                    const isSelected = selectedTallaId === variante.idVariante;
 
                                     return (
                                         <button
                                             key={variante.idVariante}
                                             type="button"
                                             disabled={isOutOfStock}
-                                            onClick={() => setSelectedTallaId(variante.idTalla)}
+                                            onClick={() => setSelectedTallaId(variante.idVariante)}
                                             className={`py-3 rounded-2xl flex flex-col items-center justify-center border transition-all cursor-pointer ${isOutOfStock
                                                 ? "opacity-35 cursor-not-allowed bg-app-surface border-app-border"
                                                 : isSelected
@@ -475,11 +535,12 @@ export default function ProductPage() {
                                     variant="primary"
                                     size="lg"
                                     fullWidth
-                                    onClick={handleAddToCart}
+                                    disabled={Boolean(user && !selectedTallaId)}
+                                    onClick={user ? handleAddToCart : () => navigate({ to: "/login" })}
                                     icon={faShoppingCart}
-                                    className="shadow-lg shadow-brand-royal/20"
+                                    className="shadow-lg shadow-brand-royal/20 disabled:cursor-not-allowed!"
                                 >
-                                    Añadir al Pedido
+                                    {user ? 'Añadir al Carrito' : "Inicia sesión para comprar"}
                                 </Button>
                             </div>
 
