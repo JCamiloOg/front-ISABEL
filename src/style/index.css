@@ -1,2 +1,170 @@
 @import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap");
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ==========================================================================
+   TEMA PERSONALIZADO ISABEL ZAPATOS (Tailwind CSS v4)
+   ========================================================================== */
+
+:root {
+  --app-bg: #ffffff;
+  --app-text: #0e2347;
+  --app-surface: #ffffff;
+  --app-surface-alt: #f8fafc;
+  --app-muted: #64748b;
+  --app-border: #e2e8f0;
+}
+
+html.dark {
+  --app-bg: #071326; /* Azul noche profundo */
+  --app-text: #f8fafc; /* Texto principal claro */
+  --app-surface: #0e2347; /* Navy oficial Isabel para tarjetas y paneles */
+  --app-surface-alt: #132a54; /* Navy alternativo más suave */
+  --app-muted: #94a3b8; /* Texto secundario */
+  --app-border: #1e3a68; /* Bordes en dark */
+}
+
+@theme {
+  /* Tipografía */
+  --font-sans:
+    "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Paleta Oficial Isabel */
+  --color-brand-navy: #0e2347; /* Azul Marino: Texto, estructura y fondo dark */
+  --color-brand-royal: #2b62d9; /* Azul Real: Acciones primarias y botones */
+  --color-brand-sky: #52a5e8; /* Azul Celeste: Acentos, bordes y foco */
+  --color-brand-white: #ffffff; /* Blanco: Superficie y respiro */
+
+  /* Variaciones estáticas */
+  --color-isabel-primary: #2b62d9;
+  --color-isabel-primary-hover: #1e4bb3;
+  --color-isabel-dark: #0e2347;
+  --color-isabel-light: #52a5e8;
+  --color-isabel-surface: #ffffff;
+  --color-isabel-muted: #64748b;
+
+  /* Colores dinámicos adaptados a dark/light */
+  --color-app-bg: var(--app-bg);
+  --color-app-text: var(--app-text);
+  --color-app-surface: var(--app-surface);
+  --color-app-surface-alt: var(--app-surface-alt);
+  --color-app-muted: var(--app-muted);
+  --color-app-border: var(--app-border);
+}
+
+/* ==========================================================================
+   ESTILOS BASE
+   ========================================================================== */
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    color: var(--app-text);
+    background-color: var(--app-bg);
+    transition:
+      background-color 0.25s ease,
+      color 0.25s ease;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background-color: rgba(82, 165, 232, 0.35);
+    color: var(--color-brand-royal);
+  }
+}
+
+/* ==========================================================================
+   CLASES DE UTILIDAD Y COMPONENTES REUTILIZABLES
+   ========================================================================== */
+@layer components {
+  /* Botón Principal (Azul Real -> Azul Marino) */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-white bg-brand-royal hover:bg-brand-navy dark:hover:bg-brand-sky dark:hover:text-brand-navy shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  /* Botón Secundario / Outline */
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-app-text bg-app-surface hover:bg-brand-sky/10 border-2 border-app-border hover:border-brand-royal dark:hover:border-brand-sky transition-all duration-200 cursor-pointer;
+  }
+
+  /* Botón Sutil / Ghost */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm text-app-text bg-brand-sky/15 hover:bg-brand-sky/25 border border-brand-sky/30 hover:border-brand-royal dark:hover:border-brand-sky transition-all duration-200 cursor-pointer;
+  }
+
+  /* Botón Acción Destacada en Fondo Oscuro */
+  .btn-accent {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-brand-sky hover:bg-white text-brand-navy shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer;
+  }
+
+  /* Tarjeta de Producto o Contenido (Light / Dark) */
+  .isabel-card {
+    @apply bg-app-surface text-app-text rounded-2xl border border-app-border hover:border-brand-royal/50 dark:hover:border-brand-sky/50 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300;
+  }
+
+  /* Tarjeta en Dark/Navy (estilo sección informativa / banner) */
+  .isabel-card-dark {
+    @apply bg-brand-navy text-white rounded-2xl p-6 border border-brand-sky/20 shadow-md;
+  }
+
+  /* Badges y Etiquetas */
+  .badge-navy {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-brand-navy text-white dark:bg-brand-sky dark:text-brand-navy;
+  }
+
+  .badge-royal {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-brand-royal text-white;
+  }
+
+  .badge-sky {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-brand-sky/15 text-brand-royal dark:text-brand-sky border border-brand-sky/30;
+  }
+
+  /* Contenedores de Sección estándar */
+  .section-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Encabezados y Subtítulos */
+  .section-title {
+    @apply text-3xl sm:text-4xl font-extrabold text-app-text tracking-tight;
+  }
+
+  .section-subtitle {
+    @apply text-xs font-bold uppercase tracking-wider text-brand-royal dark:text-brand-sky;
+  }
+
+  /* Inputs de Formulario */
+  .isabel-input {
+    @apply w-full px-4 py-2.5 rounded-xl bg-app-surface border border-app-border text-app-text placeholder:text-app-muted focus:outline-none focus:border-brand-royal dark:focus:border-brand-sky focus:ring-2 focus:ring-brand-sky/30 transition-all text-sm;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-scaleUp {
+  animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
