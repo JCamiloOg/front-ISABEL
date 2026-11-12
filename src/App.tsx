@@ -11,12 +11,11 @@ function App() {
       once: true,     // Si la animación solo debe ejecutarse una vez
       easing: 'ease-in-out',
     });
-  }, []);
-
+  }, [])
   return (
     <>
       <RouterProvider router={router} />
-      <TanStackRouterDevtools router={router} position="top-left" />
+      <TanStackRouterDevtools router={router} />
     </>
   )
 }

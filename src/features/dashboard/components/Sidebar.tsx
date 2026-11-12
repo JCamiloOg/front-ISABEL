@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faChartPie,
@@ -6,34 +6,15 @@ import {
     faBoxesStacked,
     faCartShopping,
     faUsers,
+    faChartLine,
+    faGear,
     faRightFromBracket,
     faChevronLeft,
     faChevronRight,
-    faChevronDown,
+    faStore,
     faBell,
-    faSun,
-    faMoon,
-    faTruckRampBox,
-    faIndustry,
-    faDollarSign,
-    faReply,
-    faKey,
-    faUserGear,
-    faList,
-    faCashRegister,
-    faReceipt,
-    faArrowUpRightFromSquare,
-    faBars,
-    faXmark,
+    faHeadset,
 } from "@fortawesome/free-solid-svg-icons";
-import { useTheme } from "../../../shared/hooks/useTheme";
-import { Link, useRouterState } from "@tanstack/react-router";
-
-interface SubNavItem {
-    id: string;
-    label: string;
-    to: string;
-}
 
 interface NavItem {
     id: string;
@@ -41,127 +22,71 @@ interface NavItem {
     icon: typeof faChartPie;
     badge?: string;
     badgeColor?: "primary" | "accent";
-    to: string;
-    /** Sub-items opcionales — si existen, el item padre se convierte en desplegable */
-    children?: SubNavItem[];
 }
 
 interface NavSection {
-    id: string;
     title: string;
     items: NavItem[];
 }
 
 export default function Sidebar() {
     const [isCollapsed, setIsCollapsed] = useState(false);
-    const [mobileOpen, setMobileOpen] = useState(false);
-    const { theme, toggleTheme } = useTheme();
-    const routerState = useRouterState();
-    const currentPath = routerState.location.pathname;
+    const [activeItem, setActiveItem] = useState("overview");
 
     const navigationSections: NavSection[] = [
         {
-            id: "principal",
             title: "Principal",
             items: [
-                { id: "dashboard", label: "Dashboard", icon: faChartPie, to: "/dashboard" },
-                { id: "bills", label: "Gastos", icon: faReceipt, to: "/dashboard/bills" },
-                { id: "boxes", label: 'Cajas', icon: faCashRegister, to: "/dashboard/boxes" }
+                { id: "overview", label: "Dashboard", icon: faChartPie },
             ],
         },
         {
-            id: "compras",
-            title: "Gestión de compras",
+            title: "Gestión de Producto",
             items: [
-                {
-                    id: "products", label: "Productos", icon: faShoePrints, to: "/dashboard/products", children: [
-                        { id: "products-list", label: "Productos", to: "/dashboard/products" },
-                        { id: "products-colors", label: "Colores", to: "/dashboard/products/colors" },
-                        { id: "products-sizes", label: "Tallas", to: "/dashboard/products/sizes" },
-                        { id: "products-categories", label: "Categorías", to: "/dashboard/products/categories" },
-                        { id: "products-brands", label: "Marcas", to: "/dashboard/products/brands" },
-                        { id: "products-types", label: "Tipos de zapato", to: "/dashboard/products/types" },
-                    ]
-                },
-                { id: "category-supplier", label: "Categoría proveedor", icon: faTruckRampBox, to: "/dashboard/category-supplier" },
-                { id: "supplier", label: "Proveedores", icon: faIndustry, to: "/dashboard/supplier" },
-                { id: "shopping-purchases", label: "Compras", icon: faCartShopping, to: "/dashboard/shopping" }
-            ],
-        },
-        {
-            id: "ventas",
-            title: "Gestión de ventas",
-            items: [
-                { id: "clients", label: "Clientes", icon: faUsers, to: "/dashboard/clients" },
-                { id: "orders", label: "Pedidos", icon: faBoxesStacked, to: "/dashboard/orders" },
-                { id: "sales", label: "Ventas", icon: faDollarSign, to: "/dashboard/sales" },
-                { id: "returns", label: "Devoluciones", icon: faReply, to: "/dashboard/returns" }
-            ],
-        },
-        {
-            id: "configuracion",
-            title: "Configuración",
-            items: [
-                { id: "users", label: "Usuarios", icon: faUserGear, to: "/dashboard/users" },
-                { id: "roles", label: "Roles", icon: faList, to: "/dashboard/roles" },
-                { id: "permissions", label: "Permisos", icon: faKey, to: "/dashboard/permissions" }
+                { id: "products", label: "Calzado", icon: faShoePrints, badgeColor: "accent" },
+
             ]
-        }
+        },
+        {
+            title: "Gestión ventas",
+            items: [
+                { id: "customers", label: "Clientes ", icon: faUsers },
+                { id: "analytics", label: "Ventas", icon: faChartLine },
+            ],
+        },
+        {
+            title: "Sistema",
+            items: [
+                { id: "settings", label: "Configuración", icon: faGear },
+                { id: "support", label: "Soporte Técnico", icon: faHeadset },
+            ],
+        },
     ];
 
-    // Control individual de secciones colapsables (por defecto todas abiertas)
-    const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+    return (
+        <aside
+            className={`relative flex flex-col h-screen bg-[#0E2347] text-[#FFFFFF] border-r border-[#2B62D9]/20 transition-all duration-300 ease-in-out select-none ${isCollapsed ? "w-20" : "w-72"
+                }`}
+        >
+            {/* Botón Flotante para Colapsar/Expandir */}
+            <button
+                type="button"
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className="absolute -right-3.5 top-8 z-30 flex h-7 w-7 items-center justify-center rounded-full bg-[#2B62D9] text-[#FFFFFF] shadow-md hover:bg-[#52A5E8] hover:text-[#0E2347] transition-all cursor-pointer border-2 border-[#0E2347]"
+                title={isCollapsed ? "Expandir barra lateral" : "Colapsar barra lateral"}
+                aria-label={isCollapsed ? "Expandir barra lateral" : "Colapsar barra lateral"}
+            >
+                <FontAwesomeIcon
+                    icon={isCollapsed ? faChevronRight : faChevronLeft}
+                    className="text-xs"
+                />
+            </button>
 
-    // Control de items padre con sub-items expandidos
-    const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
-
-    const toggleSection = (sectionId: string) => {
-        setCollapsedSections((prev) => ({
-            ...prev,
-            [sectionId]: !prev[sectionId],
-        }));
-    };
-
-    const toggleItem = (itemId: string) => {
-        setExpandedItems((prev) => ({
-            ...prev,
-            [itemId]: !prev[itemId],
-        }));
-    };
-
-    // Cerrar offcanvas al navegar en móvil
-    useEffect(() => {
-        setMobileOpen(false);
-    }, [currentPath]);
-
-    // Cerrar offcanvas con Escape
-    const handleKeyDown = useCallback((e: KeyboardEvent) => {
-        if (e.key === "Escape" && mobileOpen) setMobileOpen(false);
-    }, [mobileOpen]);
-
-    useEffect(() => {
-        document.addEventListener("keydown", handleKeyDown);
-        return () => document.removeEventListener("keydown", handleKeyDown);
-    }, [handleKeyDown]);
-
-    // Bloquear scroll del body cuando el offcanvas está abierto
-    useEffect(() => {
-        if (mobileOpen) {
-            document.body.style.overflow = "hidden";
-        } else {
-            document.body.style.overflow = "";
-        }
-        return () => { document.body.style.overflow = ""; };
-    }, [mobileOpen]);
-
-    /* ──────────────────────────────────────────
-       Contenido reutilizable del sidebar
-    ────────────────────────────────────────── */
-    const sidebarContent = (
-        <>
-            {/* ─── Encabezado / Marca ISABEL ─── */}
-            <div className="flex items-center h-20 px-4 border-b border-app-border dark:border-white/10 gap-3 overflow-hidden shrink-0">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white p-1.5 shadow-xs border border-brand-navy/10">
+            {/* =========================================
+          ENCABEZADO / MARCA ISABEL
+      ========================================= */}
+            <div className="flex items-center h-20 px-4 border-b border-[#FFFFFF]/10 gap-3 overflow-hidden shrink-0">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FFFFFF] p-1.5 shadow-sm">
                     <img
                         src="/Logo Isabel Zapatos.svg"
                         alt="Isabel Logo"
@@ -171,332 +96,155 @@ export default function Sidebar() {
 
                 {!isCollapsed && (
                     <div className="flex flex-col min-w-0 transition-opacity duration-300">
-                        <span className="text-lg font-bold tracking-tight text-brand-navy dark:text-white leading-none truncate">
+                        <span className="text-lg font-bold tracking-tight text-[#FFFFFF] leading-none truncate">
                             ISABEL
                         </span>
-                        <span className="text-[10px] uppercase tracking-widest text-brand-royal dark:text-brand-sky font-semibold mt-1 truncate">
+                        <span className="text-[10px] uppercase tracking-widest text-[#52A5E8] font-semibold mt-1 truncate">
                             Panel Administrativo
                         </span>
                     </div>
                 )}
-
-                {/* Botón cerrar en móvil (dentro del panel) */}
-                <button
-                    type="button"
-                    onClick={() => setMobileOpen(false)}
-                    className="lg:hidden ml-auto flex h-8 w-8 items-center justify-center rounded-lg text-brand-navy/60 dark:text-white/60 hover:bg-brand-sky/10 dark:hover:bg-white/10 transition-colors cursor-pointer"
-                    aria-label="Cerrar menú"
-                >
-                    <FontAwesomeIcon icon={faXmark} className="text-lg" />
-                </button>
             </div>
 
-            {/* ─── Navegación Principal ─── */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-5 space-y-4 scrollbar-thin scrollbar-thumb-brand-royal/30">
-                {navigationSections.map((section) => {
-                    const isSectionCollapsed = !!collapsedSections[section.id];
-                    const hasActiveChild = section.items.some(
-                        (item) =>
-                            currentPath === item.to ||
-                            currentPath.startsWith(`${item.to}/`) ||
-                            item.children?.some((sub) => currentPath === sub.to || currentPath.startsWith(`${sub.to}/`))
-                    );
+            {/* =========================================
+          NAVEGACIÓN PRINCIPAL
+      ========================================= */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-5 space-y-6 scrollbar-thin scrollbar-thumb-[#2B62D9]/30">
+                {navigationSections.map((section, idx) => (
+                    <div key={idx} className="space-y-1">
+                        {/* Título de Sección */}
+                        {!isCollapsed ? (
+                            <p className="px-3 text-[11px] font-bold uppercase tracking-wider text-[#52A5E8]/70 mb-2">
+                                {section.title}
+                            </p>
+                        ) : (
+                            <div className="h-px bg-[#FFFFFF]/10 mx-2 my-3" />
+                        )}
 
-                    return (
-                        <div key={section.id} className="space-y-1">
-                            {/* Cabecera de Sección */}
-                            {!isCollapsed ? (
+                        {/* Elementos de Navegación */}
+                        {section.items.map((item) => {
+                            const isActive = activeItem === item.id;
+                            return (
                                 <button
+                                    key={item.id}
                                     type="button"
-                                    onClick={() => toggleSection(section.id)}
-                                    className={`group flex w-full items-center justify-between px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-colors duration-200 cursor-pointer ${hasActiveChild
-                                        ? "text-brand-royal dark:text-brand-sky"
-                                        : "text-brand-navy/60 dark:text-brand-sky/70 hover:text-brand-navy dark:hover:text-white"
+                                    onClick={() => setActiveItem(item.id)}
+                                    className={`group relative flex w-full items-center gap-3.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${isActive
+                                        ? "bg-[#2B62D9] text-[#FFFFFF] shadow-sm shadow-[#2B62D9]/40"
+                                        : "text-[#FFFFFF]/75 hover:bg-[#FFFFFF]/5 hover:text-[#FFFFFF]"
                                         }`}
-                                    title={isSectionCollapsed ? `Expandir ${section.title}` : `Colapsar ${section.title}`}
+                                    title={isCollapsed ? item.label : undefined}
                                 >
-                                    <span className="truncate">{section.title}</span>
-                                    <span
-                                        className={`flex items-center justify-center w-4 h-4 text-[10px] transition-transform duration-300 ease-in-out ${isSectionCollapsed ? "-rotate-90 text-brand-navy/40 dark:text-brand-sky/50" : "rotate-0"
+                                    {/* Indicador de píldora activa */}
+                                    {isActive && (
+                                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-[#52A5E8] rounded-r-md" />
+                                    )}
+
+                                    {/* Icono */}
+                                    <div
+                                        className={`flex h-6 w-6 items-center justify-center shrink-0 text-base transition-colors ${isActive
+                                            ? "text-[#FFFFFF]"
+                                            : "text-[#52A5E8] group-hover:text-[#FFFFFF]"
                                             }`}
                                     >
-                                        <FontAwesomeIcon icon={faChevronDown} />
-                                    </span>
+                                        <FontAwesomeIcon icon={item.icon} />
+                                    </div>
+
+                                    {/* Etiqueta y Badges (cuando no está colapsado) */}
+                                    {!isCollapsed && (
+                                        <div className="flex flex-1 items-center justify-between min-w-0">
+                                            <span className="truncate">{item.label}</span>
+                                            {item.badge && (
+                                                <span
+                                                    className={`ml-2 px-2 py-0.5 text-[10px] font-bold rounded-full shrink-0 ${item.badgeColor === "accent"
+                                                        ? "bg-[#52A5E8] text-[#0E2347]"
+                                                        : "bg-[#FFFFFF]/20 text-[#FFFFFF]"
+                                                        }`}
+                                                >
+                                                    {item.badge}
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Tooltip flotante cuando está colapsado */}
+                                    {isCollapsed && (
+                                        <div className="absolute left-full ml-3 hidden rounded-lg bg-[#0E2347] border border-[#52A5E8]/30 px-3 py-1.5 text-xs font-semibold text-[#FFFFFF] shadow-xl group-hover:flex z-50 whitespace-nowrap items-center gap-2">
+                                            <span>{item.label}</span>
+                                            {item.badge && (
+                                                <span
+                                                    className={`px-1.5 py-0.2 rounded-full text-[9px] ${item.badgeColor === "accent"
+                                                        ? "bg-[#52A5E8] text-[#0E2347]"
+                                                        : "bg-[#2B62D9] text-[#FFFFFF]"
+                                                        }`}
+                                                >
+                                                    {item.badge}
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
                                 </button>
-                            ) : (
-                                <div className="h-px bg-app-border dark:bg-white/10 mx-2 my-2" />
-                            )}
+                            );
+                        })}
+                    </div>
+                ))}
 
-                            {/* Contenedor Animado con CSS Grid transition (0fr -> 1fr) */}
-                            <div
-                                className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${!isCollapsed && isSectionCollapsed
-                                    ? "grid-rows-[0fr] opacity-0 pointer-events-none"
-                                    : "grid-rows-[1fr] opacity-100"
-                                    }`}
-                            >
-                                <div className="overflow-hidden space-y-1">
-                                    {section.items.map((item) => {
-                                        const hasChildren = item.children && item.children.length > 0;
-                                        const isItemExpanded = !!expandedItems[item.id];
-                                        const hasActiveSubChild = hasChildren && item.children!.some(
-                                            (sub) => currentPath === sub.to || currentPath.startsWith(`${sub.to}/`)
-                                        );
-                                        const isParentActive = currentPath === item.to || currentPath.startsWith(`${item.to}/`);
-
-                                        // ─── Item CON sub-items: botón desplegable ───
-                                        if (hasChildren) {
-                                            return (
-                                                <div key={item.id}>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => toggleItem(item.id)}
-                                                        className={`group relative flex w-full items-center gap-3.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${hasActiveSubChild || isParentActive
-                                                            ? "bg-brand-royal/10 dark:bg-brand-sky/10 text-brand-royal dark:text-brand-sky font-semibold"
-                                                            : "text-brand-navy/80 dark:text-white/75 hover:bg-brand-sky/10 dark:hover:bg-white/5 hover:text-brand-royal dark:hover:text-white"
-                                                            }`}
-                                                        title={isCollapsed ? item.label : undefined}
-                                                    >
-                                                        {/* Indicador lateral si tiene hijo activo */}
-                                                        {(hasActiveSubChild || isParentActive) && (
-                                                            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-brand-sky rounded-r-md" />
-                                                        )}
-
-                                                        <div
-                                                            className={`flex h-6 w-6 items-center justify-center shrink-0 text-base transition-colors ${hasActiveSubChild || isParentActive
-                                                                ? "text-brand-royal dark:text-brand-sky"
-                                                                : "text-brand-royal dark:text-brand-sky group-hover:scale-105"
-                                                                }`}
-                                                        >
-                                                            <FontAwesomeIcon icon={item.icon} />
-                                                        </div>
-
-                                                        {!isCollapsed && (
-                                                            <div className="flex flex-1 items-center justify-between min-w-0">
-                                                                <span className="truncate">{item.label}</span>
-                                                                <span
-                                                                    className={`flex items-center justify-center w-4 h-4 text-[10px] transition-transform duration-300 ease-in-out ${isItemExpanded ? "rotate-0" : "-rotate-90"
-                                                                        }`}
-                                                                >
-                                                                    <FontAwesomeIcon icon={faChevronDown} />
-                                                                </span>
-                                                            </div>
-                                                        )}
-
-                                                        {/* Tooltip colapsado con lista de hijos */}
-                                                        {isCollapsed && (
-                                                            <div className="absolute left-full ml-3 hidden rounded-lg bg-brand-navy border border-brand-sky/30 px-3 py-2 text-xs font-semibold text-white shadow-xl group-hover:flex z-50 whitespace-nowrap flex-col gap-1">
-                                                                <span className="font-bold text-brand-sky mb-1">{item.label}</span>
-                                                                {item.children!.map((sub) => (
-                                                                    <Link
-                                                                        key={sub.id}
-                                                                        to={sub.to}
-                                                                        className={`px-2 py-1 rounded-md transition-colors ${currentPath === sub.to
-                                                                            ? "bg-brand-sky/20 text-brand-sky"
-                                                                            : "hover:bg-white/10 text-white/80"
-                                                                            }`}
-                                                                    >
-                                                                        {sub.label}
-                                                                    </Link>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                    </button>
-
-                                                    {/* Sub-items con animación grid */}
-                                                    {!isCollapsed && (
-                                                        <div
-                                                            className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${isItemExpanded
-                                                                ? "grid-rows-[1fr] opacity-100"
-                                                                : "grid-rows-[0fr] opacity-0 pointer-events-none"
-                                                                }`}
-                                                        >
-                                                            <div className="overflow-hidden">
-                                                                <div className="ml-7 mt-1 pl-3.5 border-l-2 border-brand-sky/20 dark:border-brand-sky/15 space-y-0.5">
-                                                                    {item.children!.map((sub) => {
-                                                                        const isSubActive = currentPath === sub.to || currentPath.startsWith(`${sub.to}/`);
-                                                                        return (
-                                                                            <Link
-                                                                                key={sub.id}
-                                                                                to={sub.to}
-                                                                                activeProps={{
-                                                                                    className: "bg-brand-royal text-white shadow-sm shadow-brand-royal/30 font-semibold"
-                                                                                }}
-                                                                                inactiveProps={{
-                                                                                    className: "text-brand-navy/70 dark:text-white/65 hover:bg-brand-sky/10 dark:hover:bg-white/5 hover:text-brand-royal dark:hover:text-white"
-                                                                                }}
-                                                                                activeOptions={{
-                                                                                    exact: true
-                                                                                }}
-                                                                                className={`group/sub relative flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-200 cursor-pointer`}
-                                                                            >
-                                                                                {/* Dot indicator */}
-                                                                                <span
-                                                                                    className={`w-1.5 h-1.5 rounded-full shrink-0 transition-colors ${isSubActive
-                                                                                        ? "bg-white"
-                                                                                        : "bg-brand-royal/40 dark:bg-brand-sky/40 group-hover/sub:bg-brand-royal dark:group-hover/sub:bg-brand-sky"
-                                                                                        }`}
-                                                                                />
-                                                                                <span className="truncate">{sub.label}</span>
-                                                                            </Link>
-                                                                        );
-                                                                    })}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            );
-                                        }
-
-                                        // ─── Item SIMPLE: link directo (comportamiento actual) ───
-                                        return (
-                                            <Link
-                                                key={item.id}
-                                                to={item.to}
-                                                activeProps={{
-                                                    className: "bg-brand-royal text-white shadow-sm shadow-brand-royal/40 font-semibold"
-                                                }}
-                                                inactiveProps={{
-                                                    className: "text-brand-navy/80 dark:text-white/75 hover:bg-brand-sky/10 dark:hover:bg-white/5 hover:text-brand-royal dark:hover:text-white"
-                                                }}
-                                                activeOptions={{
-                                                    exact: true
-                                                }}
-                                                className="group relative flex w-full items-center gap-3.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer"
-                                                title={isCollapsed ? item.label : undefined}
-                                            >
-                                                {({ isActive }) => (
-                                                    <>
-                                                        {/* Indicador lateral activo */}
-                                                        {isActive && (
-                                                            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-brand-sky rounded-r-md" />
-                                                        )}
-
-                                                        {/* Icono */}
-                                                        <div
-                                                            className={`flex h-6 w-6 items-center justify-center shrink-0 text-base transition-colors ${isActive
-                                                                ? "text-white"
-                                                                : "text-brand-royal dark:text-brand-sky group-hover:scale-105"
-                                                                }`}
-                                                        >
-                                                            <FontAwesomeIcon icon={item.icon} />
-                                                        </div>
-
-                                                        {!isCollapsed && (
-                                                            <div className="flex flex-1 items-center justify-between min-w-0">
-                                                                <span className="truncate">{item.label}</span>
-                                                                {item.badge && (
-                                                                    <span
-                                                                        className={`ml-2 px-2 py-0.5 text-[10px] font-bold rounded-full shrink-0 ${item.badgeColor === "accent"
-                                                                            ? "bg-brand-sky text-brand-navy"
-                                                                            : "bg-white/20 text-white"
-                                                                            }`}
-                                                                    >
-                                                                        {item.badge}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        )}
-
-                                                        {/* Tooltip flotante cuando el sidebar está colapsado */}
-                                                        {isCollapsed && (
-                                                            <div className="absolute left-full ml-3 hidden rounded-lg bg-brand-navy border border-brand-sky/30 px-3 py-1.5 text-xs font-semibold text-white shadow-xl group-hover:flex z-50 whitespace-nowrap items-center gap-2">
-                                                                <span>{item.label}</span>
-                                                                {item.badge && (
-                                                                    <span
-                                                                        className={`px-1.5 py-0.2 rounded-full text-[9px] ${item.badgeColor === "accent"
-                                                                            ? "bg-brand-sky text-brand-navy"
-                                                                            : "bg-brand-royal text-white"
-                                                                            }`}
-                                                                    >
-                                                                        {item.badge}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    </>
-                                                )}
-                                            </Link>
-                                        );
-                                    })}
+                {/* Tarjeta de Acceso Rápido a la Tienda Pública */}
+                {!isCollapsed && (
+                    <div className="mt-6 pt-4 border-t border-[#FFFFFF]/10">
+                        <div className="bg-gradient-to-br from-[#2B62D9]/25 to-[#52A5E8]/10 rounded-2xl p-3.5 border border-[#52A5E8]/20">
+                            <div className="flex items-center gap-2.5 mb-2">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#52A5E8] text-[#0E2347] shrink-0">
+                                    <FontAwesomeIcon icon={faStore} className="text-sm" />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-[#FFFFFF]">Tienda en Vivo</p>
+                                    <p className="text-[10px] text-[#52A5E8]">isabelzapatos.com</p>
                                 </div>
                             </div>
+                            <a
+                                href="/"
+                                className="mt-2 block w-full text-center py-1.5 rounded-lg bg-[#52A5E8]/15 hover:bg-[#52A5E8]/30 text-[#FFFFFF] text-xs font-semibold border border-[#52A5E8]/30 transition-colors"
+                            >
+                                Ver Tienda
+                            </a>
                         </div>
-                    );
-                })}
-            </div>
-
-            {/* ─── Acceso directo a la Landing Page ─── */}
-            <div className="px-3 py-2 border-t border-app-border dark:border-white/10 shrink-0">
-                <Link
-                    to="/"
-                    className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-brand-navy dark:text-white bg-brand-sky/10 dark:bg-white/5 hover:bg-brand-royal hover:text-white dark:hover:bg-brand-royal transition-all duration-200 border border-brand-sky/20 hover:border-brand-royal shadow-2xs ${isCollapsed ? "justify-center" : ""
-                        }`}
-                    title={isCollapsed ? "Ir a la Landing Page" : undefined}
-                >
-                    <div className="flex h-6 w-6 items-center justify-center shrink-0 text-brand-royal dark:text-brand-sky group-hover:text-white transition-colors">
-                        <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-xs" />
                     </div>
-
-                    {!isCollapsed && (
-                        <div className="flex flex-1 items-center justify-between min-w-0">
-                            <span className="">Volver a inicio</span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-brand-royal/10 dark:bg-white/10 text-brand-royal dark:text-brand-sky group-hover:bg-white/20 group-hover:text-white font-medium transition-colors">
-                                Web
-                            </span>
-                        </div>
-                    )}
-
-                    {/* Tooltip flotante al estar colapsado el sidebar */}
-                    {isCollapsed && (
-                        <div className="absolute left-full ml-3 hidden rounded-lg dark:bg-brand-navy bg-brand-white border border-brand-sky/30 px-3 py-1.5 text-xs font-semibold dark:text-white text-brand-royal shadow-xl group-hover:flex z-50 whitespace-nowrap items-center gap-1.5">
-                            <span>Volver a inicio</span>
-                            <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-[10px] text-brand-sky" />
-                        </div>
-                    )}
-                </Link>
+                )}
             </div>
 
-            {/* ─── Perfil de Usuario & Cerrar Sesión ─── */}
-            <div className="p-3 border-t border-app-border dark:border-white/10 dark:bg-brand-navy/90 bg-brand-white shrink-0">
+            {/* =========================================
+          PERFIL DE USUARIO & CERRAR SESIÓN
+      ========================================= */}
+            <div className="p-3 border-t border-[#FFFFFF]/10 bg-[#0E2347]/90 shrink-0">
                 <div
-                    className={`flex items-center gap-3 p-2 rounded-xl hover:bg-brand-sky/10 dark:hover:bg-white/5 transition-colors ${isCollapsed ? "justify-center" : ""
+                    className={`flex items-center gap-3 p-2 rounded-xl hover:bg-[#FFFFFF]/5 transition-colors ${isCollapsed ? "justify-center" : ""
                         }`}
                 >
                     {/* Avatar del Administrador */}
                     <div className="relative shrink-0">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-tr from-brand-royal to-brand-sky text-white font-bold text-sm shadow-sm">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-[#2B62D9] to-[#52A5E8] text-[#FFFFFF] font-bold text-sm shadow-sm">
                             AD
                         </div>
                         {/* Indicador en línea */}
-                        <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-400 border-2 border-brand-white dark:border-brand-navy" />
+                        <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-400 border-2 border-[#0E2347]" />
                     </div>
 
                     {!isCollapsed && (
                         <div className="flex flex-1 items-center justify-between min-w-0">
                             <div className="min-w-0">
-                                <p className="text-xs font-bold text-brand-navy dark:text-white truncate">
+                                <p className="text-xs font-bold text-[#FFFFFF] truncate">
                                     Admin Calzado
                                 </p>
-                                <p className="text-[10px] text-brand-royal dark:text-brand-sky truncate">
+                                <p className="text-[10px] text-[#52A5E8] truncate">
                                     admin@isabel.com
                                 </p>
                             </div>
 
                             <div className="flex items-center gap-1">
-                                {/* Switch Tema */}
                                 <button
                                     type="button"
-                                    onClick={toggleTheme}
-                                    className="p-1.5 rounded-lg text-brand-royal dark:text-brand-sky/70 hover:text-brand-navy dark:hover:text-white hover:bg-brand-sky/15 dark:hover:bg-white/5 transition-colors cursor-pointer"
-                                    title={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-                                    aria-label="Alternar tema"
-                                >
-                                    <FontAwesomeIcon icon={theme === "dark" ? faSun : faMoon} className="text-xs" />
-                                </button>
-                                <button
-                                    type="button"
-                                    className="p-1.5 rounded-lg text-brand-royal dark:text-brand-sky/70 hover:text-brand-navy dark:hover:text-white hover:bg-brand-sky/15 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                                    className="p-1.5 rounded-lg text-[#FFFFFF]/70 hover:text-[#52A5E8] hover:bg-[#FFFFFF]/5 transition-colors cursor-pointer"
                                     title="Notificaciones"
                                     aria-label="Ver notificaciones"
                                 >
@@ -504,7 +252,7 @@ export default function Sidebar() {
                                 </button>
                                 <button
                                     type="button"
-                                    className="p-1.5 rounded-lg text-brand-royal dark:text-brand-sky/70 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
+                                    className="p-1.5 rounded-lg text-[#FFFFFF]/70 hover:text-red-400 hover:bg-[#FFFFFF]/5 transition-colors cursor-pointer"
                                     title="Cerrar Sesión"
                                     aria-label="Cerrar Sesión"
                                 >
@@ -515,68 +263,6 @@ export default function Sidebar() {
                     )}
                 </div>
             </div>
-        </>
-    );
-
-    return (
-        <>
-            {/* ═══════════════════════════════════════════
-                DESKTOP: Sidebar estático/sticky a la izquierda
-            ═══════════════════════════════════════════ */}
-            <aside
-                className={`hidden lg:flex flex-col sticky top-0 h-screen bg-brand-white dark:bg-brand-navy text-app-text border-r border-brand-royal/20 transition-all duration-300 ease-in-out select-none z-30 ${isCollapsed ? "w-20" : "w-72"
-                    }`}
-            >
-                {/* Botón Flotante para Colapsar/Expandir */}
-                <button
-                    type="button"
-                    onClick={() => setIsCollapsed(!isCollapsed)}
-                    className="absolute -right-3.5 top-8 z-30 flex h-7 w-7 items-center justify-center rounded-full bg-brand-royal text-white shadow-md hover:bg-brand-sky hover:text-brand-navy transition-all cursor-pointer border-2 border-brand-white dark:border-brand-navy"
-                    title={isCollapsed ? "Expandir barra lateral" : "Colapsar barra lateral"}
-                    aria-label={isCollapsed ? "Expandir barra lateral" : "Colapsar barra lateral"}
-                >
-                    <FontAwesomeIcon
-                        icon={isCollapsed ? faChevronRight : faChevronLeft}
-                        className="text-xs"
-                    />
-                </button>
-
-                {sidebarContent}
-            </aside>
-
-            {/* ═══════════════════════════════════════════
-                MÓVIL: Botón flotante (FAB) + Offcanvas overlay
-            ═══════════════════════════════════════════ */}
-
-            {/* FAB — siempre visible en móvil cuando el menú está cerrado */}
-            {!mobileOpen && (
-                <button
-                    type="button"
-                    onClick={() => setMobileOpen(true)}
-                    className="lg:hidden fixed bottom-6 left-5 z-50 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-royal text-white shadow-xl shadow-brand-royal/30 hover:bg-brand-sky hover:text-brand-navy active:scale-90 transition-all cursor-pointer border-2 border-white/20"
-                    aria-label="Abrir menú de navegación"
-                >
-                    <FontAwesomeIcon icon={faBars} className="text-xl" />
-                </button>
-            )}
-
-            {/* Backdrop oscuro */}
-            <div
-                className={`lg:hidden fixed inset-0 z-40 bg-brand-navy/60 backdrop-blur-sm transition-opacity duration-300 ${mobileOpen
-                    ? "opacity-100 pointer-events-auto"
-                    : "opacity-0 pointer-events-none"
-                    }`}
-                onClick={() => setMobileOpen(false)}
-                aria-hidden="true"
-            />
-
-            {/* Panel offcanvas deslizante */}
-            <aside
-                className={`lg:hidden fixed inset-y-0 left-0 z-50 flex flex-col w-72 max-w-[85vw] bg-brand-white dark:bg-brand-navy text-app-text shadow-2xl shadow-black/20 transition-transform duration-300 ease-in-out select-none ${mobileOpen ? "translate-x-0" : "-translate-x-full"
-                    }`}
-            >
-                {sidebarContent}
-            </aside>
-        </>
+        </aside>
     );
 }
