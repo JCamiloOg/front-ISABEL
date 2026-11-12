@@ -3,6 +3,7 @@ import { rootRoute } from "./rootRoute";
 import DashboardLayout from "../../features/dashboard/layout/DashboardLayout";
 import DashboardPage from "../../features/dashboard/pages/DashboardPage";
 import ProductsDashboardPage from "../../features/dashboard/pages/ProductsPage";
+import OrdersPage from "../../features/dashboard/pages/OrdersPage";
 
 export const dashboardLayout = createRoute({
   getParentRoute: () => rootRoute,
@@ -94,7 +95,7 @@ export const clientsRoute = createRoute({
 export const ordersRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/orders",
-  component: () => <></>,
+  component: () => <OrdersPage />,
 });
 
 export const salesRoute = createRoute({

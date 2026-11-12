@@ -5,11 +5,11 @@
 import type { ProductoConRelaciones } from "../@types/Products";
 
 // ==========================================
-// Datos de Prueba (10 Zapatos)
+// Datos de Prueba (10 Zapatos en Pesos Colombianos - COP)
+// Descuentos configurados como porcentaje (ej: 10 = 10%)
 // ==========================================
 
 export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
-
     {
         idProducto: 1,
         nombre: "Nike Air Force 1 '07",
@@ -17,8 +17,8 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
         idCategoriaProducto: 1,
         idMarca: 1,
         idTipoZapato: 1,
-        precioCompra: 65.00,
-        precioVenta: 119.99,
+        precioCompra: 160000,
+        precioVenta: 289900,
         publico: true,
         genero: 'Unisex',
         estado: 'Activo',
@@ -39,7 +39,7 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
                         idProductoColor: 1,
                         idTalla: 1,
                         stockActual: 15,
-                        descuento: 0.00,
+                        descuento: 0,
                         estado: 'Activo',
                         talla: { idTalla: 1, numeroTalla: '42', genero: 'Unisex', tallaInternacional: 'US 9' }
                     },
@@ -48,7 +48,7 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
                         idProductoColor: 1,
                         idTalla: 2,
                         stockActual: 8,
-                        descuento: 0.00,
+                        descuento: 0,
                         estado: 'Activo',
                         talla: { idTalla: 2, numeroTalla: '43', genero: 'Unisex', tallaInternacional: 'US 10' }
                     }
@@ -69,7 +69,7 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
                         idProductoColor: 2,
                         idTalla: 2,
                         stockActual: 20,
-                        descuento: 10.00,
+                        descuento: 10, // 10% de descuento
                         estado: 'Activo',
                         talla: { idTalla: 2, numeroTalla: '43', genero: 'Unisex', tallaInternacional: 'US 10' }
                     }
@@ -84,8 +84,8 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
         idCategoriaProducto: 2,
         idMarca: 2,
         idTipoZapato: 2,
-        precioCompra: 95.50,
-        precioVenta: 189.99,
+        precioCompra: 220000,
+        precioVenta: 389900,
         publico: true,
         genero: 'Hombre',
         estado: 'Activo',
@@ -105,7 +105,7 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
                         idProductoColor: 3,
                         idTalla: 3,
                         stockActual: 5,
-                        descuento: 15.00,
+                        descuento: 15, // 15% de descuento
                         estado: 'Activo',
                         talla: { idTalla: 3, numeroTalla: '41', genero: 'Hombre', tallaInternacional: 'US 8.5' }
                     }
@@ -120,8 +120,8 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
         idCategoriaProducto: 1,
         idMarca: 3,
         idTipoZapato: 1,
-        precioCompra: 38.00,
-        precioVenta: 75.00,
+        precioCompra: 110000,
+        precioVenta: 199900,
         publico: true,
         genero: 'Unisex',
         estado: 'Activo',
@@ -141,7 +141,7 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
                         idProductoColor: 4,
                         idTalla: 2,
                         stockActual: 12,
-                        descuento: 0.00,
+                        descuento: 0,
                         estado: 'Activo',
                         talla: { idTalla: 2, numeroTalla: '43', genero: 'Unisex', tallaInternacional: 'US 10' }
                     }
@@ -156,8 +156,8 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
         idCategoriaProducto: 1,
         idMarca: 4,
         idTipoZapato: 1,
-        precioCompra: 45.00,
-        precioVenta: 89.99,
+        precioCompra: 140000,
+        precioVenta: 249900,
         publico: true,
         genero: 'Mujer',
         estado: 'Activo',
@@ -177,7 +177,7 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
                         idProductoColor: 5,
                         idTalla: 1,
                         stockActual: 0,
-                        descuento: 5.00,
+                        descuento: 5, // 5% de descuento
                         estado: 'Inactivo',
                         talla: { idTalla: 1, numeroTalla: '38', genero: 'Mujer', tallaInternacional: 'US 7.5' }
                     }
@@ -192,8 +192,8 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
         idCategoriaProducto: 1,
         idMarca: 5,
         idTipoZapato: 3,
-        precioCompra: 32.00,
-        precioVenta: 65.00,
+        precioCompra: 95000,
+        precioVenta: 179900,
         publico: true,
         genero: 'Unisex',
         estado: 'Activo',
@@ -213,7 +213,7 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
                         idProductoColor: 6,
                         idTalla: 3,
                         stockActual: 25,
-                        descuento: 0.00,
+                        descuento: 0,
                         estado: 'Activo',
                         talla: { idTalla: 3, numeroTalla: '40', genero: 'Unisex', tallaInternacional: 'US 7' }
                     }
@@ -228,8 +228,8 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
         idCategoriaProducto: 1,
         idMarca: 6,
         idTipoZapato: 1,
-        precioCompra: 35.00,
-        precioVenta: 70.00,
+        precioCompra: 105000,
+        precioVenta: 189900,
         publico: true,
         genero: 'Unisex',
         estado: 'Activo',
@@ -249,7 +249,7 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
                         idProductoColor: 7,
                         idTalla: 2,
                         stockActual: 18,
-                        descuento: 0.00,
+                        descuento: 0,
                         estado: 'Activo',
                         talla: { idTalla: 2, numeroTalla: '42', genero: 'Unisex', tallaInternacional: 'US 9' }
                     }
@@ -264,8 +264,8 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
         idCategoriaProducto: 2,
         idMarca: 7,
         idTipoZapato: 2,
-        precioCompra: 85.00,
-        precioVenta: 160.00,
+        precioCompra: 210000,
+        precioVenta: 359900,
         publico: true,
         genero: 'Hombre',
         estado: 'Activo',
@@ -284,7 +284,7 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
                         idProductoColor: 8,
                         idTalla: 4,
                         stockActual: 7,
-                        descuento: 20.00,
+                        descuento: 20, // 20% de descuento
                         estado: 'Activo',
                         talla: { idTalla: 4, numeroTalla: '44', genero: 'Hombre', tallaInternacional: 'US 10.5' }
                     }
@@ -299,8 +299,8 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
         idCategoriaProducto: 3,
         idMarca: 8,
         idTipoZapato: 4,
-        precioCompra: 75.00,
-        precioVenta: 145.00,
+        precioCompra: 195000,
+        precioVenta: 329900,
         publico: true,
         genero: 'Hombre',
         estado: 'Activo',
@@ -319,7 +319,7 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
                         idProductoColor: 9,
                         idTalla: 3,
                         stockActual: 10,
-                        descuento: 0.00,
+                        descuento: 0,
                         estado: 'Activo',
                         talla: { idTalla: 3, numeroTalla: '43', genero: 'Hombre', tallaInternacional: 'US 9.5' }
                     }
@@ -334,8 +334,8 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
         idCategoriaProducto: 4,
         idMarca: 9,
         idTipoZapato: 5,
-        precioCompra: 110.00,
-        precioVenta: 198.00,
+        precioCompra: 280000,
+        precioVenta: 459900,
         publico: true,
         genero: 'Hombre',
         estado: 'Activo',
@@ -354,7 +354,7 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
                         idProductoColor: 10,
                         idTalla: 4,
                         stockActual: 14,
-                        descuento: 0.00,
+                        descuento: 0,
                         estado: 'Activo',
                         talla: { idTalla: 4, numeroTalla: '44', genero: 'Hombre', tallaInternacional: 'US 10.5' }
                     }
@@ -369,8 +369,8 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
         idCategoriaProducto: 1,
         idMarca: 10,
         idTipoZapato: 1,
-        precioCompra: 42.00,
-        precioVenta: 85.00,
+        precioCompra: 120000,
+        precioVenta: 219900,
         publico: true,
         genero: 'Mujer',
         estado: 'Activo',
@@ -389,7 +389,7 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
                         idProductoColor: 11,
                         idTalla: 1,
                         stockActual: 9,
-                        descuento: 0.00,
+                        descuento: 0,
                         estado: 'Activo',
                         talla: { idTalla: 1, numeroTalla: '37', genero: 'Mujer', tallaInternacional: 'US 6.5' }
                     }
