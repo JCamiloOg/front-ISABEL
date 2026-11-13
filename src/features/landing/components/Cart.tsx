@@ -286,8 +286,9 @@ export default function Cart() {
                         </div>
 
                         {/* Botón de Checkout */}
-                        <button
-                            type="button"
+                        <Link
+                            to="/checkout"
+                            onClick={() => setIsCartOpen(false)}
                             className="btn-primary w-full py-3! text-sm! font-bold! shadow-md shadow-brand-royal/20 flex items-center justify-center gap-2 group cursor-pointer"
                         >
                             <span>Continuar con el Pedido</span>
@@ -295,7 +296,7 @@ export default function Cart() {
                                 icon={faArrowRight}
                                 className="text-xs transition-transform group-hover:translate-x-1"
                             />
-                        </button>
+                        </Link>
 
                         <div className="flex items-center justify-center gap-2 text-[10px] text-app-muted pt-1">
                             <FontAwesomeIcon icon={faShieldHalved} className="text-emerald-500 text-xs" />

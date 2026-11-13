@@ -61,7 +61,7 @@ export default function CardProduct({ producto, className = "" }: CardProductPro
         style: "currency",
         currency: "COP",
         maximumFractionDigits: 0,
-    }).format(producto.precioVenta * 1000);
+    }).format(producto.precioVenta);
 
     return (
         <div

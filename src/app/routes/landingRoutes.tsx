@@ -4,6 +4,8 @@ import IndexLayout from "../../features/landing/layout/IndexLayout";
 import IndexPage from "../../features/landing/pages/IndexPage";
 import CatalogPage from "../../features/landing/pages/CatalogPage";
 import ProductPage from "../../features/landing/pages/ProductPage";
+import CreateOrder from "../../features/landing/pages/CreateOrder";
+import OrdersPageByUser from "../../features/landing/pages/OrdersPageByUser";
 
 export const indexLayout = createRoute({
   getParentRoute: () => rootRoute,
@@ -29,9 +31,22 @@ export const productRoute = createRoute({
   component: () => <ProductPage />,
 });
 
+export const createOrderRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/checkout",
+  component: () => <CreateOrder />,
+});
+
+export const getOrdersRoute = createRoute({
+  getParentRoute: () => indexLayout,
+  path: "/orders",
+  component: () => <OrdersPageByUser />
+});
+
 export const landingRoutes = indexLayout.addChildren([
   indexRoute,
   catalogRoute,
   productRoute,
+  getOrdersRoute
 ]);
 
