@@ -221,7 +221,7 @@ export default function ProductPage() {
                     {/* ========================================================
                         COLUMNA IZQUIERDA: GALERÍA VISUAL DEL COLOR SELECCIONADO
                     ======================================================== */}
-                    <div className="lg:col-span-7 space-y-4">
+                    <div data-aos="fade-right" className="lg:col-span-7 space-y-4">
                         {/* Contenedor Principal de la Imagen */}
                         <div className="relative aspect-4/3 sm:aspect-16/11 w-full rounded-3xl overflow-hidden isabel-card border-2 border-brand-sky/25 shadow-xl bg-brand-sky/5 dark:bg-brand-surface-alt group">
                             <img
@@ -325,7 +325,7 @@ export default function ProductPage() {
                     {/* ========================================================
                         COLUMNA DERECHA: SELECTOR DE COLOR & INFORMACIÓN
                     ======================================================== */}
-                    <div className="lg:col-span-5 space-y-6">
+                    <div data-aos="fade-left" data-aos-delay="100" className="lg:col-span-5 space-y-6">
                         {/* Cabecera del producto */}
                         <div className="space-y-2">
                             <div className="flex items-center gap-2">

@@ -134,7 +134,10 @@ export default function ForgotPasswordPage() {
             <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-brand-royal/15 rounded-full blur-3xl pointer-events-none" />
 
             {/* Tarjeta Central */}
-            <div className="w-full max-w-lg bg-app-surface text-app-text rounded-3xl border border-app-border shadow-2xl p-7 sm:p-10 relative z-10 transition-all duration-300">
+            <div
+                data-aos="zoom-in"
+                className="w-full max-w-lg bg-app-surface text-app-text rounded-3xl border border-app-border shadow-2xl p-7 sm:p-10 relative z-10 transition-all duration-300"
+            >
                 {/* Cabecera de la Tarjeta */}
                 <div className="flex items-center justify-between mb-6 pb-4 border-b border-app-border">
                     <Link

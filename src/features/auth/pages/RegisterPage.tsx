@@ -60,7 +60,7 @@ export default function RegisterPage() {
             {/* =========================================
                 COLUMNA IZQUIERDA: FORMULARIO DE REGISTRO
             ========================================= */}
-            <div className="w-full lg:w-1/2 flex flex-col justify-between p-6 sm:p-10 lg:p-12 z-10 overflow-y-auto max-h-screen scrollbar-thin scrollbar-thumb-brand-royal/30">
+            <div data-aos="fade-right" className="w-full lg:w-1/2 flex flex-col justify-between p-6 sm:p-10 lg:p-12 z-10 overflow-y-auto max-h-screen scrollbar-thin scrollbar-thumb-brand-royal/30">
                 {/* Cabecera / Volver */}
                 <div className="flex items-center justify-between">
                     <div className="flex flex-row items-center gap-2">
@@ -297,7 +297,7 @@ export default function RegisterPage() {
             {/* =========================================
                 COLUMNA DERECHA: FOTOGRAFÍA EDITORIAL CON OVERLAY
             ========================================= */}
-            <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col justify-between p-10 xl:p-14 text-white border-l border-brand-royal/20 select-none">
+            <div data-aos="fade-left" data-aos-delay="150" className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col justify-between p-10 xl:p-14 text-white border-l border-brand-royal/20 select-none">
                 {/* Imagen Fotográfica de Fondo */}
                 <img
                     src="/shoesBlackWhite.jpg"
