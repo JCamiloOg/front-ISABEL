@@ -261,14 +261,15 @@ export default function Sidebar() {
                                                             <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-brand-sky rounded-r-md" />
                                                         )}
 
-                                                        <div
+                                                        <Link
+                                                            to={item.to}
                                                             className={`flex h-6 w-6 items-center justify-center shrink-0 text-base transition-colors ${hasActiveSubChild || isParentActive
                                                                 ? "text-brand-royal dark:text-brand-sky"
                                                                 : "text-brand-royal dark:text-brand-sky group-hover:scale-105"
                                                                 }`}
                                                         >
                                                             <FontAwesomeIcon icon={item.icon} />
-                                                        </div>
+                                                        </Link>
 
                                                         {!isCollapsed && (
                                                             <div className="flex flex-1 items-center justify-between min-w-0">

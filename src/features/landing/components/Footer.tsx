@@ -8,7 +8,7 @@ export default function Footer() {
             <div className="section-container">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-white/10">
                     {/* Columna Marca & Identidad */}
-                    <div className="lg:col-span-2 space-y-4">
+                    <div data-aos="fade-up" data-aos-delay="50" className="lg:col-span-2 space-y-4">
                         <div className="flex items-center gap-3">
                             <div className="bg-white p-1 rounded-lg">
                                 <img
@@ -58,7 +58,7 @@ export default function Footer() {
                     </div>
 
                     {/* Enlaces de Exploración */}
-                    <div>
+                    <div data-aos="fade-up" data-aos-delay="150">
                         <h4 className="text-sm font-bold uppercase tracking-wider text-brand-sky mb-4">
                             Líneas de Calzado
                         </h4>
@@ -92,7 +92,7 @@ export default function Footer() {
                     </div>
 
                     {/* Ayuda y Soporte */}
-                    <div>
+                    <div data-aos="fade-up" data-aos-delay="250">
                         <h4 className="text-sm font-bold uppercase tracking-wider text-brand-sky mb-4">
                             Atención a Clientes
                         </h4>
@@ -126,7 +126,7 @@ export default function Footer() {
                     </div>
 
                     {/* Contacto Directo */}
-                    <div>
+                    <div data-aos="fade-up" data-aos-delay="350">
                         <h4 className="text-sm font-bold uppercase tracking-wider text-brand-sky mb-4">
                             Despachos & Bodega
                         </h4>
@@ -148,7 +148,7 @@ export default function Footer() {
                 </div>
 
                 {/* Copyright y Políticas */}
-                <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-white/60 gap-4">
+                <div data-aos="fade-in" data-aos-delay="200" className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-white/60 gap-4">
                     <p>© {new Date().getFullYear()} Isabel Zapatos • Bodega de Distribución. Todos los derechos reservados.</p>
                     <div className="flex gap-6">
                         <a href="#" className="hover:text-white transition-colors">

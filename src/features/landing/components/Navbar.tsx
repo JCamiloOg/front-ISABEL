@@ -10,6 +10,7 @@ import {
     faChevronDown,
     faBars,
     faXmark,
+    faBoxesStacked,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import useTheme from "../../../shared/hooks/useTheme";
@@ -233,6 +234,16 @@ export default function Navbar() {
                                                     <span className="flex-1 truncate">Ir al Dashboard</span>
                                                 </Link>
                                             )}
+                                            <Link
+                                                to="/orders"
+                                                onClick={() => setIsMenuOpen(false)}
+                                                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-app-text hover:bg-brand-royal hover:text-white dark:hover:bg-brand-royal transition-all duration-200 group cursor-pointer"
+                                            >
+                                                <div className="w-7 h-7 rounded-lg bg-brand-royal/10 dark:bg-white/10 group-hover:bg-white/20 text-brand-royal dark:text-brand-sky group-hover:text-white flex items-center justify-center shrink-0 transition-colors">
+                                                    <FontAwesomeIcon icon={faBoxesStacked} className="text-xs" />
+                                                </div>
+                                                <span className="flex-1 truncate">Mis pedidos</span>
+                                            </Link>
 
                                             <button
                                                 type="button"
@@ -264,8 +275,8 @@ export default function Navbar() {
                         type="button"
                         onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
                         className={`md:hidden flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-300 cursor-pointer ${isMobileNavOpen
-                                ? "bg-brand-royal/15 text-brand-royal dark:bg-brand-sky/20 dark:text-brand-sky border-brand-royal/30 rotate-90"
-                                : "bg-app-surface text-app-text hover:bg-brand-sky/10 border-app-border rotate-0"
+                            ? "bg-brand-royal/15 text-brand-royal dark:bg-brand-sky/20 dark:text-brand-sky border-brand-royal/30 rotate-90"
+                            : "bg-app-surface text-app-text hover:bg-brand-sky/10 border-app-border rotate-0"
                             }`}
                         aria-label={isMobileNavOpen ? "Cerrar menú" : "Abrir menú"}
                         aria-expanded={isMobileNavOpen}
@@ -284,8 +295,8 @@ export default function Navbar() {
             {/* Backdrop con transición suave de opacidad */}
             <div
                 className={`md:hidden fixed inset-0 top-20 bg-brand-navy/40 backdrop-blur-xs z-40 transition-all duration-300 ease-in-out ${isMobileNavOpen
-                        ? "opacity-100 pointer-events-auto"
-                        : "opacity-0 pointer-events-none"
+                    ? "opacity-100 pointer-events-auto"
+                    : "opacity-0 pointer-events-none"
                     }`}
                 onClick={() => setIsMobileNavOpen(false)}
                 aria-hidden="true"
@@ -294,8 +305,8 @@ export default function Navbar() {
             {/* Contenedor del Menú Desplegable con transición de Grid/Opacity/Translate */}
             <div
                 className={`md:hidden relative z-50 overflow-hidden bg-app-surface/98 backdrop-blur-xl border-b border-app-border shadow-2xl transition-all duration-300 ease-in-out ${isMobileNavOpen
-                        ? "max-h-[85vh] opacity-100 translate-y-0"
-                        : "max-h-0 opacity-0 -translate-y-2 pointer-events-none border-b-transparent"
+                    ? "max-h-[85vh] opacity-100 translate-y-0"
+                    : "max-h-0 opacity-0 -translate-y-2 pointer-events-none border-b-transparent"
                     }`}
             >
                 <div className="px-4 py-5 space-y-4">
@@ -309,8 +320,8 @@ export default function Navbar() {
                                     to={to}
                                     onClick={() => setIsMobileNavOpen(false)}
                                     className={`relative flex items-center justify-between px-5 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-200 select-none ${isActive
-                                            ? "bg-brand-royal/10 dark:bg-brand-sky/15 text-brand-royal dark:text-brand-sky shadow-xs border-l-4 border-brand-royal dark:border-brand-sky pl-4"
-                                            : "text-app-text/80 hover:bg-brand-sky/10 dark:hover:bg-white/5 hover:text-brand-royal dark:hover:text-brand-sky"
+                                        ? "bg-brand-royal/10 dark:bg-brand-sky/15 text-brand-royal dark:text-brand-sky shadow-xs border-l-4 border-brand-royal dark:border-brand-sky pl-4"
+                                        : "text-app-text/80 hover:bg-brand-sky/10 dark:hover:bg-white/5 hover:text-brand-royal dark:hover:text-brand-sky"
                                         }`}
                                 >
                                     <span>{label}</span>
@@ -356,8 +367,8 @@ export default function Navbar() {
                             {/* Contenido desplegable animado de la tarjeta de usuario */}
                             <div
                                 className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${isMobileUserExpanded
-                                        ? "grid-rows-[1fr] opacity-100"
-                                        : "grid-rows-[0fr] opacity-0 pointer-events-none"
+                                    ? "grid-rows-[1fr] opacity-100"
+                                    : "grid-rows-[0fr] opacity-0 pointer-events-none"
                                     }`}
                             >
                                 <div className="overflow-hidden">

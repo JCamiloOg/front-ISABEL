@@ -17,7 +17,7 @@ export default function HeroSection() {
             <div className="section-container">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
                     {/* Texto Hero: Bodega con compra flexible a pocas cantidades */}
-                    <div className="lg:col-span-6 space-y-6">
+                    <div data-aos="fade-right" className="lg:col-span-6 space-y-6">
                         <div className="badge-sky gap-2 py-1.5 px-3.5 text-xs">
                             <span className="inline-block w-2 h-2 rounded-full bg-brand-royal dark:bg-brand-sky" />
                             Bodega Mayorista • Compra desde Pocas Unidades
@@ -70,7 +70,7 @@ export default function HeroSection() {
                     </div>
 
                     {/* LADO DERECHO: PANEL FOTOGRÁFICO INMERSIVO EDITORIAL */}
-                    <div className="lg:col-span-6 relative">
+                    <div data-aos="fade-left" data-aos-delay="150" className="lg:col-span-6 relative">
                         <div className="relative mx-auto max-w-lg lg:max-w-none">
                             {/* Resplandor corporativo posterior */}
                             <div className="absolute inset-0 bg-linear-to-tr from-brand-royal to-brand-sky rounded-3xl transform rotate-2 scale-95 opacity-30 filter blur-2xl pointer-events-none" />

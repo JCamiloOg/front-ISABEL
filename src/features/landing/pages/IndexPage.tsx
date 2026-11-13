@@ -27,7 +27,11 @@ export default function IndexPage() {
       <section id="beneficios" className="py-12 bg-brand-navy text-white">
         <div className="section-container">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
-            <div className="flex items-center gap-4 bg-white/5 p-6 rounded-2xl border border-brand-sky/20">
+            <div
+              data-aos="fade-up"
+              data-aos-delay="100"
+              className="flex items-center gap-4 bg-white/5 p-6 rounded-2xl border border-brand-sky/20"
+            >
               <div className="w-12 h-12 rounded-xl bg-brand-sky text-brand-navy flex items-center justify-center shrink-0">
                 <FontAwesomeIcon icon={faHandHoldingDollar} className="text-xl" />
               </div>
@@ -37,7 +41,11 @@ export default function IndexPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-4 bg-white/5 p-6 rounded-2xl border border-brand-sky/20">
+            <div
+              data-aos="fade-up"
+              data-aos-delay="200"
+              className="flex items-center gap-4 bg-white/5 p-6 rounded-2xl border border-brand-sky/20"
+            >
               <div className="w-12 h-12 rounded-xl bg-brand-royal text-white flex items-center justify-center shrink-0">
                 <FontAwesomeIcon icon={faBoxesStacked} className="text-xl" />
               </div>
@@ -47,7 +55,11 @@ export default function IndexPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-4 bg-white/5 p-6 rounded-2xl border border-brand-sky/20">
+            <div
+              data-aos="fade-up"
+              data-aos-delay="300"
+              className="flex items-center gap-4 bg-white/5 p-6 rounded-2xl border border-brand-sky/20"
+            >
               <div className="w-12 h-12 rounded-xl bg-brand-sky text-brand-navy flex items-center justify-center shrink-0">
                 <FontAwesomeIcon icon={faTruckFast} className="text-xl" />
               </div>
@@ -66,7 +78,10 @@ export default function IndexPage() {
       <section id="catalogo" className="py-20 bg-app-bg transition-colors duration-200">
         <div className="section-container">
           {/* Encabezado del catálogo */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
+          <div
+            data-aos="fade-up"
+            className="flex flex-col md:flex-row md:items-end justify-between mb-12"
+          >
             <div>
               <span className="section-subtitle">
                 Inventario Disponible en Bodega
@@ -87,13 +102,22 @@ export default function IndexPage() {
 
           {/* Grid de los 5 Zapatos usando el CardProduct */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-            {primerosProductos.map((producto) => (
-              <CardProduct key={producto.idProducto} producto={producto} />
+            {primerosProductos.map((producto, index) => (
+              <div
+                key={producto.idProducto}
+                data-aos="fade-up"
+                data-aos-delay={(index + 1) * 100}
+              >
+                <CardProduct producto={producto} />
+              </div>
             ))}
           </div>
 
           {/* Banner de Surtido y Pedidos para Tiendas */}
-          <div className="mt-14 bg-linear-to-r from-brand-navy via-brand-navy to-brand-royal rounded-3xl p-8 sm:p-12 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
+          <div
+            data-aos="zoom-in"
+            className="mt-14 bg-linear-to-r from-brand-navy via-brand-navy to-brand-royal rounded-3xl p-8 sm:p-12 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl"
+          >
 
             <div className="space-y-2 text-center md:text-left">
               <div className="inline-flex items-center gap-2 text-xs font-bold text-brand-sky uppercase tracking-wider">
@@ -123,7 +147,7 @@ export default function IndexPage() {
       <section id="bodega" className="py-20 bg-brand-sky/10 dark:bg-brand-surface-alt/50 border-y border-brand-sky/20 transition-colors duration-200">
         <div className="section-container">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
+            <div data-aos="fade-right" className="space-y-6">
               <span className="section-subtitle">
                 Ventajas de Proveedor Directo
               </span>
@@ -172,7 +196,7 @@ export default function IndexPage() {
               </div>
             </div>
 
-            <div className="relative">
+            <div data-aos="fade-left" className="relative">
               <div className="aspect-video lg:aspect-4/3 rounded-3xl overflow-hidden border-2 border-brand-sky/40 shadow-xl bg-app-surface p-8 flex items-center justify-center">
                 <img
                   src="/Logo Isabel Zapatos.svg"

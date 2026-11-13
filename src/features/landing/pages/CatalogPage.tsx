@@ -103,13 +103,13 @@ export default function CatalogPage() {
     return (
         <main className="min-h-screen bg-app-bg text-app-text transition-colors duration-200">
             {/* Header Hero del Catálogo */}
-            <section className="relative overflow-hidden bg-linear-to-b from-brand-navy to-brand-sky dark:to-app-bg  via-[#122A54] pt-14 pb-12 border-b border-brand-royal/15">
+            <section className="relative overflow-hidden bg-brand-navy pt-14 pb-12 border-b border-brand-royal/20 text-white">
                 {/* Glow ambiental */}
                 <div className="absolute top-0 right-1/4 w-96 h-96 bg-brand-sky/15 rounded-full blur-3xl pointer-events-none" />
                 <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-brand-royal/20 rounded-full blur-3xl pointer-events-none" />
 
                 <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="max-w-3xl">
+                    <div data-aos="fade-down" className="max-w-3xl">
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-royal/25 text-brand-sky border border-brand-sky/30 text-xs font-semibold tracking-wider uppercase mb-4 backdrop-blur-sm">
                             <FontAwesomeIcon icon={faBoxesStacked} className="text-xs" />
                             <span>Bodega Mayorista &bull; Disponibilidad Inmediata</span>
@@ -123,7 +123,11 @@ export default function CatalogPage() {
                     </div>
 
                     {/* Barra de Búsqueda Principal integrada */}
-                    <div className="mt-8 p-3 sm:p-4 rounded-2xl bg-white/10 dark:bg-black/30 backdrop-blur-xl border border-white/15 shadow-xl max-w-4xl">
+                    <div
+                        data-aos="fade-up"
+                        data-aos-delay="150"
+                        className="mt-8 p-3 sm:p-4 rounded-2xl bg-white/10 dark:bg-black/30 backdrop-blur-xl border border-white/15 shadow-xl max-w-4xl"
+                    >
                         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
                             <div className="sm:col-span-8 lg:col-span-8">
                                 <Input
@@ -135,7 +139,7 @@ export default function CatalogPage() {
                                     placeholder="Buscar por modelo, SKU o estilo (ej: Air Force, NK-AF1, Running)..."
                                     iconLeft={faMagnifyingGlass}
                                     containerClassName="w-full"
-                                    className="bg-white! dark:bg-slate-900/90! shadow-sm"
+                                    className="bg-white! text-slate-900! dark:bg-slate-900/90! dark:text-white! placeholder:text-slate-400! border-slate-200! dark:border-slate-800! shadow-sm"
                                 />
                             </div>
 
@@ -147,7 +151,7 @@ export default function CatalogPage() {
                                             setOrden(e.target.value as SortOption);
                                             setPaginaActual(1);
                                         }}
-                                        className="w-full h-11 px-3.5 rounded-xl text-sm font-medium bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-sky transition-colors cursor-pointer"
+                                        className="w-full h-11 px-3.5 rounded-xl text-sm font-semibold bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-sky transition-colors cursor-pointer shadow-sm"
                                     >
                                         <option value="relevancia">Destacados / Relevancia</option>
                                         <option value="precio-asc">Precio: Menor a Mayor</option>
@@ -159,10 +163,10 @@ export default function CatalogPage() {
                         </div>
 
                         {/* Chips de filtro rápido */}
-                        <div className="mt-3 pt-3 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 text-xs">
+                        <div className="mt-3 pt-3 border-t border-white/15 flex flex-wrap items-center justify-between gap-3 text-xs">
                             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                                <span className="text-slate-300 font-semibold mr-1 flex items-center gap-1.5">
-                                    <FontAwesomeIcon icon={faFilter} className="text-[10px]" />
+                                <span className="text-white/80 font-bold mr-1 flex items-center gap-1.5">
+                                    <FontAwesomeIcon icon={faFilter} className="text-[10px] text-brand-sky" />
                                     Género:
                                 </span>
                                 {(["TODOS", "Hombre", "Mujer", "Unisex"] as const).map((gen) => (
@@ -173,10 +177,11 @@ export default function CatalogPage() {
                                             setGeneroSeleccionado(gen);
                                             setPaginaActual(1);
                                         }}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${generoSeleccionado === gen
-                                            ? "bg-brand-sky text-brand-navy font-bold shadow-sm"
-                                            : "bg-white/10 hover:bg-white/20 text-white/90 cursor-pointer"
-                                            }`}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                                            generoSeleccionado === gen
+                                                ? "bg-brand-sky text-brand-navy font-black shadow-md scale-102"
+                                                : "bg-white/15 hover:bg-white/25 text-white cursor-pointer border border-white/10"
+                                        }`}
                                     >
                                         {gen === "TODOS" ? "Todos los géneros" : gen}
                                     </button>
@@ -184,27 +189,14 @@ export default function CatalogPage() {
                             </div>
 
                             <div className="flex items-center gap-3">
-                                <label className="inline-flex items-center gap-2 cursor-pointer text-slate-200 font-medium select-none">
-                                    <input
-                                        type="checkbox"
-                                        checked={soloEnStock}
-                                        onChange={(e) => {
-                                            setSoloEnStock(e.target.checked);
-                                            setPaginaActual(1);
-                                        }}
-                                        className="rounded border-slate-400 text-brand-royal focus:ring-brand-sky h-4 w-4"
-                                    />
-                                    <span>Solo con stock</span>
-                                </label>
-
                                 {hayFiltrosActivos && (
                                     <button
                                         type="button"
                                         onClick={handleLimpiarFiltros}
-                                        className="text-brand-sky hover:text-white underline decoration-dashed flex items-center gap-1 transition-colors"
+                                        className="text-brand-sky hover:text-white underline decoration-dashed flex items-center gap-1.5 font-bold transition-colors cursor-pointer"
                                     >
                                         <FontAwesomeIcon icon={faRotateLeft} className="text-[10px]" />
-                                        Limpiar
+                                        Limpiar filtros
                                     </button>
                                 )}
                             </div>
@@ -240,8 +232,14 @@ export default function CatalogPage() {
                 {/* Grid de Productos */}
                 {productosPaginados.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {productosPaginados.map((producto) => (
-                            <CardProduct key={producto.idProducto} producto={producto} />
+                        {productosPaginados.map((producto, index) => (
+                            <div
+                                key={producto.idProducto}
+                                data-aos="fade-up"
+                                data-aos-delay={(index % 4) * 80}
+                            >
+                                <CardProduct producto={producto} />
+                            </div>
                         ))}
                     </div>
                 ) : (

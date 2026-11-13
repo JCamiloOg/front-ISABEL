@@ -3,6 +3,11 @@ import { rootRoute } from "./rootRoute";
 import DashboardLayout from "../../features/dashboard/layout/DashboardLayout";
 import DashboardPage from "../../features/dashboard/pages/DashboardPage";
 import ProductsDashboardPage from "../../features/dashboard/pages/ProductsPage";
+import OrdersPage from "../../features/dashboard/pages/OrdersPage";
+import BoxesPage from "../../features/dashboard/pages/BoxesPage";
+import GastosPage from "../../features/dashboard/pages/bills";
+import ProveedoresPage from "../../features/dashboard/pages/Proveedores";
+import VentasPage from "../../features/dashboard/pages/Ventas";
 
 export const dashboardLayout = createRoute({
   getParentRoute: () => rootRoute,
@@ -20,13 +25,14 @@ export const dashboardRoute = createRoute({
 export const billsRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/bills",
-  component: () => <></>,
+
+  component: () => <GastosPage />,
 });
 
 export const boxesRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/boxes",
-  component: () => <></>,
+  component: () => <BoxesPage />,
 });
 
 // ── Gestión de compras / Productos ──
@@ -75,7 +81,7 @@ export const categorySupplierRoute = createRoute({
 export const supplierRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/supplier",
-  component: () => <></>,
+  component: () => <ProveedoresPage />,
 });
 
 export const shoppingRoute = createRoute({
@@ -94,13 +100,13 @@ export const clientsRoute = createRoute({
 export const ordersRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/orders",
-  component: () => <></>,
+  component: () => <OrdersPage />,
 });
 
 export const salesRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/sales",
-  component: () => <></>,
+  component: () => <VentasPage />,
 });
 
 export const returnsRoute = createRoute({

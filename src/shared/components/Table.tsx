@@ -177,7 +177,7 @@ export function Table<T>({
               // Skeleton Loading State
               Array.from({ length: pagination?.itemsPerPage || 5 }).map((_, rIdx) => (
                 <tr key={`loading-row-${rIdx}`} className="animate-pulse">
-                  {columns.map((col, cIdx) => (
+                  {columns.map((_, cIdx) => (
                     <td key={`loading-col-${cIdx}`} className="py-4 px-4">
                       <div className="h-4 w-3/4 rounded-md bg-app-border/70" />
                     </td>

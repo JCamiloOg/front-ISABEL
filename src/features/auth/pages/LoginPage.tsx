@@ -45,7 +45,7 @@ export default function LoginPage() {
             {/* =========================================
                 COLUMNA IZQUIERDA: FORMULARIO DE ACCESO
             ========================================= */}
-            <div className="w-full lg:w-1/2 flex flex-col justify-between p-6 sm:p-10 lg:p-14 z-10">
+            <div data-aos="fade-right" className="w-full lg:w-1/2 flex flex-col justify-between p-6 sm:p-10 lg:p-14 z-10">
                 {/* Cabecera / Volver */}
                 <div className="flex items-center justify-between">
                     <Link
@@ -178,7 +178,7 @@ export default function LoginPage() {
             {/* =========================================
                 COLUMNA DERECHA: FOTOGRAFÍA EDITORIAL CON OVERLAY
             ========================================= */}
-            <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col justify-between p-10 xl:p-14text-white border-l border-brand-royal/20 select-none">
+            <div data-aos="fade-left" data-aos-delay="150" className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col justify-between p-10 xl:p-14text-white border-l border-brand-royal/20 select-none">
                 {/* Imagen Fotográfica de Fondo */}
                 <img
                     src="/login-shoes.jpg"
