@@ -16,7 +16,7 @@ import {
   faPhone,
   faEnvelope,
   faFileInvoiceDollar,
-  faPlus,
+
   faPrint,
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -27,7 +27,7 @@ import { Button } from "../../../shared/components/Button";
 import { Input } from "../../../shared/components/Inputs/Input";
 import { Select } from "../../../shared/components/Inputs/Select";
 import Modal from "../../../shared/components/Modal";
-import { Toast, MySwal } from "../../../shared/utils/alerts";
+import { Toast } from "../../../shared/utils/alerts";
 
 // Formateador de moneda en pesos colombianos
 const formatCOP = (val: number) =>
