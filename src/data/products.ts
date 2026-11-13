@@ -176,7 +176,7 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
                         idVariante: 6,
                         idProductoColor: 5,
                         idTalla: 1,
-                        stockActual: 0,
+                        stockActual: 10,
                         descuento: 5, // 5% de descuento
                         estado: 'Inactivo',
                         talla: { idTalla: 1, numeroTalla: '38', genero: 'Mujer', tallaInternacional: 'US 7.5' }

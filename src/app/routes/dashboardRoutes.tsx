@@ -4,6 +4,7 @@ import DashboardLayout from "../../features/dashboard/layout/DashboardLayout";
 import DashboardPage from "../../features/dashboard/pages/DashboardPage";
 import ProductsDashboardPage from "../../features/dashboard/pages/ProductsPage";
 import OrdersPage from "../../features/dashboard/pages/OrdersPage";
+import BoxesPage from "../../features/dashboard/pages/BoxesPage";
 
 export const dashboardLayout = createRoute({
   getParentRoute: () => rootRoute,
@@ -27,7 +28,7 @@ export const billsRoute = createRoute({
 export const boxesRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/boxes",
-  component: () => <></>,
+  component: () => <BoxesPage />,
 });
 
 // ── Gestión de compras / Productos ──
