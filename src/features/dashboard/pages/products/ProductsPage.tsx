@@ -7,23 +7,27 @@ import {
   faArrowRotateRight,
   faEye,
   faPenToSquare,
-  faTrashCan,
   faLayerGroup,
   faDollarSign,
   faToggleOn,
   faToggleOff,
   faWarehouse,
   faImage,
+  faUpload,
+  faPalette,
+  faRulerCombined,
+  faXmark,
+  faTrashCan,
 } from "@fortawesome/free-solid-svg-icons";
 
 import { MOCK_PRODUCTOS_PRISMA } from "../../../../data/products";
-import type { ProductoConRelaciones, Genero, Estado } from "../../../../@types/Products";
+import type { ProductoConRelaciones, Genero, Estado, ProductoColor } from "../../../../@types/Products";
 import { Button } from "../../../../shared/components/Button";
 import { Input } from "../../../../shared/components/Inputs/Input";
 import { Select } from "../../../../shared/components/Inputs/Select";
 import Modal from "../../../../shared/components/Modal";
 import { Table, type TableColumn } from "../../../../shared/components/Table";
-import { Toast, MySwal } from "../../../../shared/utils/alerts";
+import { Toast } from "../../../../shared/utils/alerts";
 
 // Mapeos de catálogo
 const CATEGORIAS_MAP: Record<number, string> = {
@@ -40,6 +44,56 @@ const MARCAS_MAP: Record<number, string> = {
   4: "Puma",
   5: "Converse",
 };
+
+// Catálogo de colores para selección y previsualización
+const COLOR_CATALOG: { idColor: number; nombre: string; hex: string }[] = [
+  { idColor: 101, nombre: "Negro", hex: "#1e293b" },
+  { idColor: 102, nombre: "Blanco", hex: "#f1f5f9" },
+  { idColor: 103, nombre: "Azul", hex: "#2563eb" },
+  { idColor: 104, nombre: "Rojo", hex: "#dc2626" },
+  { idColor: 105, nombre: "Gris", hex: "#64748b" },
+  { idColor: 106, nombre: "Verde Militar", hex: "#16a34a" },
+  { idColor: 107, nombre: "Beige / Café", hex: "#b45309" },
+  { idColor: 108, nombre: "Amarillo", hex: "#eab308" },
+  { idColor: 109, nombre: "Rosa Pastel", hex: "#ec4899" },
+  { idColor: 110, nombre: "Naranja", hex: "#ea580c" },
+];
+
+const getColorInfo = (idColor: number) => {
+  return (
+    COLOR_CATALOG.find((c) => c.idColor === idColor) || {
+      idColor,
+      nombre: `Color #${idColor}`,
+      hex: "#64748b",
+    }
+  );
+};
+
+const getTallaInternacional = (numero: string): string => {
+  const num = parseInt(numero, 10);
+  if (isNaN(num)) return `Talla ${numero}`;
+  const us = Math.max(4, (num - 32) * 0.8 + 4).toFixed(1).replace(".0", "");
+  return `US ${us}`;
+};
+
+// Interfaces para manejo de colores y tallas en el formulario
+interface FormVarianteItem {
+  idVariante?: number;
+  idTalla?: number;
+  numeroTalla: string;
+  stockActual: number;
+  descuento: number;
+  estado: Estado;
+}
+
+interface FormColorItem {
+  idProductoColor?: number;
+  idColor: number;
+  nombreColor: string;
+  imagenes: string[];
+  estado: Estado;
+  variantes: FormVarianteItem[];
+}
 
 export default function ProductsPage() {
   // Estado local de productos
@@ -66,9 +120,8 @@ export default function ProductsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductoConRelaciones | null>(null);
 
-  // Estados del formulario
+  // Estados del formulario (sin campo SKU visible al usuario)
   const [formNombre, setFormNombre] = useState("");
-  const [formSku, setFormSku] = useState("");
   const [formMarca, setFormMarca] = useState<number>(1);
   const [formCategoria, setFormCategoria] = useState<number>(1);
   const [formPrecioCompra, setFormPrecioCompra] = useState<number>(50);
@@ -76,7 +129,16 @@ export default function ProductsPage() {
   const [formGenero, setFormGenero] = useState<Genero>("Unisex");
   const [formPublico, setFormPublico] = useState<boolean>(true);
   const [formEstado, setFormEstado] = useState<Estado>("Activo");
-  const [formImageUrl, setFormImageUrl] = useState("");
+
+  // Colores y tallas dinámicos del formulario
+  const [formColores, setFormColores] = useState<FormColorItem[]>([]);
+  const [activeFormColorIndex, setActiveFormColorIndex] = useState<number>(0);
+
+  // Campos para agregar nuevo color / nueva talla rápida en el formulario
+  const [newColorSelectId, setNewColorSelectId] = useState<number>(101);
+  const [newTallaNumero, setNewTallaNumero] = useState<string>("40");
+  const [newTallaStock, setNewTallaStock] = useState<number>(10);
+  const [newTallaDescuento, setNewTallaDescuento] = useState<number>(0);
 
   // Métricas ejecutivas
   const metrics = useMemo(() => {
@@ -168,11 +230,85 @@ export default function ProductsPage() {
     setIsDetailOpen(true);
   };
 
-  // Abrir Modal de Creación / Edición
+  // Toggle de Estado del Producto
+  const handleToggleEstado = (prod: ProductoConRelaciones) => {
+    const nextEstado: Estado = prod.estado === "Activo" ? "Inactivo" : "Activo";
+    setProductos((prev) =>
+      prev.map((p) => (p.idProducto === prod.idProducto ? { ...p, estado: nextEstado } : p))
+    );
+    Toast.fire({
+      icon: "info",
+      title: `${prod.nombre}: ahora está ${nextEstado}`,
+    });
+  };
+
+  // Toggle de Estado del Color en Modal Detalle
+  const handleToggleColorEstadoInDetail = (colorIdx: number) => {
+    if (!detailProduct) return;
+    const targetColor = detailProduct.colores[colorIdx];
+    if (!targetColor) return;
+    const nextEstado: Estado = targetColor.estado === "Activo" ? "Inactivo" : "Activo";
+    const colorName = getColorInfo(targetColor.idColor).nombre;
+
+    const updatedColores = detailProduct.colores.map((c, i) =>
+      i === colorIdx ? { ...c, estado: nextEstado } : c
+    );
+
+    const updatedProd: ProductoConRelaciones = {
+      ...detailProduct,
+      colores: updatedColores,
+    };
+
+    setDetailProduct(updatedProd);
+    setProductos((prev) =>
+      prev.map((p) => (p.idProducto === updatedProd.idProducto ? updatedProd : p))
+    );
+
+    Toast.fire({
+      icon: "info",
+      title: `Color ${colorName}: cambiado a ${nextEstado}`,
+    });
+  };
+
+  // Toggle de Estado de la Talla en Modal Detalle
+  const handleToggleTallaEstadoInDetail = (colorIdx: number, idVariante: number) => {
+    if (!detailProduct) return;
+    let tallaNumero = "";
+    let nextEstado: Estado = "Activo";
+
+    const updatedColores = detailProduct.colores.map((color, cIdx) => {
+      if (cIdx !== colorIdx) return color;
+      const updatedVariantes = color.variantes.map((v) => {
+        if (v.idVariante === idVariante) {
+          nextEstado = v.estado === "Activo" ? "Inactivo" : "Activo";
+          tallaNumero = v.talla.numeroTalla;
+          return { ...v, estado: nextEstado };
+        }
+        return v;
+      });
+      return { ...color, variantes: updatedVariantes };
+    });
+
+    const updatedProd: ProductoConRelaciones = {
+      ...detailProduct,
+      colores: updatedColores,
+    };
+
+    setDetailProduct(updatedProd);
+    setProductos((prev) =>
+      prev.map((p) => (p.idProducto === updatedProd.idProducto ? updatedProd : p))
+    );
+
+    Toast.fire({
+      icon: "info",
+      title: `Talla ${tallaNumero}: cambiada a ${nextEstado}`,
+    });
+  };
+
+  // Abrir Modal de Creación
   const handleOpenCreateModal = () => {
     setEditingProduct(null);
     setFormNombre("");
-    setFormSku(`IS-${Math.floor(100 + Math.random() * 900)}`);
     setFormMarca(1);
     setFormCategoria(1);
     setFormPrecioCompra(45);
@@ -180,14 +316,34 @@ export default function ProductsPage() {
     setFormGenero("Unisex");
     setFormPublico(true);
     setFormEstado("Activo");
-    setFormImageUrl("https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80");
+
+    // Color inicial por defecto con tallas
+    setFormColores([
+      {
+        idColor: 101,
+        nombreColor: "Negro",
+        imagenes: [],
+        estado: "Activo",
+        variantes: [
+          { numeroTalla: "39", stockActual: 10, descuento: 0, estado: "Activo" },
+          { numeroTalla: "40", stockActual: 12, descuento: 0, estado: "Activo" },
+          { numeroTalla: "41", stockActual: 15, descuento: 0, estado: "Activo" },
+          { numeroTalla: "42", stockActual: 8, descuento: 0, estado: "Activo" },
+        ],
+      },
+    ]);
+    setActiveFormColorIndex(0);
+    setNewColorSelectId(102);
+    setNewTallaNumero("43");
+    setNewTallaStock(10);
+    setNewTallaDescuento(0);
     setIsFormOpen(true);
   };
 
+  // Abrir Modal de Edición
   const handleOpenEditModal = (prod: ProductoConRelaciones) => {
     setEditingProduct(prod);
     setFormNombre(prod.nombre);
-    setFormSku(prod.sku);
     setFormMarca(prod.idMarca);
     setFormCategoria(prod.idCategoriaProducto);
     setFormPrecioCompra(prod.precioCompra);
@@ -195,36 +351,287 @@ export default function ProductsPage() {
     setFormGenero(prod.genero);
     setFormPublico(prod.publico);
     setFormEstado(prod.estado);
-    const existingImg = prod.colores?.[0]?.imagenes?.[0] || "";
-    setFormImageUrl(existingImg);
+
+    const loadedColores: FormColorItem[] = prod.colores.map((c) => ({
+      idProductoColor: c.idProductoColor,
+      idColor: c.idColor,
+      nombreColor: getColorInfo(c.idColor).nombre,
+      imagenes: [...c.imagenes],
+      estado: c.estado,
+      variantes: c.variantes.map((v) => ({
+        idVariante: v.idVariante,
+        idTalla: v.idTalla,
+        numeroTalla: v.talla.numeroTalla,
+        stockActual: v.stockActual,
+        descuento: v.descuento,
+        estado: v.estado,
+      })),
+    }));
+
+    setFormColores(
+      loadedColores.length > 0
+        ? loadedColores
+        : [
+            {
+              idColor: 101,
+              nombreColor: "Negro",
+              imagenes: [],
+              estado: "Activo",
+              variantes: [{ numeroTalla: "40", stockActual: 10, descuento: 0, estado: "Activo" }],
+            },
+          ]
+    );
+    setActiveFormColorIndex(0);
+    setNewColorSelectId(101);
+    setNewTallaNumero("40");
+    setNewTallaStock(10);
+    setNewTallaDescuento(0);
     setIsFormOpen(true);
   };
 
-  const handleSaveProduct = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formNombre.trim() || !formSku.trim()) {
+  // Manejo de Colores en el Formulario
+  const handleAddColor = () => {
+    const chosenColor = getColorInfo(newColorSelectId);
+    const alreadyExists = formColores.some((c) => c.idColor === newColorSelectId);
+    if (alreadyExists) {
       Toast.fire({
         icon: "warning",
-        title: "Completa el nombre y SKU del calzado",
+        title: `El color ${chosenColor.nombre} ya está en la lista`,
       });
       return;
     }
 
+    const newColorItem: FormColorItem = {
+      idColor: chosenColor.idColor,
+      nombreColor: chosenColor.nombre,
+      imagenes: [],
+      estado: "Activo",
+      variantes: [
+        { numeroTalla: "39", stockActual: 8, descuento: 0, estado: "Activo" },
+        { numeroTalla: "40", stockActual: 10, descuento: 0, estado: "Activo" },
+        { numeroTalla: "41", stockActual: 12, descuento: 0, estado: "Activo" },
+      ],
+    };
+
+    setFormColores((prev) => [...prev, newColorItem]);
+    setActiveFormColorIndex(formColores.length);
+    Toast.fire({
+      icon: "success",
+      title: `Color ${chosenColor.nombre} agregado`,
+    });
+  };
+
+  const handleRemoveColor = (indexToRemove: number) => {
+    if (formColores.length <= 1) {
+      Toast.fire({
+        icon: "warning",
+        title: "El producto debe tener al menos un color",
+      });
+      return;
+    }
+    setFormColores((prev) => prev.filter((_, i) => i !== indexToRemove));
+    if (activeFormColorIndex >= indexToRemove && activeFormColorIndex > 0) {
+      setActiveFormColorIndex((prev) => prev - 1);
+    }
+  };
+
+  const handleToggleFormColorEstado = (index: number) => {
+    setFormColores((prev) =>
+      prev.map((c, i) => {
+        if (i !== index) return c;
+        const nextEstado: Estado = c.estado === "Activo" ? "Inactivo" : "Activo";
+        return { ...c, estado: nextEstado };
+      })
+    );
+  };
+
+  // Manejo de Tallas en el Formulario
+  const handleAddTallaToActiveColor = () => {
+    if (!newTallaNumero.trim()) {
+      Toast.fire({ icon: "warning", title: "Ingresa el número de talla" });
+      return;
+    }
+
+    const activeColor = formColores[activeFormColorIndex];
+    if (!activeColor) return;
+
+    const exists = activeColor.variantes.some((v) => v.numeroTalla === newTallaNumero.trim());
+    if (exists) {
+      Toast.fire({
+        icon: "warning",
+        title: `La talla ${newTallaNumero} ya existe en este color`,
+      });
+      return;
+    }
+
+    const newVar: FormVarianteItem = {
+      numeroTalla: newTallaNumero.trim(),
+      stockActual: Number(newTallaStock) || 0,
+      descuento: Number(newTallaDescuento) || 0,
+      estado: "Activo",
+    };
+
+    setFormColores((prev) =>
+      prev.map((c, i) =>
+        i === activeFormColorIndex ? { ...c, variantes: [...c.variantes, newVar] } : c
+      )
+    );
+
+    Toast.fire({
+      icon: "success",
+      title: `Talla ${newTallaNumero} agregada`,
+    });
+  };
+
+  const handleRemoveTallaFromActiveColor = (varIdx: number) => {
+    const activeColor = formColores[activeFormColorIndex];
+    if (!activeColor) return;
+    if (activeColor.variantes.length <= 1) {
+      Toast.fire({
+        icon: "warning",
+        title: "Cada color debe tener al menos una talla",
+      });
+      return;
+    }
+    setFormColores((prev) =>
+      prev.map((c, i) =>
+        i === activeFormColorIndex
+          ? { ...c, variantes: c.variantes.filter((_, idx) => idx !== varIdx) }
+          : c
+      )
+    );
+  };
+
+  const handleToggleFormTallaEstado = (varIdx: number) => {
+    setFormColores((prev) =>
+      prev.map((c, i) => {
+        if (i !== activeFormColorIndex) return c;
+        const updatedVars: FormVarianteItem[] = c.variantes.map((v, idx) => {
+          if (idx !== varIdx) return v;
+          const nextEstado: Estado = v.estado === "Activo" ? "Inactivo" : "Activo";
+          return { ...v, estado: nextEstado };
+        });
+        return { ...c, variantes: updatedVars };
+      })
+    );
+  };
+
+  const handleUpdateTallaField = (
+    varIdx: number,
+    field: "stockActual" | "descuento",
+    value: number
+  ) => {
+    setFormColores((prev) =>
+      prev.map((c, i) => {
+        if (i !== activeFormColorIndex) return c;
+        const updatedVars = c.variantes.map((v, idx) =>
+          idx === varIdx ? { ...v, [field]: value } : v
+        );
+        return { ...c, variantes: updatedVars };
+      })
+    );
+  };
+
+  // Manejo de Imagen mediante archivo (File Input)
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === "string") {
+        const dataUrl = reader.result;
+        setFormColores((prev) =>
+          prev.map((c, i) =>
+            i === activeFormColorIndex ? { ...c, imagenes: [dataUrl, ...c.imagenes.slice(1)] } : c
+          )
+        );
+        Toast.fire({
+          icon: "success",
+          title: "Imagen cargada correctamente",
+        });
+      }
+    };
+    reader.readAsDataURL(file);
+    // Reiniciar input para permitir cargar el mismo archivo si se desea
+    e.target.value = "";
+  };
+
+  const handleRemoveImage = () => {
+    setFormColores((prev) =>
+      prev.map((c, i) => (i === activeFormColorIndex ? { ...c, imagenes: [] } : c))
+    );
+  };
+
+  // Guardar Producto (Crear o Editar)
+  const handleSaveProduct = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formNombre.trim()) {
+      Toast.fire({
+        icon: "warning",
+        title: "Ingresa el nombre del calzado",
+      });
+      return;
+    }
+
+    if (formColores.length === 0) {
+      Toast.fire({
+        icon: "warning",
+        title: "Agrega al menos un color al calzado",
+      });
+      return;
+    }
+
+    for (const c of formColores) {
+      if (c.variantes.length === 0) {
+        Toast.fire({
+          icon: "warning",
+          title: `El color ${c.nombreColor} debe tener al menos una talla`,
+        });
+        return;
+      }
+    }
+
     if (editingProduct) {
+      const updatedColores: ProductoColor[] = formColores.map((fc, cIdx) => {
+        const prodColorId = fc.idProductoColor || Number(`${editingProduct.idProducto}${cIdx + 1}`);
+        return {
+          idProductoColor: prodColorId,
+          idProducto: editingProduct.idProducto,
+          idColor: fc.idColor,
+          imagenes:
+            fc.imagenes.length > 0
+              ? fc.imagenes
+              : ["https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80"],
+          estado: fc.estado,
+          variantes: fc.variantes.map((fv, vIdx) => {
+            const varId = fv.idVariante || Number(`${prodColorId}${vIdx + 1}`);
+            const idTalla = fv.idTalla || vIdx + 1;
+            return {
+              idVariante: varId,
+              idProductoColor: prodColorId,
+              idTalla,
+              stockActual: Number(fv.stockActual) || 0,
+              descuento: Number(fv.descuento) || 0,
+              estado: fv.estado,
+              talla: {
+                idTalla,
+                numeroTalla: fv.numeroTalla,
+                genero: formGenero,
+                tallaInternacional: getTallaInternacional(fv.numeroTalla),
+              },
+            };
+          }),
+        };
+      });
+
       setProductos((prev) =>
         prev.map((item) => {
           if (item.idProducto === editingProduct.idProducto) {
-            const updatedColores = [...item.colores];
-            if (updatedColores.length > 0 && formImageUrl) {
-              updatedColores[0] = {
-                ...updatedColores[0],
-                imagenes: [formImageUrl, ...(updatedColores[0].imagenes.slice(1) || [])],
-              };
-            }
             return {
               ...item,
               nombre: formNombre,
-              sku: formSku,
+              sku: editingProduct.sku, // El SKU se mantiene sin requerir edición al usuario
               idMarca: Number(formMarca),
               idCategoriaProducto: Number(formCategoria),
               precioCompra: Number(formPrecioCompra),
@@ -241,10 +648,54 @@ export default function ProductsPage() {
       Toast.fire({ icon: "success", title: "Zapato actualizado correctamente" });
     } else {
       const newId = productos.length > 0 ? Math.max(...productos.map((p) => p.idProducto)) + 1 : 1;
+
+      // Generar SKU automáticamente sin solicitarlo al usuario
+      const brandPrefixes: Record<number, string> = {
+        1: "NK",
+        2: "AD",
+        3: "VN",
+        4: "PM",
+        5: "CV",
+      };
+      const prefix = brandPrefixes[formMarca] || "IS";
+      const autoSku = `${prefix}-${Math.floor(100 + Math.random() * 900)}-${Math.floor(10 + Math.random() * 90)}`;
+
+      const newColores: ProductoColor[] = formColores.map((fc, cIdx) => {
+        const prodColorId = Number(`${newId}${cIdx + 1}`);
+        return {
+          idProductoColor: prodColorId,
+          idProducto: newId,
+          idColor: fc.idColor,
+          imagenes:
+            fc.imagenes.length > 0
+              ? fc.imagenes
+              : ["https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80"],
+          estado: fc.estado,
+          variantes: fc.variantes.map((fv, vIdx) => {
+            const varId = Number(`${prodColorId}${vIdx + 1}`);
+            const idTalla = vIdx + 1;
+            return {
+              idVariante: varId,
+              idProductoColor: prodColorId,
+              idTalla,
+              stockActual: Number(fv.stockActual) || 0,
+              descuento: Number(fv.descuento) || 0,
+              estado: fv.estado,
+              talla: {
+                idTalla,
+                numeroTalla: fv.numeroTalla,
+                genero: formGenero,
+                tallaInternacional: getTallaInternacional(fv.numeroTalla),
+              },
+            };
+          }),
+        };
+      });
+
       const newShoe: ProductoConRelaciones = {
         idProducto: newId,
         nombre: formNombre,
-        sku: formSku,
+        sku: autoSku,
         idMarca: Number(formMarca),
         idCategoriaProducto: Number(formCategoria),
         idTipoZapato: 1,
@@ -253,36 +704,9 @@ export default function ProductsPage() {
         publico: formPublico,
         genero: formGenero,
         estado: formEstado,
-        colores: [
-          {
-            idProductoColor: Number(`${newId}01`),
-            idProducto: newId,
-            idColor: 101,
-            imagenes: [formImageUrl || "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=800&q=80"],
-            estado: "Activo",
-            variantes: [
-              {
-                idVariante: Number(`${newId}0101`),
-                idProductoColor: Number(`${newId}01`),
-                idTalla: 1,
-                stockActual: 10,
-                descuento: 0,
-                estado: "Activo",
-                talla: { idTalla: 1, numeroTalla: "40", genero: formGenero, tallaInternacional: "US 8" },
-              },
-              {
-                idVariante: Number(`${newId}0102`),
-                idProductoColor: Number(`${newId}01`),
-                idTalla: 2,
-                stockActual: 12,
-                descuento: 0,
-                estado: "Activo",
-                talla: { idTalla: 2, numeroTalla: "41", genero: formGenero, tallaInternacional: "US 8.5" },
-              },
-            ],
-          },
-        ],
+        colores: newColores,
       };
+
       setProductos((prev) => [newShoe, ...prev]);
       Toast.fire({ icon: "success", title: "Nuevo calzado registrado con éxito" });
     }
@@ -290,37 +714,7 @@ export default function ProductsPage() {
     setIsFormOpen(false);
   };
 
-  const handleToggleEstado = (prod: ProductoConRelaciones) => {
-    const nextEstado: Estado = prod.estado === "Activo" ? "Inactivo" : "Activo";
-    setProductos((prev) =>
-      prev.map((p) => (p.idProducto === prod.idProducto ? { ...p, estado: nextEstado } : p))
-    );
-    Toast.fire({
-      icon: "info",
-      title: `${prod.nombre}: ahora está ${nextEstado}`,
-    });
-  };
-
-  const handleDeleteProduct = (prod: ProductoConRelaciones) => {
-    MySwal.fire({
-      title: "¿Eliminar calzado?",
-      text: `¿Seguro que deseas remover permanentemente "${prod.nombre}" del catálogo?`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Sí, eliminar",
-      cancelButtonText: "Cancelar",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        setProductos((prev) => prev.filter((p) => p.idProducto !== prod.idProducto));
-        Toast.fire({
-          icon: "success",
-          title: "Calzado eliminado del catálogo",
-        });
-      }
-    });
-  };
-
-  // Definición de columnas para el componente global Table
+  // Definición de columnas para el componente global Table (Sin opción de eliminación de productos)
   const tableColumns: TableColumn<ProductoConRelaciones>[] = [
     {
       key: "producto",
@@ -395,8 +789,9 @@ export default function ProductsPage() {
         return (
           <div className="flex flex-col items-center">
             <span
-              className={`font-extrabold text-sm ${isLow ? "text-rose-600 dark:text-rose-400" : "text-app-text"
-                }`}
+              className={`font-extrabold text-sm ${
+                isLow ? "text-rose-600 dark:text-rose-400" : "text-app-text"
+              }`}
             >
               {totalStockProd} pares
             </span>
@@ -434,14 +829,16 @@ export default function ProductsPage() {
           type="button"
           onClick={() => handleToggleEstado(prod)}
           title={`Hacer clic para cambiar a ${prod.estado === "Activo" ? "Inactivo" : "Activo"}`}
-          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold transition-all cursor-pointer ${prod.estado === "Activo"
-            ? "bg-emerald-100/90 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-200"
-            : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-300"
-            }`}
+          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold transition-all cursor-pointer ${
+            prod.estado === "Activo"
+              ? "bg-emerald-100/90 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-200"
+              : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-300"
+          }`}
         >
           <span
-            className={`h-1.5 w-1.5 rounded-full ${prod.estado === "Activo" ? "bg-emerald-500" : "bg-slate-400"
-              }`}
+            className={`h-1.5 w-1.5 rounded-full ${
+              prod.estado === "Activo" ? "bg-emerald-500" : "bg-slate-400"
+            }`}
           />
           {prod.estado}
         </button>
@@ -471,15 +868,6 @@ export default function ProductsPage() {
             className="flex h-8 w-8 items-center justify-center rounded-lg border border-app-border text-app-muted hover:border-brand-royal hover:text-brand-royal dark:hover:border-brand-sky dark:hover:text-brand-sky hover:bg-brand-royal/5 transition-all cursor-pointer"
           >
             <FontAwesomeIcon icon={faPenToSquare} className="text-xs" />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleDeleteProduct(prod)}
-            title="Eliminar del catálogo"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-app-border text-app-muted hover:border-rose-300 hover:text-rose-600 hover:bg-rose-50 dark:hover:border-rose-800 dark:hover:text-rose-400 dark:hover:bg-rose-950/30 transition-all cursor-pointer"
-          >
-            <FontAwesomeIcon icon={faTrashCan} className="text-xs" />
           </button>
         </div>
       ),
@@ -710,7 +1098,7 @@ export default function ProductsPage() {
         emptyDescription="Prueba ajustando los filtros de búsqueda, marca o género."
       />
 
-      {/* MODAL DETALLE COMPLETO (Variantes de Color, Tallas y Descuentos) */}
+      {/* MODAL DETALLE COMPLETO (Variantes de Color, Tallas y Cambio de Estado) */}
       <Modal
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
@@ -720,7 +1108,7 @@ export default function ProductsPage() {
         footer={
           <div className="flex w-full items-center justify-between">
             <span className="text-xs text-app-muted">
-              Estado: <strong className="text-app-text">{detailProduct?.estado}</strong>
+              Estado General: <strong className="text-app-text">{detailProduct?.estado}</strong>
             </span>
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" onClick={() => setIsDetailOpen(false)}>
@@ -788,53 +1176,104 @@ export default function ProductsPage() {
               </div>
             </div>
 
-            <div className="space-y-3 pt-2 border-t border-app-border">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-app-text uppercase tracking-wider">
-                  Variantes por Color ({detailProduct.colores.length})
-                </label>
-                <span className="text-xs text-app-muted">
-                  Color #{detailProduct.colores[selectedColorIndex]?.idColor}
-                </span>
-              </div>
+            <div className="space-y-4 pt-3 border-t border-app-border">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-bold text-app-text uppercase tracking-wider">
+                    Variantes por Color ({detailProduct.colores.length})
+                  </label>
+                  <span className="text-xs text-app-muted">
+                    · Clic en el color para ver sus tallas
+                  </span>
+                </div>
 
-              <div className="flex gap-2">
-                {detailProduct.colores.map((color, idx) => (
-                  <button
-                    key={color.idProductoColor}
-                    type="button"
-                    onClick={() => setSelectedColorIndex(idx)}
-                    className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold transition-all cursor-pointer border ${selectedColorIndex === idx
-                      ? "border-brand-royal bg-brand-royal/10 text-brand-royal dark:border-brand-sky dark:bg-brand-sky/15 dark:text-brand-sky"
-                      : "border-app-border bg-app-surface text-app-muted hover:border-brand-royal/30"
+                {/* Cambio de estado del color activo en detalle */}
+                {detailProduct.colores[selectedColorIndex] && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-app-muted">
+                      Estado de {getColorInfo(detailProduct.colores[selectedColorIndex].idColor).nombre}:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleColorEstadoInDetail(selectedColorIndex)}
+                      title={`Clic para cambiar estado del color a ${
+                        detailProduct.colores[selectedColorIndex].estado === "Activo" ? "Inactivo" : "Activo"
                       }`}
-                  >
-                    <span
-                      className="h-3 w-3 rounded-full border border-white"
-                      style={{
-                        backgroundColor:
-                          color.idColor === 101 ? "#1e293b" : color.idColor === 102 ? "#cbd5e1" : "#2563eb",
-                      }}
-                    />
-                    Color {idx + 1} ({color.variantes.length} tallas)
-                  </button>
-                ))}
+                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold transition-all cursor-pointer ${
+                        detailProduct.colores[selectedColorIndex].estado === "Activo"
+                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-200"
+                          : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-300"
+                      }`}
+                    >
+                      <FontAwesomeIcon
+                        icon={
+                          detailProduct.colores[selectedColorIndex].estado === "Activo"
+                            ? faToggleOn
+                            : faToggleOff
+                        }
+                        className="text-xs"
+                      />
+                      <span>{detailProduct.colores[selectedColorIndex].estado}</span>
+                    </button>
+                  </div>
+                )}
               </div>
 
-              {/* Detalle interno de tallas */}
+              {/* Botones de Colores */}
+              <div className="flex flex-wrap gap-2">
+                {detailProduct.colores.map((color, idx) => {
+                  const colorInfo = getColorInfo(color.idColor);
+                  const isSelected = selectedColorIndex === idx;
+                  return (
+                    <button
+                      key={color.idProductoColor}
+                      type="button"
+                      onClick={() => setSelectedColorIndex(idx)}
+                      className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold transition-all cursor-pointer border ${
+                        isSelected
+                          ? "border-brand-royal bg-brand-royal/10 text-brand-royal dark:border-brand-sky dark:bg-brand-sky/15 dark:text-brand-sky shadow-xs"
+                          : "border-app-border bg-app-surface text-app-muted hover:border-brand-royal/30"
+                      } ${color.estado === "Inactivo" ? "opacity-75" : ""}`}
+                    >
+                      <span
+                        className="h-3 w-3 rounded-full border border-white shadow-xs shrink-0"
+                        style={{ backgroundColor: colorInfo.hex }}
+                      />
+                      <span>{colorInfo.nombre}</span>
+                      <span className="text-[10px] font-normal opacity-75">
+                        ({color.variantes.length} {color.variantes.length === 1 ? "talla" : "tallas"})
+                      </span>
+                      <span
+                        className={`ml-1 text-[9px] px-1.5 py-0.5 rounded-full ${
+                          color.estado === "Activo"
+                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
+                            : "bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                        }`}
+                      >
+                        {color.estado}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Detalle interno de tallas con cambio interactivo de estado */}
               <div className="overflow-hidden rounded-xl border border-app-border bg-app-surface mt-3">
                 <div className="p-3 bg-app-surface-alt border-b border-app-border flex items-center justify-between text-xs font-bold text-app-muted">
                   <span>TALLA DISPONIBLE</span>
                   <span>STOCK ACTUAL</span>
                   <span>DESCUENTO</span>
-                  <span>ESTADO</span>
+                  <span className="text-right">ESTADO (CLIC PARA CAMBIAR)</span>
                 </div>
 
                 <div className="divide-y divide-app-border text-xs">
                   {detailProduct.colores[selectedColorIndex]?.variantes.map((v) => (
-                    <div key={v.idVariante} className="p-3 flex items-center justify-between hover:bg-app-surface-alt/50">
+                    <div
+                      key={v.idVariante}
+                      className="p-3 flex items-center justify-between hover:bg-app-surface-alt/50 transition-colors"
+                    >
                       <div className="flex items-center gap-2">
-                        <span className="flex h-6 w-8 items-center justify-center rounded bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky font-bold">
+                        <span className="flex h-6 w-8 items-center justify-center rounded bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky font-extrabold">
                           {v.talla.numeroTalla}
                         </span>
                         <span className="text-app-muted">({v.talla.tallaInternacional})</span>
@@ -854,15 +1293,23 @@ export default function ProductsPage() {
                         )}
                       </div>
 
-                      <div>
-                        <span
-                          className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-bold ${v.estado === "Activo"
-                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400"
-                            : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                            }`}
+                      <div className="text-right">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleTallaEstadoInDetail(selectedColorIndex, v.idVariante)}
+                          title={`Hacer clic para cambiar a ${v.estado === "Activo" ? "Inactivo" : "Activo"}`}
+                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
+                            v.estado === "Activo"
+                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-200"
+                              : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-300"
+                          }`}
                         >
-                          {v.estado}
-                        </span>
+                          <FontAwesomeIcon
+                            icon={v.estado === "Activo" ? faToggleOn : faToggleOff}
+                            className="text-xs"
+                          />
+                          <span>{v.estado}</span>
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -878,8 +1325,8 @@ export default function ProductsPage() {
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
         title={editingProduct ? "Editar Calzado" : "Registrar Nuevo Calzado"}
-        description="Ingresa los datos comerciales, modelo y características del zapato"
-        size="lg"
+        description="Ingresa los datos comerciales, colores, tallas e imágenes del calzado"
+        size="xl"
         footer={
           <div className="flex w-full items-center justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={() => setIsFormOpen(false)}>
@@ -891,23 +1338,15 @@ export default function ProductsPage() {
           </div>
         }
       >
-        <form onSubmit={handleSaveProduct} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form onSubmit={handleSaveProduct} className="space-y-5">
+          {/* Nombre del Producto (Sin campo SKU en el formulario) */}
+          <div>
             <Input
               id="form-nombre"
               label="Nombre del Producto / Modelo"
               placeholder="Ej. Air Jordan Retro 1"
               value={formNombre}
               onChange={(e) => setFormNombre(e.target.value)}
-              required
-            />
-
-            <Input
-              id="form-sku"
-              label="Código SKU"
-              placeholder="Ej. NK-AJ1-001"
-              value={formSku}
-              onChange={(e) => setFormSku(e.target.value)}
               required
             />
           </div>
@@ -979,25 +1418,15 @@ export default function ProductsPage() {
             />
           </div>
 
-          <Input
-            id="form-image-url"
-            label="URL de Imagen Principal"
-            placeholder="https://images.unsplash.com/photo-..."
-            value={formImageUrl}
-            onChange={(e) => setFormImageUrl(e.target.value)}
-            iconLeft={<FontAwesomeIcon icon={faImage} className="text-app-muted text-xs" />}
-            helper="Puedes usar enlaces de Unsplash o rutas locales para previsualización"
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Select
               id="form-estado"
-              label="Estado Inicial"
+              label="Estado Inicial del Calzado"
               value={formEstado}
               onChange={(e) => setFormEstado(e.target.value as Estado)}
               options={[
-                { value: "Activo", label: "Activo (Disponible)" },
-                { value: "Inactivo", label: "Inactivo (Oculto)" },
+                { value: "Activo", label: "Activo (Disponible para venta)" },
+                { value: "Inactivo", label: "Inactivo (Oculto en catálogo)" },
               ]}
             />
 
@@ -1006,15 +1435,347 @@ export default function ProductsPage() {
               <button
                 type="button"
                 onClick={() => setFormPublico((prev) => !prev)}
-                className={`flex items-center justify-between rounded-xl border p-2.5 text-xs font-bold transition-all cursor-pointer ${formPublico
-                  ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
-                  : "border-app-border bg-app-surface text-app-muted"
-                  }`}
+                className={`flex items-center justify-between rounded-xl border p-2.5 text-xs font-bold transition-all cursor-pointer ${
+                  formPublico
+                    ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
+                    : "border-app-border bg-app-surface text-app-muted"
+                }`}
               >
                 <span>{formPublico ? "Visible para clientes (Público)" : "Privado (Solo personal)"}</span>
                 <FontAwesomeIcon icon={formPublico ? faToggleOn : faToggleOff} className="text-base" />
               </button>
             </div>
+          </div>
+
+          {/* SECCIÓN CREAR COLORES Y TALLAS */}
+          <div className="space-y-4 pt-4 border-t border-app-border">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-extrabold text-app-text flex items-center gap-2">
+                  <FontAwesomeIcon icon={faPalette} className="text-brand-royal dark:text-brand-sky" />
+                  Colores, Imágenes y Tallas del Calzado
+                </h3>
+                <p className="text-xs text-app-muted">
+                  Configura cada color, sube su imagen y define sus tallas disponibles
+                </p>
+              </div>
+
+              {/* Selector para añadir un nuevo color */}
+              <div className="flex items-center gap-2">
+                <select
+                  value={newColorSelectId}
+                  onChange={(e) => setNewColorSelectId(Number(e.target.value))}
+                  className="h-8 rounded-lg border border-app-border bg-app-surface px-2 text-xs font-semibold text-app-text"
+                >
+                  {COLOR_CATALOG.map((c) => (
+                    <option key={c.idColor} value={c.idColor}>
+                      {c.nombre}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={handleAddColor}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-brand-royal px-3 text-xs font-bold text-white hover:bg-brand-royal/90 dark:bg-brand-sky dark:text-slate-900 transition-all cursor-pointer"
+                >
+                  <FontAwesomeIcon icon={faPlus} className="text-xs" />
+                  <span>Añadir Color</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Pestañas de Colores */}
+            <div className="flex flex-wrap gap-2">
+              {formColores.map((colorItem, idx) => {
+                const colorInfo = getColorInfo(colorItem.idColor);
+                const isActive = activeFormColorIndex === idx;
+                return (
+                  <div
+                    key={idx}
+                    className={`flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-bold transition-all ${
+                      isActive
+                        ? "border-brand-royal bg-brand-royal/10 text-brand-royal dark:border-brand-sky dark:bg-brand-sky/15 dark:text-brand-sky shadow-xs"
+                        : "border-app-border bg-app-surface text-app-muted hover:border-brand-royal/30"
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setActiveFormColorIndex(idx)}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <span
+                        className="h-3.5 w-3.5 rounded-full border border-white shadow-xs"
+                        style={{ backgroundColor: colorInfo.hex }}
+                      />
+                      <span>{colorInfo.nombre}</span>
+                      <span className="text-[10px] opacity-75 font-normal">
+                        ({colorItem.variantes.length} {colorItem.variantes.length === 1 ? "talla" : "tallas"})
+                      </span>
+                    </button>
+
+                    {/* Toggle estado del color dentro del formulario */}
+                    <button
+                      type="button"
+                      onClick={() => handleToggleFormColorEstado(idx)}
+                      title={`Color ${colorItem.estado}. Clic para cambiar.`}
+                      className={`text-[10px] px-2 py-0.5 rounded-full cursor-pointer transition-all ${
+                        colorItem.estado === "Activo"
+                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-200"
+                          : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-300"
+                      }`}
+                    >
+                      {colorItem.estado}
+                    </button>
+
+                    {formColores.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveColor(idx)}
+                        title="Eliminar este color"
+                        className="text-app-muted hover:text-rose-500 cursor-pointer ml-0.5"
+                      >
+                        <FontAwesomeIcon icon={faXmark} className="text-xs" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Contenido del color activo: Imagen mediante input de archivo + Tallas */}
+            {formColores[activeFormColorIndex] && (
+              <div className="rounded-2xl border border-app-border bg-app-surface p-4 sm:p-5 space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-app-border gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className="h-4 w-4 rounded-full border border-white shadow-xs"
+                      style={{
+                        backgroundColor: getColorInfo(formColores[activeFormColorIndex].idColor).hex,
+                      }}
+                    />
+                    <h4 className="text-xs font-bold text-app-text uppercase tracking-wider">
+                      Configuración para: {getColorInfo(formColores[activeFormColorIndex].idColor).nombre}
+                    </h4>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-app-muted">Estado del color:</span>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleFormColorEstado(activeFormColorIndex)}
+                      title={`Clic para cambiar estado a ${
+                        formColores[activeFormColorIndex].estado === "Activo" ? "Inactivo" : "Activo"
+                      }`}
+                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold transition-all cursor-pointer ${
+                        formColores[activeFormColorIndex].estado === "Activo"
+                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-200"
+                          : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-300"
+                      }`}
+                    >
+                      <FontAwesomeIcon
+                        icon={
+                          formColores[activeFormColorIndex].estado === "Activo"
+                            ? faToggleOn
+                            : faToggleOff
+                        }
+                        className="text-xs"
+                      />
+                      <span>{formColores[activeFormColorIndex].estado}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* CAMPO DE IMAGEN: INPUT DE ARCHIVO */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-app-text flex items-center gap-1.5">
+                    <FontAwesomeIcon icon={faImage} className="text-brand-royal dark:text-brand-sky text-xs" />
+                    Imagen del calzado ({getColorInfo(formColores[activeFormColorIndex].idColor).nombre})
+                  </label>
+
+                  <div className="flex flex-col sm:flex-row items-center gap-4 p-4 rounded-xl border border-dashed border-app-border bg-app-surface-alt">
+                    {formColores[activeFormColorIndex]?.imagenes?.[0] ? (
+                      <div className="relative h-24 w-24 shrink-0 rounded-xl overflow-hidden border border-app-border bg-app-surface shadow-xs">
+                        <img
+                          src={formColores[activeFormColorIndex].imagenes[0]}
+                          alt="Vista previa"
+                          className="h-full w-full object-cover object-center"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleRemoveImage}
+                          title="Remover imagen"
+                          className="absolute top-1 right-1 h-5 w-5 bg-rose-600 text-white rounded-full flex items-center justify-center text-xs shadow hover:bg-rose-700 cursor-pointer"
+                        >
+                          <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="h-24 w-24 shrink-0 rounded-xl border border-dashed border-app-border flex flex-col items-center justify-center text-app-muted bg-app-surface">
+                        <FontAwesomeIcon icon={faImage} className="text-2xl text-app-muted/50" />
+                        <span className="text-[10px] mt-1 text-center font-medium">Sin imagen</span>
+                      </div>
+                    )}
+
+                    <div className="flex-1 w-full text-center sm:text-left">
+                      <input
+                        type="file"
+                        id="shoe-image-file-input"
+                        accept="image/*"
+                        onChange={handleImageFileChange}
+                        className="hidden"
+                      />
+                      <label
+                        htmlFor="shoe-image-file-input"
+                        className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-brand-royal dark:text-brand-sky bg-brand-royal/10 dark:bg-brand-sky/15 hover:bg-brand-royal/20 transition-all cursor-pointer border border-brand-royal/20 dark:border-brand-sky/20"
+                      >
+                        <FontAwesomeIcon icon={faUpload} />
+                        {formColores[activeFormColorIndex]?.imagenes?.[0]
+                          ? "Cambiar archivo de imagen"
+                          : "Seleccionar imagen desde tu equipo"}
+                      </label>
+                      <p className="text-[11px] text-app-muted mt-1.5">
+                        Formatos recomendados: PNG, JPG o WEBP. La imagen se asocia directamente a este color.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* GESTIÓN DE TALLAS PARA EL COLOR ACTIVO */}
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-app-text flex items-center gap-1.5">
+                      <FontAwesomeIcon icon={faRulerCombined} className="text-brand-royal dark:text-brand-sky text-xs" />
+                      Tallas disponibles para este color
+                    </label>
+                    <span className="text-xs text-app-muted font-medium">
+                      {formColores[activeFormColorIndex].variantes.length} registradas
+                    </span>
+                  </div>
+
+                  {/* Barra rápida para agregar nueva talla */}
+                  <div className="flex flex-wrap items-end gap-2.5 p-3 rounded-xl bg-app-surface-alt border border-app-border">
+                    <div className="w-24">
+                      <label className="text-[11px] font-semibold text-app-muted block mb-1">Talla</label>
+                      <input
+                        type="text"
+                        placeholder="Ej. 40"
+                        value={newTallaNumero}
+                        onChange={(e) => setNewTallaNumero(e.target.value)}
+                        className="h-8 w-full rounded-lg border border-app-border bg-app-surface px-2.5 text-xs font-bold text-app-text"
+                      />
+                    </div>
+
+                    <div className="w-24">
+                      <label className="text-[11px] font-semibold text-app-muted block mb-1">Stock (pares)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={newTallaStock}
+                        onChange={(e) => setNewTallaStock(Number(e.target.value))}
+                        className="h-8 w-full rounded-lg border border-app-border bg-app-surface px-2.5 text-xs font-bold text-app-text"
+                      />
+                    </div>
+
+                    <div className="w-24">
+                      <label className="text-[11px] font-semibold text-app-muted block mb-1">Descuento %</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={newTallaDescuento}
+                        onChange={(e) => setNewTallaDescuento(Number(e.target.value))}
+                        className="h-8 w-full rounded-lg border border-app-border bg-app-surface px-2.5 text-xs font-bold text-app-text"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleAddTallaToActiveColor}
+                      className="h-8 inline-flex items-center gap-1.5 rounded-lg bg-brand-royal px-3.5 text-xs font-bold text-white hover:bg-brand-royal/90 dark:bg-brand-sky dark:text-slate-900 transition-all cursor-pointer"
+                    >
+                      <FontAwesomeIcon icon={faPlus} className="text-xs" />
+                      <span>Añadir Talla</span>
+                    </button>
+                  </div>
+
+                  {/* Tabla de tallas configuradas con estado cambiable y eliminación de talla */}
+                  <div className="overflow-hidden rounded-xl border border-app-border bg-app-surface">
+                    <div className="grid grid-cols-5 gap-2 p-2.5 bg-app-surface-alt border-b border-app-border text-[11px] font-bold text-app-muted">
+                      <span>TALLA</span>
+                      <span>STOCK</span>
+                      <span>DESCUENTO</span>
+                      <span className="text-center">ESTADO</span>
+                      <span className="text-right">ACCIÓN</span>
+                    </div>
+
+                    <div className="divide-y divide-app-border text-xs">
+                      {formColores[activeFormColorIndex].variantes.map((v, vIdx) => (
+                        <div
+                          key={vIdx}
+                          className="grid grid-cols-5 gap-2 p-2.5 items-center hover:bg-app-surface-alt/40 transition-colors"
+                        >
+                          <div className="flex items-center gap-1.5">
+                            <span className="flex h-6 w-8 items-center justify-center rounded bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky font-extrabold text-xs">
+                              {v.numeroTalla}
+                            </span>
+                            <span className="text-[10px] text-app-muted">({getTallaInternacional(v.numeroTalla)})</span>
+                          </div>
+
+                          <div>
+                            <input
+                              type="number"
+                              min="0"
+                              value={v.stockActual}
+                              onChange={(e) => handleUpdateTallaField(vIdx, "stockActual", Number(e.target.value))}
+                              className="h-7 w-20 rounded border border-app-border bg-app-surface px-1.5 text-xs font-semibold text-app-text"
+                            />
+                          </div>
+
+                          <div>
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={v.descuento}
+                              onChange={(e) => handleUpdateTallaField(vIdx, "descuento", Number(e.target.value))}
+                              className="h-7 w-16 rounded border border-app-border bg-app-surface px-1.5 text-xs font-semibold text-app-text"
+                            />
+                            <span className="text-[10px] text-app-muted ml-1">%</span>
+                          </div>
+
+                          <div className="text-center">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleFormTallaEstado(vIdx)}
+                              title={`Clic para cambiar estado a ${v.estado === "Activo" ? "Inactivo" : "Activo"}`}
+                              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold transition-all cursor-pointer ${
+                                v.estado === "Activo"
+                                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 hover:bg-emerald-200"
+                                  : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-300"
+                              }`}
+                            >
+                              <FontAwesomeIcon icon={v.estado === "Activo" ? faToggleOn : faToggleOff} className="text-xs" />
+                              <span>{v.estado}</span>
+                            </button>
+                          </div>
+
+                          <div className="text-right">
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveTallaFromActiveColor(vIdx)}
+                              title="Eliminar esta talla del color"
+                              className="h-6 w-6 inline-flex items-center justify-center rounded text-app-muted hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+                            >
+                              <FontAwesomeIcon icon={faTrashCan} className="text-xs" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </form>
       </Modal>
