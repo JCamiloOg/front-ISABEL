@@ -4,13 +4,14 @@ export type MetodoPago = "Transferencia Bancaria" | "Contra Entrega" | "Wompi / 
 export interface ItemPedido {
   idItem: number;
   idProducto: number;
+  idVariante?: number;
   nombreProducto: string;
   sku: string;
   color: string;
   talla: string;
   cantidad: number;
   precioUnitario: number;
-  descuento: number; // Porcentaje
+  descuento: number;
   subtotal: number;
   imagen: string;
 }
@@ -19,7 +20,7 @@ export interface ClientePedido {
   nombre: string;
   email: string;
   telefono: string;
-  tipoDocumento: "CC" | "NIT" | "CE";
+  tipoDocumento: "CC" | "CE" | "NIT" | "PASAPORTE";
   documento: string;
   ciudad: string;
   direccion: string;
@@ -27,9 +28,10 @@ export interface ClientePedido {
 
 export interface Pedido {
   idPedido: number;
-  codigoPedido: string; // ej: "PED-2026-001"
-  fecha: string; // ISO o formato fecha
-  cliente: ClientePedido;
+  codigoPedido: string;
+  fecha: string;
+  clienteId: string;
+  cliente?: ClientePedido;
   items: ItemPedido[];
   metodoPago: MetodoPago;
   estado: EstadoPedido;
@@ -37,8 +39,10 @@ export interface Pedido {
   costoEnvio: number;
   descuentoTotal: number;
   total: number;
+  montoAbono?: number;
+  imagenComprobante?: string;
+  observaciones?: string;
   notas?: string;
   guiaTransportadora?: string;
   transportadora?: string;
 }
-

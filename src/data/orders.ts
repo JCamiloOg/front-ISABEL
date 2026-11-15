@@ -1,19 +1,39 @@
 import type { Pedido } from "../@types/Orders";
+import { initialClients } from "./mockClients";
+
+const buildClientData = (clientId: string) => {
+  const client = initialClients.find((item) => item.id === clientId);
+
+  if (!client) {
+    return {
+      nombre: "Cliente no encontrado",
+      email: "",
+      telefono: "",
+      tipoDocumento: "CC" as const,
+      documento: "",
+      ciudad: "",
+      direccion: "",
+    };
+  }
+
+  return {
+    nombre: `${client.firstName} ${client.lastName}`.trim(),
+    email: client.email,
+    telefono: client.phone,
+    tipoDocumento: client.documentType,
+    documento: client.documentNumber,
+    ciudad: client.address.split(",").at(-1)?.trim() || client.address,
+    direccion: client.address,
+  };
+};
 
 export const MOCK_PEDIDOS: Pedido[] = [
   {
     idPedido: 1,
     codigoPedido: "PED-2026-001",
     fecha: "2026-11-10T14:30:00",
-    cliente: {
-      nombre: "Carlos Andrés Mendoza",
-      email: "carlos.mendoza@gmail.com",
-      telefono: "+57 312 456 7890",
-      tipoDocumento: "CC",
-      documento: "1020304050",
-      ciudad: "Bogotá D.C.",
-      direccion: "Carrera 15 # 85-30 Apto 402",
-    },
+    clienteId: "cli-001",
+    cliente: buildClientData("cli-001"),
     items: [
       {
         idItem: 1,
@@ -48,6 +68,7 @@ export const MOCK_PEDIDOS: Pedido[] = [
     costoEnvio: 15000,
     descuentoTotal: 0,
     total: 794700,
+    observaciones: "Dejar en portería si no se encuentra nadie.",
     notas: "Dejar en portería si no se encuentra nadie.",
     transportadora: "Coordinadora",
     guiaTransportadora: "CRD-98421045",
@@ -56,15 +77,8 @@ export const MOCK_PEDIDOS: Pedido[] = [
     idPedido: 2,
     codigoPedido: "PED-2026-002",
     fecha: "2026-11-10T16:15:00",
-    cliente: {
-      nombre: "Distribuidora Calzados El Sol",
-      email: "contacto@calzadoselsol.com",
-      telefono: "+57 300 123 4567",
-      tipoDocumento: "NIT",
-      documento: "900543210-1",
-      ciudad: "Medellín",
-      direccion: "Calle 44 # 65-12 Bodega 3",
-    },
+    clienteId: "cli-003",
+    cliente: buildClientData("cli-003"),
     items: [
       {
         idItem: 3,
@@ -99,6 +113,7 @@ export const MOCK_PEDIDOS: Pedido[] = [
     costoEnvio: 0,
     descuentoTotal: 233940,
     total: 1895360,
+    observaciones: "Facturar a nombre de persona jurídica.",
     notas: "Facturar a nombre de persona jurídica.",
     transportadora: "Envía",
     guiaTransportadora: "ENV-77123901",
@@ -107,15 +122,8 @@ export const MOCK_PEDIDOS: Pedido[] = [
     idPedido: 3,
     codigoPedido: "PED-2026-003",
     fecha: "2026-11-11T09:45:00",
-    cliente: {
-      nombre: "Valentina Gómez Ríos",
-      email: "valen.gomez@outlook.com",
-      telefono: "+57 318 901 2345",
-      tipoDocumento: "CC",
-      documento: "1037654321",
-      ciudad: "Cali",
-      direccion: "Avenida 6N # 28-45",
-    },
+    clienteId: "cli-002",
+    cliente: buildClientData("cli-002"),
     items: [
       {
         idItem: 5,
@@ -137,21 +145,15 @@ export const MOCK_PEDIDOS: Pedido[] = [
     costoEnvio: 12000,
     descuentoTotal: 12495,
     total: 249405,
+    observaciones: "Confirmar por WhatsApp antes de despachar.",
     notas: "Confirmar por WhatsApp antes de despachar.",
   },
   {
     idPedido: 4,
     codigoPedido: "PED-2026-004",
     fecha: "2026-11-08T11:20:00",
-    cliente: {
-      nombre: "Tienda Urban Shoes Barranquilla",
-      email: "pedidos@urbanshoesbaq.com",
-      telefono: "+57 305 789 0123",
-      tipoDocumento: "NIT",
-      documento: "800987654-3",
-      ciudad: "Barranquilla",
-      direccion: "Carrera 53 # 76-110 Local 12",
-    },
+    clienteId: "cli-003",
+    cliente: buildClientData("cli-003"),
     items: [
       {
         idItem: 6,
@@ -193,15 +195,8 @@ export const MOCK_PEDIDOS: Pedido[] = [
     idPedido: 5,
     codigoPedido: "PED-2026-005",
     fecha: "2026-11-07T17:05:00",
-    cliente: {
-      nombre: "Sebastián Restrepo Silva",
-      email: "sebastian.restrepo@gmail.com",
-      telefono: "+57 315 678 9012",
-      tipoDocumento: "CC",
-      documento: "1017894561",
-      ciudad: "Bucaramanga",
-      direccion: "Calle 35 # 22-18",
-    },
+    clienteId: "cli-004",
+    cliente: buildClientData("cli-004"),
     items: [
       {
         idItem: 8,
@@ -223,21 +218,15 @@ export const MOCK_PEDIDOS: Pedido[] = [
     costoEnvio: 15000,
     descuentoTotal: 0,
     total: 474900,
+    observaciones: "Cancelado por el cliente por solicitud de cambio de modelo.",
     notas: "Cancelado por el cliente por solicitud de cambio de modelo.",
   },
   {
     idPedido: 6,
     codigoPedido: "PED-2026-006",
     fecha: "2026-11-11T16:50:00",
-    cliente: {
-      nombre: "María Paula Henao",
-      email: "mp.henao@yahoo.com",
-      telefono: "+57 320 234 5678",
-      tipoDocumento: "CC",
-      documento: "1028394012",
-      ciudad: "Pereira",
-      direccion: "Carrera 8 # 21-40 Apto 301",
-    },
+    clienteId: "cli-001",
+    cliente: buildClientData("cli-001"),
     items: [
       {
         idItem: 9,
@@ -259,7 +248,7 @@ export const MOCK_PEDIDOS: Pedido[] = [
     costoEnvio: 10000,
     descuentoTotal: 0,
     total: 449800,
+    observaciones: "Entrega urgente.",
     notas: "Entrega urgente.",
   },
 ];
-
