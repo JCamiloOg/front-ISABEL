@@ -3,11 +3,13 @@ import { rootRoute } from "./rootRoute";
 import DashboardLayout from "../../features/dashboard/layout/DashboardLayout";
 import DashboardPage from "../../features/dashboard/pages/DashboardPage";
 import ProductsDashboardPage from "../../features/dashboard/pages/ProductsPage";
-import OrdersPage from "../../features/dashboard/pages/OrdersPage";
+import OrdersPage from "../../features/dashboard/pages/orders/OrdersPage";
 import BoxesPage from "../../features/dashboard/pages/BoxesPage";
 import GastosPage from "../../features/dashboard/pages/bills";
 import ProveedoresPage from "../../features/dashboard/pages/Proveedores";
 import VentasPage from "../../features/dashboard/pages/Ventas";
+import ClientesPage from "../../features/dashboard/pages/clients/ClientsPage";
+import DevolucionesPage from "../../features/dashboard/pages/Devoluciones";
 
 export const dashboardLayout = createRoute({
   getParentRoute: () => rootRoute,
@@ -94,7 +96,7 @@ export const shoppingRoute = createRoute({
 export const clientsRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/clients",
-  component: () => <></>,
+  component: () => <ClientesPage  />,
 });
 
 export const ordersRoute = createRoute({
@@ -112,7 +114,7 @@ export const salesRoute = createRoute({
 export const returnsRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/returns",
-  component: () => <></>,
+  component: () => <DevolucionesPage />,
 });
 
 // ── Configuración ──
