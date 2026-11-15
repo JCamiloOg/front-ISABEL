@@ -16,14 +16,14 @@ import {
   faImage,
 } from "@fortawesome/free-solid-svg-icons";
 
-import { MOCK_PRODUCTOS_PRISMA } from "../../../data/products";
-import type { ProductoConRelaciones, Genero, Estado } from "../../../@types/Products";
-import { Button } from "../../../shared/components/Button";
-import { Input } from "../../../shared/components/Inputs/Input";
-import { Select } from "../../../shared/components/Inputs/Select";
-import Modal from "../../../shared/components/Modal";
-import { Table, type TableColumn } from "../../../shared/components/Table";
-import { Toast, MySwal } from "../../../shared/utils/alerts";
+import { MOCK_PRODUCTOS_PRISMA } from "../../../../data/products";
+import type { ProductoConRelaciones, Genero, Estado } from "../../../../@types/Products";
+import { Button } from "../../../../shared/components/Button";
+import { Input } from "../../../../shared/components/Inputs/Input";
+import { Select } from "../../../../shared/components/Inputs/Select";
+import Modal from "../../../../shared/components/Modal";
+import { Table, type TableColumn } from "../../../../shared/components/Table";
+import { Toast, MySwal } from "../../../../shared/utils/alerts";
 
 // Mapeos de catálogo
 const CATEGORIAS_MAP: Record<number, string> = {
@@ -395,9 +395,8 @@ export default function ProductsPage() {
         return (
           <div className="flex flex-col items-center">
             <span
-              className={`font-extrabold text-sm ${
-                isLow ? "text-rose-600 dark:text-rose-400" : "text-app-text"
-              }`}
+              className={`font-extrabold text-sm ${isLow ? "text-rose-600 dark:text-rose-400" : "text-app-text"
+                }`}
             >
               {totalStockProd} pares
             </span>
@@ -435,16 +434,14 @@ export default function ProductsPage() {
           type="button"
           onClick={() => handleToggleEstado(prod)}
           title={`Hacer clic para cambiar a ${prod.estado === "Activo" ? "Inactivo" : "Activo"}`}
-          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold transition-all cursor-pointer ${
-            prod.estado === "Activo"
-              ? "bg-emerald-100/90 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-200"
-              : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-300"
-          }`}
+          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold transition-all cursor-pointer ${prod.estado === "Activo"
+            ? "bg-emerald-100/90 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-200"
+            : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-300"
+            }`}
         >
           <span
-            className={`h-1.5 w-1.5 rounded-full ${
-              prod.estado === "Activo" ? "bg-emerald-500" : "bg-slate-400"
-            }`}
+            className={`h-1.5 w-1.5 rounded-full ${prod.estado === "Activo" ? "bg-emerald-500" : "bg-slate-400"
+              }`}
           />
           {prod.estado}
         </button>
@@ -807,11 +804,10 @@ export default function ProductsPage() {
                     key={color.idProductoColor}
                     type="button"
                     onClick={() => setSelectedColorIndex(idx)}
-                    className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold transition-all cursor-pointer border ${
-                      selectedColorIndex === idx
-                        ? "border-brand-royal bg-brand-royal/10 text-brand-royal dark:border-brand-sky dark:bg-brand-sky/15 dark:text-brand-sky"
-                        : "border-app-border bg-app-surface text-app-muted hover:border-brand-royal/30"
-                    }`}
+                    className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold transition-all cursor-pointer border ${selectedColorIndex === idx
+                      ? "border-brand-royal bg-brand-royal/10 text-brand-royal dark:border-brand-sky dark:bg-brand-sky/15 dark:text-brand-sky"
+                      : "border-app-border bg-app-surface text-app-muted hover:border-brand-royal/30"
+                      }`}
                   >
                     <span
                       className="h-3 w-3 rounded-full border border-white"
@@ -860,11 +856,10 @@ export default function ProductsPage() {
 
                       <div>
                         <span
-                          className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                            v.estado === "Activo"
-                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400"
-                              : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                          }`}
+                          className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-bold ${v.estado === "Activo"
+                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400"
+                            : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                            }`}
                         >
                           {v.estado}
                         </span>
@@ -1011,11 +1006,10 @@ export default function ProductsPage() {
               <button
                 type="button"
                 onClick={() => setFormPublico((prev) => !prev)}
-                className={`flex items-center justify-between rounded-xl border p-2.5 text-xs font-bold transition-all cursor-pointer ${
-                  formPublico
-                    ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
-                    : "border-app-border bg-app-surface text-app-muted"
-                }`}
+                className={`flex items-center justify-between rounded-xl border p-2.5 text-xs font-bold transition-all cursor-pointer ${formPublico
+                  ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
+                  : "border-app-border bg-app-surface text-app-muted"
+                  }`}
               >
                 <span>{formPublico ? "Visible para clientes (Público)" : "Privado (Solo personal)"}</span>
                 <FontAwesomeIcon icon={formPublico ? faToggleOn : faToggleOff} className="text-base" />

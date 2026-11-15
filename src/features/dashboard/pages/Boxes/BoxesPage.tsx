@@ -15,12 +15,12 @@ import {
   faShieldHalved,
 } from "@fortawesome/free-solid-svg-icons";
 
-import type { Caja, TipoCaja } from "../../../@types/Boxes";
-import { Button } from "../../../shared/components/Button";
-import { Input } from "../../../shared/components/Inputs/Input";
-import { Select } from "../../../shared/components/Inputs/Select";
-import Modal from "../../../shared/components/Modal";
-import { Toast, MySwal } from "../../../shared/utils/alerts";
+import type { Caja, TipoCaja } from "../../../../@types/Boxes";
+import { Button } from "../../../../shared/components/Button";
+import { Input } from "../../../../shared/components/Inputs/Input";
+import { Select } from "../../../../shared/components/Inputs/Select";
+import Modal from "../../../../shared/components/Modal";
+import { Toast, MySwal } from "../../../../shared/utils/alerts";
 
 // Formateador COP
 const formatCOP = (val: number) =>
@@ -347,8 +347,8 @@ export default function BoxesPage() {
               <div
                 key={caja.id_caja}
                 className={`relative flex flex-col justify-between rounded-3xl border transition-all duration-300 p-6 shadow-sm hover:shadow-xl ${caja.estado
-                    ? "bg-app-surface border-app-border hover:border-brand-royal/40 dark:hover:border-brand-sky/40"
-                    : "bg-app-surface/60 border-app-border/70 opacity-70"
+                  ? "bg-app-surface border-app-border hover:border-brand-royal/40 dark:hover:border-brand-sky/40"
+                  : "bg-app-surface/60 border-app-border/70 opacity-70"
                   }`}
               >
                 {/* Cabecera de la Tarjeta */}
@@ -357,8 +357,8 @@ export default function BoxesPage() {
                     <div className="flex items-center gap-3">
                       <div
                         className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-inner ${isBank
-                            ? "bg-indigo-500/15 text-indigo-600 dark:text-indigo-400"
-                            : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                          ? "bg-indigo-500/15 text-indigo-600 dark:text-indigo-400"
+                          : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
                           }`}
                       >
                         <FontAwesomeIcon
@@ -369,8 +369,8 @@ export default function BoxesPage() {
                       <div>
                         <span
                           className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${isBank
-                              ? "bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20"
-                              : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20"
+                            ? "bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20"
+                            : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20"
                             }`}
                         >
                           {caja.tipo_caja}
@@ -386,8 +386,8 @@ export default function BoxesPage() {
                       type="button"
                       onClick={() => handleToggleEstado(caja)}
                       className={`text-2xl transition-colors cursor-pointer p-1 -mr-1 -mt-1 ${caja.estado
-                          ? "text-emerald-500 hover:text-emerald-600"
-                          : "text-slate-300 dark:text-slate-600 hover:text-slate-400"
+                        ? "text-emerald-500 hover:text-emerald-600"
+                        : "text-slate-300 dark:text-slate-600 hover:text-slate-400"
                         }`}
                       title={caja.estado ? "Desactivar caja" : "Activar caja"}
                       aria-label="Alternar estado de caja"
@@ -435,8 +435,8 @@ export default function BoxesPage() {
                     />
                     <span
                       className={`font-semibold ${caja.estado
-                          ? "text-emerald-600 dark:text-emerald-400"
-                          : "text-app-muted"
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-app-muted"
                         }`}
                     >
                       {caja.estado ? "Activa y Operativa" : "Inactiva / En Pausa"}
@@ -503,8 +503,8 @@ export default function BoxesPage() {
                 type="button"
                 onClick={() => setTipoCaja("Efectivo")}
                 className={`p-3 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center gap-1.5 ${tipoCaja === "Efectivo"
-                    ? "bg-emerald-500/10 border-emerald-500 text-emerald-700 dark:text-emerald-400 ring-2 ring-emerald-500/20"
-                    : "bg-app-surface border-app-border hover:bg-brand-sky/5"
+                  ? "bg-emerald-500/10 border-emerald-500 text-emerald-700 dark:text-emerald-400 ring-2 ring-emerald-500/20"
+                  : "bg-app-surface border-app-border hover:bg-brand-sky/5"
                   }`}
               >
                 <FontAwesomeIcon icon={faMoneyBillWave} className="text-lg" />
@@ -515,8 +515,8 @@ export default function BoxesPage() {
                 type="button"
                 onClick={() => setTipoCaja("Cuenta Bancaria")}
                 className={`p-3 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center gap-1.5 ${tipoCaja === "Cuenta Bancaria"
-                    ? "bg-indigo-500/10 border-indigo-500 text-indigo-700 dark:text-indigo-400 ring-2 ring-indigo-500/20"
-                    : "bg-app-surface border-app-border hover:bg-brand-sky/5"
+                  ? "bg-indigo-500/10 border-indigo-500 text-indigo-700 dark:text-indigo-400 ring-2 ring-indigo-500/20"
+                  : "bg-app-surface border-app-border hover:bg-brand-sky/5"
                   }`}
               >
                 <FontAwesomeIcon icon={faBuildingColumns} className="text-lg" />

@@ -2,14 +2,15 @@ import { createRoute } from "@tanstack/react-router";
 import { rootRoute } from "./rootRoute";
 import DashboardLayout from "../../features/dashboard/layout/DashboardLayout";
 import DashboardPage from "../../features/dashboard/pages/DashboardPage";
-import ProductsDashboardPage from "../../features/dashboard/pages/ProductsPage";
+import ProductsDashboardPage from "../../features/dashboard/pages/products/ProductsPage";
 import OrdersPage from "../../features/dashboard/pages/orders/OrdersPage";
-import BoxesPage from "../../features/dashboard/pages/BoxesPage";
 import GastosPage from "../../features/dashboard/pages/bills";
 import ProveedoresPage from "../../features/dashboard/pages/Proveedores";
 import VentasPage from "../../features/dashboard/pages/Ventas";
 import ClientesPage from "../../features/dashboard/pages/clients/ClientsPage";
 import DevolucionesPage from "../../features/dashboard/pages/Devoluciones";
+import BoxesPage from "../../features/dashboard/pages/Boxes/BoxesPage";
+import UsersPage from "../../features/dashboard/pages/users/UsersPage";
 
 export const dashboardLayout = createRoute({
   getParentRoute: () => rootRoute,
@@ -96,7 +97,7 @@ export const shoppingRoute = createRoute({
 export const clientsRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/clients",
-  component: () => <ClientesPage  />,
+  component: () => <ClientesPage />,
 });
 
 export const ordersRoute = createRoute({
@@ -121,7 +122,7 @@ export const returnsRoute = createRoute({
 export const usersRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/users",
-  component: () => <></>,
+  component: () => <UsersPage />,
 });
 
 export const rolesRoute = createRoute({
