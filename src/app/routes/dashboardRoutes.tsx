@@ -11,6 +11,13 @@ import ClientesPage from "../../features/dashboard/pages/clients/ClientsPage";
 import DevolucionesPage from "../../features/dashboard/pages/Devoluciones";
 import BoxesPage from "../../features/dashboard/pages/Boxes/BoxesPage";
 import UsersPage from "../../features/dashboard/pages/users/UsersPage";
+import ColoresProducts from "../../features/dashboard/pages/products/ColoresProducts";
+import TallaProducts from "../../features/dashboard/pages/products/TallaProducts";
+import CategoriaProduct from "../../features/dashboard/pages/products/CategoriaProduct";
+import MarcaProducts from "../../features/dashboard/pages/products/MarcaProducts";
+import TipoProducts from "../../features/dashboard/pages/products/TipoProducts";
+import CategoriaProveedor from "../../features/dashboard/pages/Proveedores/CategoriaProveedor";
+import Compras from "../../features/dashboard/pages/Compras/Compras";
 import RolesPage from "../../features/dashboard/pages/Roles/RolesPage";
 import PermissionsPage from "../../features/dashboard/pages/Permissions/PermissionsPage";
 
@@ -50,37 +57,37 @@ export const productsDashboardRoute = createRoute({
 export const productColorsRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/products/colors",
-  component: () => <></>,
+  component: () => <ColoresProducts />,
 });
 
 export const productSizesRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/products/sizes",
-  component: () => <></>,
+  component: () => <TallaProducts />,
 });
 
 export const productCategoriesRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/products/categories",
-  component: () => <></>,
+  component: () => <CategoriaProduct />,
 });
 
 export const productBrandsRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/products/brands",
-  component: () => <></>,
+  component: () => <MarcaProducts />,
 });
 
 export const productTypesRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/products/types",
-  component: () => <></>,
+  component: () => <TipoProducts />,
 });
 
 export const categorySupplierRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/category-supplier",
-  component: () => <></>,
+  component: () => <CategoriaProveedor />,
 });
 
 export const supplierRoute = createRoute({
@@ -92,7 +99,7 @@ export const supplierRoute = createRoute({
 export const shoppingRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/shopping",
-  component: () => <></>,
+  component: () => <Compras />,
 });
 
 // ── Gestión de ventas ──
