@@ -1,494 +1,594 @@
-import React, { useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faSackDollar, faArrowTrendUp, faBoxOpen, 
-  faFileInvoiceDollar, faCrown, 
-  faCheckCircle, faSearch, faTriangleExclamation, 
-  faXmark
-} from '@fortawesome/free-solid-svg-icons';
-import { 
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
-} from 'recharts';
+import { useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faChartLine,
+  faSackDollar,
+  faArrowTrendUp,
+  faBoxOpen,
+  faMoneyBillWave,
+  faTrophy,
+  faArrowTrendDown,
+  faTriangleExclamation,
+  faXmark,
+} from "@fortawesome/free-solid-svg-icons";
+import {
+  BarChart,
+  Bar,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
-// --- Datos Mock: Balance de Gastos y Ganancias ---
-const dataBalanceFinanciero = [
-  { periodo: 'Sem 1', ventas: 2100000, gastos: 1100000, ganancia: 1000000 },
-  { periodo: 'Sem 2', ventas: 2450000, gastos: 1200000, ganancia: 1250000 },
-  { periodo: 'Sem 3', ventas: 1950000, gastos: 950000, ganancia: 1000000 },
-  { periodo: 'Sem 4', ventas: 2900000, gastos: 1350000, ganancia: 1550000 },
+// --- Datos Consolidados (Últimos 6 meses: Jun - Nov 2026) ---
+const dataFinanzas6Meses = [
+  { mes: "Jun", ventas: 7200000, gastos: 3800000, ganancia: 3400000 },
+  { mes: "Jul", ventas: 7850000, gastos: 4100000, ganancia: 3750000 },
+  { mes: "Ago", ventas: 8400000, gastos: 4300000, ganancia: 4100000 },
+  { mes: "Sep", ventas: 8100000, gastos: 4150000, ganancia: 3950000 },
+  { mes: "Oct", ventas: 8950000, gastos: 4450000, ganancia: 4500000 },
+  { mes: "Nov", ventas: 9400000, gastos: 4600000, ganancia: 4800000 },
 ];
 
-// --- Datos Mock: Seguimiento Ventas por Día / Mes / Año ---
-const seriesVentasPorPeriodo = {
-  'Día': [
-    { label: '09:00', valor: 120000 },
-    { label: '11:00', valor: 280000 },
-    { label: '14:00', valor: 450000 },
-    { label: '16:00', valor: 690000 },
-    { label: '18:00', valor: 850000 },
-  ],
-  'Mes': [
-    { label: 'Ene', valor: 6800000 },
-    { label: 'Feb', valor: 7200000 },
-    { label: 'Mar', valor: 8100000 },
-    { label: 'Abr', valor: 7900000 },
-    { label: 'May', valor: 8800000 },
-    { label: 'Jun', valor: 9400000 },
-  ],
-  'Año': [
-    { label: '2023', valor: 78500000 },
-    { label: '2024', valor: 94200000 },
-    { label: '2025', valor: 103800000 },
-    { label: '2026', valor: 112500000 },
-  ]
-};
-
-// --- Datos Mock: Estado de Comprobantes de Pago ---
-const dataComprobantes = [
-  { name: 'Verificados', value: 85, color: '#2B62D9' },
-  { name: 'Por Comprobar', value: 10, color: '#52A5E8' },
-  { name: 'Rechazados', value: 5, color: '#64748B' },
+// --- Gráfica: Productos con más Stock (Top 10) ---
+const dataProductosMasStock = [
+  { producto: "Air Force 1 '07", stock: 68 },
+  { producto: "Adidas Samba OG", stock: 59 },
+  { producto: "Nike Dunk Low", stock: 54 },
+  { producto: "Vans Old Skool", stock: 49 },
+  { producto: "Puma Palermo", stock: 45 },
+  { producto: "Converse Chuck 70", stock: 41 },
+  { producto: "New Balance 550", stock: 38 },
+  { producto: "Jordan 1 Low", stock: 35 },
+  { producto: "Adidas Campus 00s", stock: 32 },
+  { producto: "Nike Air Max 90", stock: 29 },
 ];
 
-const pedidosPendientesIniciales = [
-  { id: 'PED-0482', cliente: 'Alejandro Ríos', producto: "Nike Air Force 1 '07 White", total: '$389.000', comprobante: 'Verificado', estado: 'Por despachar', fecha: '16 Nov 2026' },
-  { id: 'PED-0481', cliente: 'María Fernández', producto: 'Jordan 1 Mid SE Red', total: '$520.000', comprobante: 'Por comprobar', estado: 'Pendiente pago', fecha: '16 Nov 2026' },
-  { id: 'PED-0480', cliente: 'Carlos Mendoza', producto: 'Adidas Ultraboost 24', total: '$610.000', comprobante: 'Por comprobar', estado: 'Pendiente pago', fecha: '15 Nov 2026' },
-  { id: 'PED-0479', cliente: 'Valentina Cruz', producto: 'Nike Dunk Low Panda', total: '$490.000', comprobante: 'Verificado', estado: 'Despachado', fecha: '14 Nov 2026' },
+// --- Gráfica: Productos con menos Stock (Top 10) ---
+const dataProductosMenosStock = [
+  { producto: "Jordan 4 Military", stock: 2 },
+  { producto: "Nike Vomero 5", stock: 3 },
+  { producto: "Adidas Gazelle Bold", stock: 4 },
+  { producto: "Jordan 1 High Taxi", stock: 4 },
+  { producto: "New Balance 9060", stock: 5 },
+  { producto: "Puma Suede XL", stock: 6 },
+  { producto: "Nike Cortez Leather", stock: 7 },
+  { producto: "Vans Knu Skool", stock: 7 },
+  { producto: "Converse Run Star", stock: 8 },
+  { producto: "Adidas Forum Low", stock: 9 },
+];
+
+// --- Gráfica: Clientes que más deben (Top 10) ---
+const dataClientesMasDeben = [
+  { cliente: "Carlos Mendoza", deuda: 1450000 },
+  { cliente: "Andrés Morales", deuda: 1180000 },
+  { cliente: "Laura Gómez", deuda: 960000 },
+  { cliente: "Jorge Castaño", deuda: 840000 },
+  { cliente: "Sofía Restrepo", deuda: 790000 },
+  { cliente: "Mateo Jiménez", deuda: 650000 },
+  { cliente: "Camila Duarte", deuda: 580000 },
+  { cliente: "Felipe Cardona", deuda: 510000 },
+  { cliente: "Daniela Ortiz", deuda: 430000 },
+  { cliente: "Sebastián Gil", deuda: 390000 },
+];
+
+// --- Gráfica: Clientes que más compran (Top 10) ---
+const dataClientesMasCompran = [
+  { cliente: "Valentina Cruz", total: 4280000 },
+  { cliente: "Alejandro Ríos", total: 3890000 },
+  { cliente: "María Fernández", total: 3420000 },
+  { cliente: "Natalia Vargas", total: 2950000 },
+  { cliente: "Juan Pablo Díaz", total: 2710000 },
+  { cliente: "Carolina Mejía", total: 2480000 },
+  { cliente: "Santiago Torres", total: 2190000 },
+  { cliente: "Paula Andrea Ruiz", total: 1940000 },
+  { cliente: "David Quintero", total: 1780000 },
+  { cliente: "Mariana Salazar", total: 1620000 },
 ];
 
 export default function DashboardPage() {
-  const [periodoVentas, setPeriodoVentas] = useState<'Día' | 'Mes' | 'Año'>('Mes');
-  const [busquedaTabla, setBusquedaTabla] = useState('');
+  const [periodoVentas, setPeriodoVentas] = useState<"Día" | "Mes" | "Año">("Mes");
   const [mostrarBanner, setMostrarBanner] = useState(true);
 
   const datosVentas = {
-    'Día': { valor: '$850K', porcentaje: '5.2%', comparativa: 'ayer' },
-    'Mes': { valor: '$9.4M', porcentaje: '21.1%', comparativa: 'mes anterior' },
-    'Año': { valor: '$112.5M', porcentaje: '14.3%', comparativa: 'año anterior' },
+    Día: { valor: "$850K", porcentaje: "5.2%", comparativa: "ayer" },
+    Mes: { valor: "$9.4M", porcentaje: "21.1%", comparativa: "mes anterior" },
+    Año: { valor: "$112.5M", porcentaje: "14.3%", comparativa: "año anterior" },
   };
   const ventaActual = datosVentas[periodoVentas];
 
-  const pedidosFiltrados = pedidosPendientesIniciales.filter((p) =>
-    p.id.toLowerCase().includes(busquedaTabla.toLowerCase()) ||
-    p.cliente.toLowerCase().includes(busquedaTabla.toLowerCase()) ||
-    p.producto.toLowerCase().includes(busquedaTabla.toLowerCase()) ||
-    p.estado.toLowerCase().includes(busquedaTabla.toLowerCase())
-  );
-
-  // Estilo adaptable para tooltips de Recharts en modo claro y oscuro
   const tooltipStyle = {
-    backgroundColor: 'var(--color-app-surface, #1e293b)',
-    borderColor: 'var(--color-app-border, #334155)',
-    color: 'var(--color-app-text, #f8fafc)',
-    borderRadius: '0.75rem',
-    fontSize: '12px',
+    backgroundColor: "var(--color-app-surface, #1e293b)",
+    borderColor: "var(--color-app-border, #334155)",
+    color: "var(--color-app-text, #f8fafc)",
+    borderRadius: "0.75rem",
+    fontSize: "12px",
   };
 
+  const formatearMillones = (val: number) =>
+    val >= 1000000 ? `$${(val / 1000000).toFixed(1)}M` : `$${(val / 1000).toFixed(0)}K`;
+
+  const formatearMoneda = (val: number) => `$${val.toLocaleString("es-CO")}`;
+
   return (
-    <div className="min-h-screen bg-app-surface-alt/40 flex flex-col justify-between transition-colors" style={{ fontFamily: '"Nunito", sans-serif' }}>
-      
-      {/* CONTENIDO PRINCIPAL */}
-      <main className="p-[24px] space-y-[24px] max-w-[1440px] w-full mx-auto">
-        
-        {/* --- HEADER --- */}
-        <div>
-          <p className="text-[12px] text-brand-royal dark:text-brand-sky font-bold uppercase tracking-wider">Medición y Desempeño</p>
-          <h1 className="text-[24px] font-bold text-app-text">Tablero de Control — Paradise Shoes</h1>
-        </div>
-
-        {/* --- 1. KPIs SUPERIORES --- */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[18px]">
-          
-          {/* KPI 1: Ventas Totales */}
-          <div className="bg-app-surface p-[18px] rounded-xl shadow-xs border border-app-border flex flex-col justify-between transition-colors">
-            <div className="flex justify-between items-start">
-              <p className="text-[12px] text-app-muted font-bold uppercase tracking-wider">Ventas Totales</p>
-              <FontAwesomeIcon icon={faSackDollar} className="text-brand-royal dark:text-brand-sky text-[18px]" />
-            </div>
-            
-            <h2 className="text-[28px] font-bold text-app-text mt-[12px]">
-              {ventaActual.valor}
-            </h2>
-            <p className="text-[12px] text-emerald-600 dark:text-emerald-400 font-semibold mt-[6px] flex items-center gap-[6px]">
-              <FontAwesomeIcon icon={faArrowTrendUp} /> +{ventaActual.porcentaje} vs {ventaActual.comparativa}
+    <div className="space-y-8 animate-fadeIn">
+      {/* Encabezado Principal (Patrón ISABEL unificado) */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-app-border pb-6">
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky">
+            <FontAwesomeIcon icon={faChartLine} className="text-lg" />
+          </span>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-app-text">
+              Tablero de Control
+            </h1>
+            <p className="text-sm text-app-muted">
+              Medición ejecutiva de ventas, rentabilidad, inventario y cartera — Paradise Shoes
             </p>
-            
-            {/* Chips de selección rápida */}
-            <div className="flex gap-[6px] mt-[12px] text-[12px] bg-app-surface-alt border border-app-border w-fit p-[6px] rounded-lg">
-              {(['Día', 'Mes', 'Año'] as const).map((periodo) => (
-                <button
-                  key={periodo}
-                  type="button"
-                  onClick={() => setPeriodoVentas(periodo)}
-                  className={`px-[12px] py-[6px] rounded-md font-bold transition-colors cursor-pointer ${
-                    periodoVentas === periodo 
-                      ? 'bg-brand-royal text-white shadow-xs' 
-                      : 'text-app-muted hover:bg-app-surface hover:text-app-text'
-                  }`}
-                >
-                  {periodo}
-                </button>
-              ))}
-            </div>
           </div>
+        </div>
+      </div>
 
-          {/* KPI 2: Balance de Gastos y Ganancias */}
-          <div className="bg-app-surface p-[18px] rounded-xl shadow-xs border border-app-border flex flex-col justify-between transition-colors">
-            <div className="flex justify-between items-start">
-              <p className="text-[12px] text-app-muted font-bold uppercase tracking-wider">Ganancia Neta</p>
-              <FontAwesomeIcon icon={faArrowTrendUp} className="text-emerald-600 dark:text-emerald-400 text-[18px]" />
-            </div>
-            <h2 className="text-[28px] font-bold text-emerald-600 dark:text-emerald-400 mt-[12px]">$4.8M</h2>
-            <div className="mt-[6px] space-y-[6px] text-[12px]">
-              <p className="text-app-muted">Gastos del período: <span className="font-bold text-app-text">$4.6M</span></p>
-              <p className="text-app-muted">Margen neto: <span className="font-bold text-emerald-600 dark:text-emerald-400">51.0%</span></p>
-            </div>
-          </div>
-
-          {/* KPI 3: Pedidos Pendientes */}
-          <div className="bg-app-surface p-[18px] rounded-xl shadow-xs border border-app-border flex flex-col justify-between transition-colors">
-            <div className="flex justify-between items-start">
-              <p className="text-[12px] text-app-muted font-bold uppercase tracking-wider">Pedidos Pendientes</p>
-              <FontAwesomeIcon icon={faBoxOpen} className="text-amber-500 text-[18px]" />
-            </div>
-            <h2 className="text-[28px] font-bold text-app-text mt-[12px]">3</h2>
-            <div className="mt-[6px] flex items-center justify-between">
-              <span className="text-[10px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 px-[12px] py-[6px] rounded-full">
-                POR DESPACHAR
+      {/* --- BLOQUE DE 6 KPIs (Patrón de tarjetas ejecutivas) --- */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {/* KPI 1 (Compuesta): Ventas por Día / Mes / Año [Esteban Lezcano] */}
+        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-app-muted">Ventas</p>
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-brand-royal dark:bg-brand-royal/20 dark:text-brand-sky">
+                <FontAwesomeIcon icon={faSackDollar} className="text-xs" />
               </span>
-              <button className="text-[12px] font-bold text-brand-royal dark:text-brand-sky hover:underline cursor-pointer">
-                Ver →
-              </button>
             </div>
-          </div>
-
-          {/* KPI 4: Comprobantes de Pago */}
-          <div className="bg-app-surface p-[18px] rounded-xl shadow-xs border border-app-border flex flex-col justify-between transition-colors">
-            <div className="flex justify-between items-start">
-              <p className="text-[12px] text-app-muted font-bold uppercase tracking-wider">Comprobantes Pago</p>
-              <FontAwesomeIcon icon={faFileInvoiceDollar} className="text-brand-royal dark:text-brand-sky text-[18px]" />
-            </div>
-            <h2 className="text-[28px] font-bold text-app-text mt-[12px]">2</h2>
-            <div className="mt-[6px] flex items-center justify-between">
-              <span className="text-[10px] font-bold bg-brand-royal/15 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky px-[12px] py-[6px] rounded-full">
-                POR VALIDAR
+            <div className="mt-2.5 flex items-baseline gap-2">
+              <span className="text-3xl font-black tracking-tight text-app-text">
+                {ventaActual.valor}
               </span>
-              <button className="text-[12px] font-bold text-brand-royal dark:text-brand-sky hover:underline cursor-pointer">
-                Revisar →
+              <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                +{ventaActual.porcentaje} vs {ventaActual.comparativa}
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-3 flex w-fit gap-1 rounded-xl border border-app-border bg-app-surface-alt p-1 text-xs">
+            {(["Día", "Mes", "Año"] as const).map((periodo) => (
+              <button
+                key={periodo}
+                type="button"
+                onClick={() => setPeriodoVentas(periodo)}
+                className={`rounded-lg px-3 py-1 font-bold transition-colors cursor-pointer ${
+                  periodoVentas === periodo
+                    ? "bg-brand-royal text-white shadow-xs"
+                    : "text-app-muted hover:bg-app-surface hover:text-app-text"
+                }`}
+              >
+                {periodo}
               </button>
-            </div>
+            ))}
           </div>
-
         </div>
 
-        {/* --- 2. BANNER DE ALERTA OPERATIVA --- */}
-        {mostrarBanner && (
-          <div className="bg-amber-500/10 border border-amber-500/30 border-l-4 border-l-amber-500 p-[12px] rounded-lg flex items-center justify-between gap-[12px]">
-            <div className="flex items-center gap-[12px]">
-              <div className="w-8 h-8 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                <FontAwesomeIcon icon={faTriangleExclamation} />
-              </div>
-              <div>
-                <p className="text-[14px] font-bold text-app-text">Atención en bodega y caja</p>
-                <p className="text-[12px] text-app-muted">Tienes 2 comprobantes de transferencia pendientes por validar y 3 pedidos en alistamiento.</p>
-              </div>
+        {/* KPI 2 (Compuesta): Ganancias Netas [Juan Camilo Osorio] */}
+        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-app-muted">Ganancias Netas</p>
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
+                <FontAwesomeIcon icon={faArrowTrendUp} className="text-xs" />
+              </span>
             </div>
-            <button onClick={() => setMostrarBanner(false)} className="text-app-muted hover:text-app-text p-[6px] cursor-pointer">
-              <FontAwesomeIcon icon={faXmark} />
-            </button>
-          </div>
-        )}
-
-        {/* --- 3. GRÁFICAS --- */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-[24px]">
-          
-          {/* Gráfica 1: Balance de Gastos y Ganancias */}
-          <div className="bg-app-surface p-[24px] rounded-xl shadow-xs border border-app-border transition-colors">
-            <h3 className="text-[14px] font-bold text-app-text mb-[18px]">Balance: Ventas, Gastos y Ganancias</h3>
-            <div className="h-60">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={dataBalanceFinanciero} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148, 163, 184, 0.2)" />
-                  <XAxis dataKey="periodo" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94A3B8' }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94A3B8' }} tickFormatter={(val) => `$${val/1000000}M`} />
-                  <Tooltip cursor={{ fill: 'rgba(148, 163, 184, 0.1)' }} contentStyle={tooltipStyle} />
-                  <Bar dataKey="ventas" name="Ventas" fill="#2B62D9" radius={[4, 4, 0, 0]} barSize={16} />
-                  <Bar dataKey="gastos" name="Gastos" fill="#52A5E8" radius={[4, 4, 0, 0]} barSize={16} />
-                  <Bar dataKey="ganancia" name="Ganancia Neta" fill="#10B981" radius={[4, 4, 0, 0]} barSize={16} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="flex justify-center gap-[12px] mt-[12px] text-[12px] text-app-muted">
-              <div className="flex items-center gap-[6px]"><span className="w-2.5 h-2.5 rounded-sm bg-[#2B62D9]"></span> Ventas</div>
-              <div className="flex items-center gap-[6px]"><span className="w-2.5 h-2.5 rounded-sm bg-[#52A5E8]"></span> Gastos</div>
-              <div className="flex items-center gap-[6px]"><span className="w-2.5 h-2.5 rounded-sm bg-[#10B981]"></span> Ganancia</div>
+            <div className="mt-2.5 flex items-baseline gap-2">
+              <span className="text-3xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">
+                $4.8M
+              </span>
+              <span className="text-xs text-app-muted">de $9.4M ingresos</span>
             </div>
           </div>
-
-          {/* Gráfica 2: Evolución de Ventas según filtro activo */}
-          <div className="bg-app-surface p-[24px] rounded-xl shadow-xs border border-app-border transition-colors">
-            <div className="flex justify-between items-center mb-[18px]">
-              <h3 className="text-[14px] font-bold text-app-text">Comportamiento de Ventas ({periodoVentas})</h3>
-            </div>
-            <div className="h-60">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={seriesVentasPorPeriodo[periodoVentas]} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148, 163, 184, 0.2)" />
-                  <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94A3B8' }} />
-                  <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fontSize: 12, fill: '#94A3B8' }} 
-                    tickFormatter={(val) => val >= 1000000 ? `$${(val/1000000).toFixed(1)}M` : `$${val/1000}K`} 
-                  />
-                  <Tooltip cursor={{ stroke: 'rgba(148, 163, 184, 0.3)' }} contentStyle={tooltipStyle} />
-                  <Line 
-                    type="monotone" 
-                    dataKey="valor" 
-                    name="Ventas" 
-                    stroke="#2B62D9" 
-                    strokeWidth={3} 
-                    dot={{ r: 4, fill: '#52A5E8', strokeWidth: 0 }} 
-                    activeDot={{ r: 6 }} 
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="flex justify-center gap-[18px] mt-[12px] text-[12px] text-app-muted">
-              <span>Visualizando histórico consolidado por <strong className="text-app-text">{periodoVentas.toLowerCase()}</strong></span>
-            </div>
-          </div>
-
-          {/* Gráfica 3: Estado de Comprobantes de Pago */}
-          <div className="bg-app-surface p-[24px] rounded-xl shadow-xs border border-app-border flex flex-col justify-between transition-colors">
-            <h3 className="text-[14px] font-bold text-app-text mb-[18px]">Estado de Comprobantes de Pago</h3>
-            <div className="h-48">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={dataComprobantes} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={75} stroke="none">
-                    {dataComprobantes.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip contentStyle={tooltipStyle} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="space-y-[6px] mt-[12px] text-[12px]">
-              {dataComprobantes.map((item) => (
-                <div key={item.name} className="flex justify-between items-center text-app-muted">
-                  <span className="flex items-center gap-[6px]">
-                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }}></span>
-                    {item.name}
-                  </span>
-                  <span className="font-bold text-app-text">{item.value}%</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
+          <p className="mt-3 text-xs text-app-muted">
+            Margen neto: <strong className="text-emerald-600 dark:text-emerald-400">51.0%</strong> (+6.6% vs mes anterior)
+          </p>
         </div>
 
-        {/* --- 4. MEDICIONES ESTRATÉGICAS --- */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-[24px]">
-          
-          {/* Bloque 1: Producto Más Vendido y Menos Vendido */}
-          <div className="bg-app-surface p-[18px] rounded-xl shadow-xs border border-app-border flex flex-col justify-between transition-colors">
-            <div>
-              <h3 className="text-[14px] font-bold text-app-text mb-[18px]">Rotación de Productos</h3>
-              <div className="space-y-[12px]">
-                {/* Más vendido */}
-                <div className="bg-emerald-500/10 border border-emerald-500/20 p-[12px] rounded-lg">
-                  <span className="inline-block text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 px-[12px] py-[6px] rounded-full mb-[6px]">
-                    PRODUCTO MÁS VENDIDO
-                  </span>
-                  <p className="text-[14px] font-bold text-app-text">Nike Air Force 1 '07 White</p>
-                  <p className="text-[12px] text-app-muted mt-[6px]">47 pares vendidos · Stock actual: 18 prs</p>
-                </div>
-
-                {/* Menos vendido */}
-                <div className="bg-rose-500/10 border border-rose-500/20 p-[12px] rounded-lg">
-                  <span className="inline-block text-[10px] font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 px-[12px] py-[6px] rounded-full mb-[6px]">
-                    PRODUCTO MENOS VENDIDO
-                  </span>
-                  <p className="text-[14px] font-bold text-app-text">Jordan 4 Retro Military Olive</p>
-                  <p className="text-[12px] text-app-muted mt-[6px]">2 pares vendidos · Stock actual: 14 prs</p>
-                </div>
-              </div>
+        {/* KPI 3 (Simple): Gastos [Juan Camilo Osorio] */}
+        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-app-muted">Gastos</p>
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-50 text-brand-sky dark:bg-brand-sky/15 dark:text-brand-sky">
+                <FontAwesomeIcon icon={faMoneyBillWave} className="text-xs" />
+              </span>
             </div>
-            <button className="w-full text-[12px] text-app-text font-bold bg-app-surface border border-app-border hover:bg-app-surface-alt py-[12px] rounded-lg mt-[18px] transition cursor-pointer">
-              Ver reporte de inventario
-            </button>
-          </div>
-
-          {/* Bloque 2: Top Mejores Proveedores */}
-          <div className="bg-app-surface p-[18px] rounded-xl shadow-xs border border-app-border flex flex-col justify-between transition-colors">
-            <div>
-              <div className="flex justify-between items-center mb-[18px]">
-                <h3 className="text-[14px] font-bold text-app-text">Top Mejores Proveedores</h3>
-                <span className="text-[10px] font-bold bg-brand-royal/15 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky px-[12px] py-[6px] rounded-full">
-                  14 REGISTRADOS
-                </span>
-              </div>
-
-              <div className="space-y-[12px]">
-                <div className="flex justify-between items-center border-b border-app-border pb-[12px]">
-                  <div>
-                    <p className="text-[14px] font-bold text-app-text">1. Nike Colombia S.A.S.</p>
-                    <p className="text-[12px] text-app-muted">18 órdenes cumplidas · Calzado Deportivo</p>
-                  </div>
-                  <span className="text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 px-[12px] py-[6px] rounded-full flex items-center gap-[6px]">
-                    <FontAwesomeIcon icon={faCheckCircle} /> ACTIVO
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center border-b border-app-border pb-[12px]">
-                  <div>
-                    <p className="text-[14px] font-bold text-app-text">2. Adidas Distribuciones</p>
-                    <p className="text-[12px] text-app-muted">12 órdenes cumplidas · Línea Running</p>
-                  </div>
-                  <span className="text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 px-[12px] py-[6px] rounded-full flex items-center gap-[6px]">
-                    <FontAwesomeIcon icon={faCheckCircle} /> ACTIVO
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center pb-[6px]">
-                  <div>
-                    <p className="text-[14px] font-bold text-app-text">3. Importadora Jordan Med</p>
-                    <p className="text-[12px] text-app-muted">9 órdenes cumplidas · Edición Limitada</p>
-                  </div>
-                  <span className="text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 px-[12px] py-[6px] rounded-full flex items-center gap-[6px]">
-                    <FontAwesomeIcon icon={faCheckCircle} /> ACTIVO
-                  </span>
-                </div>
-              </div>
+            <div className="mt-2.5 flex items-baseline gap-2">
+              <span className="text-3xl font-black tracking-tight text-app-text">$4.6M</span>
+              <span className="text-xs text-app-muted">egresos del mes</span>
             </div>
-            <button className="w-full text-[12px] text-app-text font-bold bg-app-surface border border-app-border hover:bg-app-surface-alt py-[12px] rounded-lg mt-[18px] transition cursor-pointer">
-              Ver todos los proveedores (14)
-            </button>
           </div>
-
-          {/* Bloque 3: Consolidación del Cliente Top del Negocio */}
-          <div className="bg-app-surface p-[18px] rounded-xl shadow-xs border border-app-border flex flex-col justify-between transition-colors">
-            <div>
-              <h3 className="text-[14px] font-bold text-app-text mb-[18px] flex items-center gap-[6px]">
-                <FontAwesomeIcon icon={faCrown} className="text-amber-500"/> Cliente Top del Negocio
-              </h3>
-              
-              <div className="bg-app-surface-alt text-app-text p-[18px] rounded-xl border border-app-border relative">
-                <span className="absolute top-[18px] right-[18px] text-[10px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold px-[12px] py-[6px] rounded-full">
-                  TOP #1 COMPRAS
-                </span>
-                <h4 className="font-bold text-[18px]">Valentina Cruz</h4>
-                <p className="text-[12px] text-app-muted mt-[6px]">Documento: 1.037.654.321 · Medellín</p>
-                
-                <div className="grid grid-cols-2 gap-[12px] mt-[18px]">
-                  <div className="bg-app-surface border border-app-border p-[12px] rounded-lg">
-                    <p className="text-[10px] text-app-muted uppercase font-bold">Total Comprado</p>
-                    <p className="font-bold text-[16px] text-app-text mt-[6px]">$4.280.000</p>
-                  </div>
-                  <div className="bg-app-surface border border-app-border p-[12px] rounded-lg">
-                    <p className="text-[10px] text-app-muted uppercase font-bold">Pedidos Totales</p>
-                    <p className="font-bold text-[16px] text-brand-royal dark:text-brand-sky mt-[6px]">9 pedidos</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <button className="w-full text-[12px] text-app-text font-bold bg-app-surface border border-app-border hover:bg-app-surface-alt py-[12px] rounded-lg mt-[18px] transition cursor-pointer">
-              Ver historial de clientes
-            </button>
-          </div>
-
+          <p className="mt-3 text-xs text-app-muted">Compras de mercancía y gastos operativos</p>
         </div>
 
-        {/* --- 5. TABLA DE SEGUIMIENTO DE PEDIDOS Y COMPROBANTES --- */}
-        <div className="bg-app-surface p-[24px] rounded-xl shadow-xs border border-app-border transition-colors">
-          
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-[12px] mb-[18px]">
+        {/* KPI 4 (Simple): Pedidos Pendientes [Cristian Stiwar Cardona] */}
+        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-app-muted">Pedidos Pendientes</p>
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
+                <FontAwesomeIcon icon={faBoxOpen} className="text-xs" />
+              </span>
+            </div>
+            <div className="mt-2.5 flex items-baseline gap-2">
+              <span className="text-3xl font-black tracking-tight text-app-text">3</span>
+              <span className="text-xs text-app-muted">órdenes por despachar</span>
+            </div>
+          </div>
+          <div className="mt-3 flex items-center justify-between">
+            <span className="inline-flex items-center rounded-full bg-amber-100/90 px-2.5 py-0.5 text-[11px] font-bold text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+              En alistamiento
+            </span>
+            <span className="text-xs text-app-muted">Bodega central</span>
+          </div>
+        </div>
+
+        {/* KPI 5 (Simple): Producto más vendido [Heiler Arteaga] */}
+        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-app-muted">Producto Más Vendido</p>
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
+                <FontAwesomeIcon icon={faTrophy} className="text-xs" />
+              </span>
+            </div>
+            <p
+              className="mt-2.5 text-lg font-extrabold tracking-tight text-app-text truncate"
+              title="Nike Air Force 1 '07 White"
+            >
+              Nike Air Force 1 '07 White
+            </p>
+          </div>
+          <p className="mt-3 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+            47 pares vendidos este mes
+          </p>
+        </div>
+
+        {/* KPI 6 (Simple): Producto menos vendido [Heiler Arteaga] */}
+        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-app-muted">Producto Menos Vendido</p>
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400">
+                <FontAwesomeIcon icon={faArrowTrendDown} className="text-xs" />
+              </span>
+            </div>
+            <p
+              className="mt-2.5 text-lg font-extrabold tracking-tight text-app-text truncate"
+              title="Jordan 4 Retro Military Olive"
+            >
+              Jordan 4 Retro Military Olive
+            </p>
+          </div>
+          <p className="mt-3 text-xs font-semibold text-rose-600 dark:text-rose-400">
+            2 pares vendidos este mes
+          </p>
+        </div>
+      </div>
+
+      {/* --- BANNER DE ALERTA OPERATIVA --- */}
+      {mostrarBanner && (
+        <div className="rounded-2xl border border-amber-500/30 border-l-4 border-l-amber-500 bg-amber-500/10 p-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
+              <FontAwesomeIcon icon={faTriangleExclamation} className="text-sm" />
+            </span>
             <div>
-              <h3 className="text-[16px] font-bold text-app-text">Seguimiento de Pedidos y Comprobantes</h3>
-              <p className="text-[12px] text-app-muted mt-[6px]">
-                <span className="font-bold text-app-text">{pedidosFiltrados.length} RESULTADOS</span> · Control de despachos y validación de pagos recientes.
+              <p className="text-sm font-bold text-app-text">Atención en bodega y caja</p>
+              <p className="text-xs text-app-muted">
+                Tienes 2 comprobantes de transferencia pendientes por validar y 3 pedidos en alistamiento.
               </p>
             </div>
-            
-            <div className="relative w-full md:w-80">
-              <input
-                type="text"
-                value={busquedaTabla}
-                onChange={(e) => setBusquedaTabla(e.target.value)}
-                placeholder="Buscar por ID, cliente o estado..."
-                className="w-full text-[14px] text-app-text placeholder:text-app-muted bg-app-surface-alt border border-app-border rounded-lg pl-[12px] pr-[36px] py-[6px] focus:outline-none focus:border-brand-royal dark:focus:border-brand-sky transition-colors"
-              />
-              <FontAwesomeIcon icon={faSearch} className="text-app-muted text-[14px] absolute right-[12px] top-1/2 -translate-y-1/2" />
+          </div>
+          <button
+            type="button"
+            onClick={() => setMostrarBanner(false)}
+            className="rounded-lg p-1.5 text-app-muted hover:bg-app-surface-alt hover:text-app-text transition-colors cursor-pointer"
+          >
+            <FontAwesomeIcon icon={faXmark} />
+          </button>
+        </div>
+      )}
+
+      {/* --- FILA 1 DE GRÁFICAS: VENTAS Y GASTOS (6 MESES) + GANANCIAS (6 MESES) --- */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Gráfica 1 (Comparativa Doble): Ventas y Gastos (Últimos 6 meses) [Heiler Arteaga] */}
+        <div className="rounded-2xl border border-app-border bg-app-surface p-5 sm:p-6 shadow-xs transition-colors">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-5">
+            <div>
+              <h3 className="text-base font-extrabold text-app-text">
+                Ventas y Gastos (Últimos 6 meses)
+              </h3>
+              <p className="text-xs text-app-muted">
+                Comparativa mensual de ingresos frente a egresos operativos
+              </p>
+            </div>
+            <div className="flex items-center gap-3 text-xs font-semibold text-app-muted">
+              <span className="flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-sm bg-[#2B62D9]" /> Ventas
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-sm bg-[#52A5E8]" /> Gastos
+              </span>
             </div>
           </div>
-          
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-[14px] text-app-muted">
-              <thead className="text-[12px] text-app-muted uppercase bg-app-surface-alt border-y border-app-border">
-                <tr>
-                  <th className="px-[18px] py-[12px] font-bold">ID Pedido</th>
-                  <th className="px-[18px] py-[12px] font-bold">Cliente</th>
-                  <th className="px-[18px] py-[12px] font-bold">Producto</th>
-                  <th className="px-[18px] py-[12px] font-bold">Total</th>
-                  <th className="px-[18px] py-[12px] font-bold">Comprobante</th>
-                  <th className="px-[18px] py-[12px] font-bold">Estado Pedido</th>
-                  <th className="px-[18px] py-[12px] font-bold text-right">Acción</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pedidosFiltrados.map((pedido) => (
-                  <tr key={pedido.id} className="border-b border-app-border hover:bg-app-surface-alt/60 transition-colors">
-                    <td className="px-[18px] py-[12px] font-bold text-app-text">{pedido.id}</td>
-                    <td className="px-[18px] py-[12px] text-app-text/90">{pedido.cliente}</td>
-                    <td className="px-[18px] py-[12px] text-app-text/90">{pedido.producto}</td>
-                    <td className="px-[18px] py-[12px] font-bold text-app-text">{pedido.total}</td>
-                    <td className="px-[18px] py-[12px]">
-                      {pedido.comprobante === 'Verificado' ? (
-                        <span className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 px-[12px] py-[6px] text-[10px] rounded-full font-bold uppercase">
-                          Verificado
-                        </span>
-                      ) : (
-                        <span className="bg-brand-royal/15 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky px-[12px] py-[6px] text-[10px] rounded-full font-bold uppercase">
-                          Por comprobar
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-[18px] py-[12px]">
-                      {pedido.estado === 'Despachado' ? (
-                        <span className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 px-[12px] py-[6px] text-[10px] rounded-full font-bold uppercase">
-                          Despachado
-                        </span>
-                      ) : (
-                        <span className="bg-amber-500/15 text-amber-700 dark:text-amber-300 px-[12px] py-[6px] text-[10px] rounded-full font-bold uppercase">
-                          {pedido.estado}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-[18px] py-[12px] text-right">
-                      <button className="text-[12px] font-bold text-brand-royal dark:text-brand-sky hover:underline transition cursor-pointer">
-                        Gestionar
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
 
-          <div className="flex justify-between items-center mt-[18px] text-[12px] text-app-muted">
-            <span>Mostrando 1-{pedidosFiltrados.length} de {pedidosPendientesIniciales.length} registros</span>
-            <button className="font-bold text-app-text bg-app-surface border border-app-border hover:bg-app-surface-alt px-[18px] py-[6px] rounded-lg transition cursor-pointer">
-              Ver todos los pedidos
-            </button>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={dataFinanzas6Meses} margin={{ top: 10, right: 10, left: -12, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148, 163, 184, 0.2)" />
+                <XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#94A3B8" }} />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 12, fill: "#94A3B8" }}
+                  tickFormatter={formatearMillones}
+                />
+                <Tooltip
+                  cursor={{ fill: "rgba(148, 163, 184, 0.1)" }}
+                  contentStyle={tooltipStyle}
+                  formatter={(value: number) => formatearMoneda(value)}
+                />
+                <Bar dataKey="ventas" name="Ventas" fill="#2B62D9" radius={[4, 4, 0, 0]} barSize={18} />
+                <Bar dataKey="gastos" name="Gastos" fill="#52A5E8" radius={[4, 4, 0, 0]} barSize={18} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
-      </main>
+        {/* Gráfica 2: Ganancias (Últimos 6 meses) [Juan Camilo Osorio] */}
+        <div className="rounded-2xl border border-app-border bg-app-surface p-5 sm:p-6 shadow-xs transition-colors">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-5">
+            <div>
+              <h3 className="text-base font-extrabold text-app-text">
+                Ganancias (Últimos 6 meses)
+              </h3>
+              <p className="text-xs text-app-muted">
+                Evolución mensual de utilidad neta consolidada
+              </p>
+            </div>
+            <span className="inline-flex w-fit items-center rounded-full bg-emerald-100/90 px-2.5 py-0.5 text-xs font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+              Utilidad Neta
+            </span>
+          </div>
 
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={dataFinanzas6Meses} margin={{ top: 10, right: 10, left: -12, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gradGanancia" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.35} />
+                    <stop offset="95%" stopColor="#10B981" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148, 163, 184, 0.2)" />
+                <XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#94A3B8" }} />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 12, fill: "#94A3B8" }}
+                  tickFormatter={formatearMillones}
+                />
+                <Tooltip
+                  contentStyle={tooltipStyle}
+                  formatter={(value: number) => [formatearMoneda(value), "Ganancia Neta"]}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="ganancia"
+                  name="Ganancia Neta"
+                  stroke="#10B981"
+                  strokeWidth={3}
+                  fillOpacity={1}
+                  fill="url(#gradGanancia)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* --- FILA 2 DE GRÁFICAS: STOCK DE PRODUCTOS (TOP 10 MÁS Y TOP 10 MENOS) [Cristian Stiwar Cardona] --- */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Gráfica 3: Productos con más Stock (Top 10) */}
+        <div className="rounded-2xl border border-app-border bg-app-surface p-5 sm:p-6 shadow-xs transition-colors">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h3 className="text-base font-extrabold text-app-text">
+                Productos con más Stock (Top 10)
+              </h3>
+              <p className="text-xs text-app-muted">
+                Referencias con mayor disponibilidad física en bodega
+              </p>
+            </div>
+            <span className="inline-flex items-center rounded-full bg-brand-royal/10 px-2.5 py-0.5 text-xs font-bold text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky">
+              Alta existencia
+            </span>
+          </div>
+
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={dataProductosMasStock}
+                layout="vertical"
+                margin={{ top: 0, right: 20, left: 20, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(148, 163, 184, 0.2)" />
+                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#94A3B8" }} />
+                <YAxis
+                  type="category"
+                  dataKey="producto"
+                  width={125}
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 11, fill: "#94A3B8" }}
+                />
+                <Tooltip
+                  cursor={{ fill: "rgba(148, 163, 184, 0.1)" }}
+                  contentStyle={tooltipStyle}
+                  formatter={(value: number) => [`${value} pares`, "Stock Actual"]}
+                />
+                <Bar dataKey="stock" name="Stock" fill="#2B62D9" radius={[0, 6, 6, 0]} barSize={16} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Gráfica 4: Productos con menos Stock (Top 10) */}
+        <div className="rounded-2xl border border-app-border bg-app-surface p-5 sm:p-6 shadow-xs transition-colors">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h3 className="text-base font-extrabold text-app-text">
+                Productos con menos Stock (Top 10)
+              </h3>
+              <p className="text-xs text-app-muted">
+                Referencias críticas próximas a agotarse
+              </p>
+            </div>
+            <span className="inline-flex items-center rounded-full bg-rose-100/90 px-2.5 py-0.5 text-xs font-bold text-rose-800 dark:bg-rose-950/60 dark:text-rose-300">
+              Bajo stock
+            </span>
+          </div>
+
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={dataProductosMenosStock}
+                layout="vertical"
+                margin={{ top: 0, right: 20, left: 20, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(148, 163, 184, 0.2)" />
+                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#94A3B8" }} />
+                <YAxis
+                  type="category"
+                  dataKey="producto"
+                  width={125}
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 11, fill: "#94A3B8" }}
+                />
+                <Tooltip
+                  cursor={{ fill: "rgba(148, 163, 184, 0.1)" }}
+                  contentStyle={tooltipStyle}
+                  formatter={(value: number) => [`${value} pares`, "Stock Actual"]}
+                />
+                <Bar dataKey="stock" name="Stock" fill="#F43F5E" radius={[0, 6, 6, 0]} barSize={16} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* --- FILA 3 DE GRÁFICAS: CLIENTES (TOP 10 QUE MÁS DEBEN Y TOP 10 QUE MÁS COMPRAN) [Esteban Lezcano] --- */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Gráfica 5: Clientes que más deben (Top 10) */}
+        <div className="rounded-2xl border border-app-border bg-app-surface p-5 sm:p-6 shadow-xs transition-colors">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h3 className="text-base font-extrabold text-app-text">
+                Clientes que más deben (Top 10)
+              </h3>
+              <p className="text-xs text-app-muted">
+                Cartera pendiente en ventas a crédito sin abono total
+              </p>
+            </div>
+            <span className="inline-flex items-center rounded-full bg-amber-100/90 px-2.5 py-0.5 text-xs font-bold text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+              Cartera crédito
+            </span>
+          </div>
+
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={dataClientesMasDeben}
+                layout="vertical"
+                margin={{ top: 0, right: 20, left: 20, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(148, 163, 184, 0.2)" />
+                <XAxis
+                  type="number"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 11, fill: "#94A3B8" }}
+                  tickFormatter={formatearMillones}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="cliente"
+                  width={120}
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 11, fill: "#94A3B8" }}
+                />
+                <Tooltip
+                  cursor={{ fill: "rgba(148, 163, 184, 0.1)" }}
+                  contentStyle={tooltipStyle}
+                  formatter={(value: number) => [formatearMoneda(value), "Saldo Pendiente"]}
+                />
+                <Bar dataKey="deuda" name="Deuda" fill="#F59E0B" radius={[0, 6, 6, 0]} barSize={16} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Gráfica 6: Clientes que más compran (Top 10) */}
+        <div className="rounded-2xl border border-app-border bg-app-surface p-5 sm:p-6 shadow-xs transition-colors">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h3 className="text-base font-extrabold text-app-text">
+                Clientes que más compran (Top 10)
+              </h3>
+              <p className="text-xs text-app-muted">
+                Ranking histórico por volumen acumulado de compras
+              </p>
+            </div>
+            <span className="inline-flex items-center rounded-full bg-emerald-100/90 px-2.5 py-0.5 text-xs font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+              Clientes top
+            </span>
+          </div>
+
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={dataClientesMasCompran}
+                layout="vertical"
+                margin={{ top: 0, right: 20, left: 20, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(148, 163, 184, 0.2)" />
+                <XAxis
+                  type="number"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 11, fill: "#94A3B8" }}
+                  tickFormatter={formatearMillones}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="cliente"
+                  width={120}
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 11, fill: "#94A3B8" }}
+                />
+                <Tooltip
+                  cursor={{ fill: "rgba(148, 163, 184, 0.1)" }}
+                  contentStyle={tooltipStyle}
+                  formatter={(value: number) => [formatearMoneda(value), "Total Comprado"]}
+                />
+                <Bar dataKey="total" name="Compras" fill="#10B981" radius={[0, 6, 6, 0]} barSize={16} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
