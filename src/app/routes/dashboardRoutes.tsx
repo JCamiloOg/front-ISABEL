@@ -18,6 +18,8 @@ import MarcaProducts from "../../features/dashboard/pages/products/MarcaProducts
 import TipoProducts from "../../features/dashboard/pages/products/TipoProducts";
 import CategoriaProveedor from "../../features/dashboard/pages/Proveedores/CategoriaProveedor";
 import Compras from "../../features/dashboard/pages/Compras/Compras";
+import RolesPage from "../../features/dashboard/pages/Roles/RolesPage";
+import PermissionsPage from "../../features/dashboard/pages/Permissions/PermissionsPage";
 
 export const dashboardLayout = createRoute({
   getParentRoute: () => rootRoute,
@@ -135,13 +137,13 @@ export const usersRoute = createRoute({
 export const rolesRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/roles",
-  component: () => <></>,
+  component: () => <RolesPage/>,
 });
 
 export const permissionsRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/permissions",
-  component: () => <></>,
+  component: () => <PermissionsPage/>,
 });
 
 export const dashboardRoutes = dashboardLayout.addChildren([
