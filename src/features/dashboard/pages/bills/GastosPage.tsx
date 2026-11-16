@@ -87,7 +87,7 @@ export function GastosPage() {
   };
 
   return (
-    <div className="min-h-full bg-app-bg p-6 text-app-text">
+    <div className="min-h-full bg-app-bg pb-6 text-app-text">
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
         {/* Encabezado */}
         <header className="flex flex-wrap items-center justify-between gap-4 border-b border-app-border pb-6">

@@ -53,19 +53,19 @@ export function ProveedoresPage() {
         prev.map((p) =>
           p.idProveedor === idProveedor
             ? {
-                ...p,
-                tipoDocumento: datos.tipoDocumento,
-                numeroDocumento: datos.numeroDocumento,
-                razonSocial: datos.razonSocial,
-                tipoProveedor: datos.tipoProveedor,
-                esImportado: datos.esImportado,
-                categorias: categoriasCompletas,
-                telefono: datos.telefono,
-                email: datos.email,
-                direccion: datos.direccion,
-                ciudad: datos.ciudad,
-                pais: datos.pais,
-              }
+              ...p,
+              tipoDocumento: datos.tipoDocumento,
+              numeroDocumento: datos.numeroDocumento,
+              razonSocial: datos.razonSocial,
+              tipoProveedor: datos.tipoProveedor,
+              esImportado: datos.esImportado,
+              categorias: categoriasCompletas,
+              telefono: datos.telefono,
+              email: datos.email,
+              direccion: datos.direccion,
+              ciudad: datos.ciudad,
+              pais: datos.pais,
+            }
             : p,
         ),
       );
@@ -135,13 +135,13 @@ export function ProveedoresPage() {
   };
 
   return (
-    <div className="min-h-full bg-app-bg p-6 text-app-text">
+    <div className="min-h-full bg-app-bg pb-6 text-app-text">
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
         {/* ── Encabezado Principal ── */}
         <header className="flex flex-wrap items-center justify-between gap-4 border-b border-app-border pb-6">
           <div>
             <div className="flex items-center gap-2.5">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky">
                 <FontAwesomeIcon icon={faIndustry} className="text-lg" />
               </span>
               <div>
@@ -149,8 +149,7 @@ export function ProveedoresPage() {
                   Gestión de Proveedores
                 </h1>
                 <p className="text-sm text-app-muted">
-                  Administra los fabricantes y distribuidores de materias primas, insumos y calzado
-                </p>
+                  Administra los fabricantes y distribuidores de materias primas, insumos y calzado                        </p>
               </div>
             </div>
           </div>
