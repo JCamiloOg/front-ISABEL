@@ -42,9 +42,10 @@ export function ProveedoresPage() {
 
   // Guardar o Actualizar Proveedor
   const handleGuardarProveedor = (datos: FormProveedor, idProveedor?: string) => {
-    const categoriasCompletas = categorias.filter((c) =>
-      datos.categoriaIds.includes(c.idCategoria),
-    );
+    const proveedorPrevio = proveedores.find((p) => p.idProveedor === idProveedor);
+    const categoriasCompletas = datos.categoriaIds
+      ? categorias.filter((c) => datos.categoriaIds?.includes(c.idCategoria))
+      : (proveedorPrevio?.categorias || []);
 
     if (idProveedor) {
       // Modo edición
@@ -142,8 +143,11 @@ export function ProveedoresPage() {
             <p className="text-[11px] font-bold uppercase tracking-wider text-brand-royal dark:text-brand-sky">
               Dashboard / Compras y Proveedores
             </p>
-            <h1 className="mt-1 text-3xl font-extrabold text-app-text tracking-tight">
-              Gestión de Proveedores
+            <h1 className="mt-1 text-3xl font-extrabold text-app-text tracking-tight flex items-center gap-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky text-xl">
+                <FontAwesomeIcon icon={faIndustry} />
+              </span>
+              <span>Gestión de Proveedores</span>
             </h1>
             <div className="mt-2.5 h-1 w-10 rounded-full bg-brand-sky" />
             <p className="mt-3 max-w-2xl text-sm text-app-muted leading-relaxed">
@@ -266,6 +270,14 @@ export function ProveedoresPage() {
         }}
         proveedor={proveedorParaDetalle}
         onEditar={handleAbrirEditar}
+        onToggleEstado={(p) => {
+          handleToggleEstado(p);
+          setProveedorParaDetalle((prev) =>
+            prev && prev.idProveedor === p.idProveedor
+              ? { ...prev, estado: prev.estado === "Activo" ? "Inactivo" : "Activo" }
+              : prev,
+          );
+        }}
       />
     </div>
   );

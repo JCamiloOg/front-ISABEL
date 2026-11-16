@@ -67,6 +67,7 @@ export function ModalNuevaVenta({
   );
   const [tipoVenta, setTipoVenta] = useState<TipoVenta>("Contado");
   const [descuentoRaw, setDescuentoRaw] = useState<string>("");
+  const [ivaPorcentajeRaw, setIvaPorcentajeRaw] = useState<string>("19");
 
   // ── Condiciones Contado ──
   const [metodoPagoContado, setMetodoPagoContado] = useState<MetodoPagoVenta>("Efectivo");
@@ -97,6 +98,7 @@ export function ModalNuevaVenta({
     if (isOpen) {
       setDetalles([]);
       setDescuentoRaw("");
+      setIvaPorcentajeRaw("19");
       setCuotaInicialRaw("");
       setComprobanteFile(null);
       setTipoVenta("Contado");
@@ -245,7 +247,12 @@ export function ModalNuevaVenta({
 
   // Cálculos de totales en tiempo real
   const descuentoValor = Number(descuentoRaw) || 0;
-  const { subtotal, descuento, iva, total } = calcularTotalesVenta(detalles, descuentoValor);
+  const ivaPorcentajeValor = Number(ivaPorcentajeRaw) || 0;
+  const { subtotal, descuento, iva, total } = calcularTotalesVenta(
+    detalles,
+    descuentoValor,
+    ivaPorcentajeValor,
+  );
 
   // Cálculos de cuota inicial y saldo pendiente
   const cuotaInicialValor = Number(cuotaInicialRaw) || 0;
@@ -256,6 +263,7 @@ export function ModalNuevaVenta({
   const handleResetModal = () => {
     setDetalles([]);
     setDescuentoRaw("");
+    setIvaPorcentajeRaw("19");
     setCuotaInicialRaw("");
     setComprobanteFile(null);
     setTipoVenta("Contado");
@@ -336,6 +344,7 @@ export function ModalNuevaVenta({
       subtotal,
       descuento,
       iva,
+      porcentajeIva: ivaPorcentajeValor,
       total,
       metodoPago: tipoVenta === "Contado" ? metodoPagoContado : undefined,
       comprobanteNombre: comprobanteFile ? comprobanteFile.name : undefined,
@@ -399,14 +408,14 @@ export function ModalNuevaVenta({
           </h3>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {/* Código generado automáticamente */}
+            {/* Consecutivo generado automáticamente */}
             <div>
               <label className="text-xs font-bold text-app-text mb-1.5 block">
-                Código de Venta
+                ID / Consecutivo
               </label>
               <div className="flex items-center gap-2 rounded-xl border border-brand-sky/30 bg-brand-royal/5 px-3 py-2.5 text-xs font-mono font-bold text-brand-royal dark:bg-brand-sky/10 dark:text-brand-sky">
                 <FontAwesomeIcon icon={faBarcode} />
-                <span>{nuevoCodigo}</span>
+                <span>#{nuevoCodigo.replace(/^VTA-\d{4}-/, "")}</span>
               </div>
             </div>
 
@@ -887,9 +896,21 @@ export function ModalNuevaVenta({
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
-                <span className="text-app-muted">IVA (19%):</span>
-                <span className="font-bold text-app-text">{formatCOP(iva)}</span>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-app-muted">IVA variable:</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-24">
+                    <Input
+                      placeholder="19"
+                      size="sm"
+                      inputMode="numeric"
+                      value={ivaPorcentajeRaw}
+                      onChange={(e) => setIvaPorcentajeRaw(soloDigitos(e.target.value))}
+                      iconRight={<span className="text-xs font-bold text-app-muted">%</span>}
+                    />
+                  </div>
+                  <span className="font-bold text-app-text min-w-[70px] text-right">{formatCOP(iva)}</span>
+                </div>
               </div>
 
               <div className="border-t border-brand-sky/20 pt-2.5 flex items-center justify-between text-base">

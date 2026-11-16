@@ -47,13 +47,16 @@ export function TablaAbonos({
   const columnsCreditos: TableColumn<Venta>[] = [
     {
       key: "codigoVenta",
-      header: "Código / Fecha",
+      header: "ID",
       render: (v) => (
         <div className="flex flex-col">
-          <span className="font-mono text-xs font-bold text-brand-royal dark:text-brand-sky">
-            {v.codigoVenta}
+          <span
+            className="font-mono text-xs font-bold text-brand-royal dark:text-brand-sky bg-brand-royal/10 dark:bg-brand-sky/15 px-2.5 py-0.5 rounded-lg w-fit"
+            title={`Código completo: ${v.codigoVenta}`}
+          >
+            #{v.codigoVenta.replace(/^VTA-\d{4}-/, "")}
           </span>
-          <span className="text-[11px] text-app-muted">{formatDate(v.fecha)}</span>
+          <span className="text-[11px] text-app-muted mt-1">{formatDate(v.fecha)}</span>
         </div>
       ),
     },
@@ -128,12 +131,12 @@ export function TablaAbonos({
   const columnsHistorial: TableColumn<Abono>[] = [
     {
       key: "fecha",
-      header: "Fecha / Venta",
+      header: "Fecha / ID",
       render: (a) => (
         <div className="flex flex-col">
           <span className="text-xs font-bold text-app-text">{formatDate(a.fecha)}</span>
           <span className="font-mono text-[11px] text-brand-royal dark:text-brand-sky font-semibold">
-            {a.codigoVenta}
+            #{a.codigoVenta.replace(/^VTA-\d{4}-/, "")}
           </span>
         </div>
       ),

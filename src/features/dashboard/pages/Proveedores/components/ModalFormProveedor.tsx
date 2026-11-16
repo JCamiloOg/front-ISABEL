@@ -5,16 +5,13 @@ import {
   faBuilding,
   faIdCard,
   faGlobe,
-  faTags,
   faPhone,
   faEnvelope,
   faLocationDot,
   faPlus,
   faCheck,
-  faXmark,
   faCircleExclamation,
   faUserTie,
-  faCity,
 } from "@fortawesome/free-solid-svg-icons";
 
 import Modal from "../../../../../shared/components/Modal";
@@ -34,7 +31,7 @@ interface ModalFormProveedorProps {
   onClose: () => void;
   proveedorAEditar: Proveedor | null;
   proveedoresExistentes: Proveedor[];
-  categoriasDisponibles: CategoriaProveedor[];
+  categoriasDisponibles?: CategoriaProveedor[];
   onGuardarProveedor: (datos: FormProveedor, idProveedor?: string) => void;
 }
 
@@ -48,8 +45,6 @@ const FORM_INICIAL: FormProveedor = {
   telefono: "",
   email: "",
   direccion: "",
-  ciudad: "Bogotá D.C.",
-  pais: "Colombia",
 };
 
 export function ModalFormProveedor({
@@ -57,7 +52,6 @@ export function ModalFormProveedor({
   onClose,
   proveedorAEditar,
   proveedoresExistentes,
-  categoriasDisponibles,
   onGuardarProveedor,
 }: ModalFormProveedorProps) {
   const [form, setForm] = useState<FormProveedor>(FORM_INICIAL);
@@ -76,8 +70,8 @@ export function ModalFormProveedor({
         telefono: proveedorAEditar.telefono,
         email: proveedorAEditar.email,
         direccion: proveedorAEditar.direccion,
-        ciudad: proveedorAEditar.ciudad || "Bogotá D.C.",
-        pais: proveedorAEditar.pais || (proveedorAEditar.esImportado ? "Extranjero" : "Colombia"),
+        ciudad: proveedorAEditar.ciudad,
+        pais: proveedorAEditar.pais,
       });
     } else {
       setForm(FORM_INICIAL);
@@ -88,25 +82,6 @@ export function ModalFormProveedor({
   const errores = intentoEnvio
     ? validarFormProveedor(form, proveedoresExistentes, proveedorAEditar?.idProveedor)
     : {};
-
-  const handleToggleCategoria = (idCat: number) => {
-    setForm((prev) => {
-      const existe = prev.categoriaIds.includes(idCat);
-      return {
-        ...prev,
-        categoriaIds: existe
-          ? prev.categoriaIds.filter((id) => id !== idCat)
-          : [...prev.categoriaIds, idCat],
-      };
-    });
-  };
-
-  const handleQuitarCategoria = (idCat: number) => {
-    setForm((prev) => ({
-      ...prev,
-      categoriaIds: prev.categoriaIds.filter((id) => id !== idCat),
-    }));
-  };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -128,8 +103,6 @@ export function ModalFormProveedor({
         telefono: form.telefono.trim(),
         email: form.email.trim(),
         direccion: form.direccion.trim(),
-        ciudad: form.ciudad.trim(),
-        pais: form.esImportado ? (form.pais.trim() || "Extranjero") : "Colombia",
       },
       proveedorAEditar?.idProveedor,
     );
@@ -138,9 +111,6 @@ export function ModalFormProveedor({
   };
 
   const esEdicion = Boolean(proveedorAEditar);
-  const categoriasSeleccionadas = categoriasDisponibles.filter((c) =>
-    form.categoriaIds.includes(c.idCategoria),
-  );
 
   return (
     <Modal
@@ -149,11 +119,11 @@ export function ModalFormProveedor({
       title={esEdicion ? "Editar Proveedor" : "Registrar Nuevo Proveedor"}
       description={
         esEdicion
-          ? `Modifica los datos y categorías asociadas a ${proveedorAEditar?.razonSocial}`
-          : "Ingresa los datos del proveedor, su condición de origen y asocia las categorías de insumos que suministra."
+          ? `Modifica los datos de identificación y contacto de ${proveedorAEditar?.razonSocial}`
+          : "Ingresa los datos del proveedor, su condición de origen y sus canales de contacto."
       }
       icon={faBuilding}
-      size="xl"
+      size="lg"
       footer={
         <div className="flex w-full items-center justify-end gap-3">
           <Button variant="outline" size="md" onClick={onClose}>
@@ -287,7 +257,6 @@ export function ModalFormProveedor({
                     setForm((p) => ({
                       ...p,
                       esImportado: false,
-                      pais: "Colombia",
                     }))
                   }
                   className={`flex items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-bold transition ${
@@ -305,7 +274,6 @@ export function ModalFormProveedor({
                     setForm((p) => ({
                       ...p,
                       esImportado: true,
-                      pais: p.pais === "Colombia" ? "" : p.pais,
                     }))
                   }
                   className={`flex items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-bold transition ${
@@ -322,101 +290,11 @@ export function ModalFormProveedor({
           </div>
         </div>
 
-        {/* ── 2. RELACIÓN ENTRE PROVEEDOR Y CATEGORÍAS (SELECCIÓN MÚLTIPLE) ── */}
-        <div className="rounded-2xl border border-brand-sky/20 bg-app-surface p-4 sm:p-5 flex flex-col gap-3.5">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-brand-sky/15 pb-2.5">
-            <div>
-              <h3 className="text-sm font-bold text-app-text flex items-center gap-2">
-                <FontAwesomeIcon icon={faTags} className="text-brand-royal dark:text-brand-sky" />
-                Categorías de Insumos Suministrados <span className="text-[#DC2626]">*</span>
-              </h3>
-              <p className="text-xs text-app-muted mt-0.5">
-                Un proveedor puede suministrar insumos de múltiples categorías simultáneamente.
-              </p>
-            </div>
-
-            <span className="text-xs font-bold text-brand-royal dark:text-brand-sky">
-              {form.categoriaIds.length} {form.categoriaIds.length === 1 ? "categoría seleccionada" : "categorías seleccionadas"}
-            </span>
-          </div>
-
-          {/* Categorías actualmente asociadas (Badges removibles) */}
-          {categoriasSeleccionadas.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2 rounded-xl bg-app-bg p-3 border border-brand-sky/15">
-              <span className="text-xs font-bold text-app-muted mr-1">Seleccionadas:</span>
-              {categoriasSeleccionadas.map((cat) => (
-                <span
-                  key={cat.idCategoria}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-brand-royal/30 bg-brand-royal/10 dark:border-brand-sky/40 dark:bg-brand-sky/15 px-2.5 py-1 text-xs font-bold text-brand-royal dark:text-brand-sky"
-                >
-                  <span>{cat.nombre}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleQuitarCategoria(cat.idCategoria)}
-                    className="hover:text-rose-600 transition"
-                    title={`Quitar ${cat.nombre}`}
-                  >
-                    <FontAwesomeIcon icon={faXmark} className="text-[11px]" />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Catálogo de categorías disponibles para seleccionar */}
-          <div>
-            <label className="text-xs font-bold text-app-text mb-2 block">
-              Haz clic sobre las categorías para asociarlas o desasociarlas:
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-              {categoriasDisponibles.map((cat) => {
-                const seleccionada = form.categoriaIds.includes(cat.idCategoria);
-                return (
-                  <button
-                    key={cat.idCategoria}
-                    type="button"
-                    onClick={() => handleToggleCategoria(cat.idCategoria)}
-                    className={`flex items-start justify-between gap-2 rounded-xl border p-2.5 text-left transition ${
-                      seleccionada
-                        ? "border-brand-royal bg-brand-royal/10 shadow-sm dark:border-brand-sky dark:bg-brand-sky/15"
-                        : "border-brand-sky/20 bg-app-surface hover:border-brand-sky/60"
-                    }`}
-                  >
-                    <div className="min-w-0">
-                      <span className={`text-xs font-bold block truncate ${seleccionada ? "text-brand-royal dark:text-brand-sky" : "text-app-text"}`}>
-                        {cat.nombre}
-                      </span>
-                      {cat.descripcion && (
-                        <span className="text-[10px] text-app-muted line-clamp-1">
-                          {cat.descripcion}
-                        </span>
-                      )}
-                    </div>
-                    <span
-                      className={`flex size-5 shrink-0 items-center justify-center rounded-md border text-[10px] ${
-                        seleccionada
-                          ? "border-brand-royal bg-brand-royal text-white dark:border-brand-sky dark:bg-brand-sky dark:text-brand-navy font-bold"
-                          : "border-brand-sky/30 bg-app-bg text-transparent"
-                      }`}
-                    >
-                      <FontAwesomeIcon icon={faCheck} />
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {errores.categorias && (
-            <p className="text-xs font-semibold text-[#DC2626]">{errores.categorias}</p>
-          )}
-        </div>
-
-        {/* ── 3. DATOS DE CONTACTO Y UBICACIÓN ── */}
+        {/* ── 2. DATOS DE CONTACTO Y DIRECCIÓN ── */}
         <div className="rounded-2xl border border-brand-sky/20 bg-app-surface p-4 sm:p-5 flex flex-col gap-4">
           <h3 className="text-sm font-bold text-app-text flex items-center gap-2 border-b border-brand-sky/15 pb-2.5">
             <FontAwesomeIcon icon={faLocationDot} className="text-brand-royal dark:text-brand-sky" />
-            Información de Contacto y Ubicación
+            Información de Contacto y Dirección
           </h3>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -439,31 +317,14 @@ export function ModalFormProveedor({
               iconLeft={faEnvelope}
             />
 
-            <Input
-              label="Dirección Física"
-              placeholder="Ej: Carrera 22 # 11-14 Zona Industrial"
-              value={form.direccion}
-              onChange={(e) => setForm((p) => ({ ...p, direccion: e.target.value }))}
-              error={errores.direccion}
-              iconLeft={faLocationDot}
-            />
-
-            <div className="grid grid-cols-2 gap-2">
+            <div className="sm:col-span-2">
               <Input
-                label="Ciudad"
-                placeholder="Ej: Bogotá D.C."
-                value={form.ciudad}
-                onChange={(e) => setForm((p) => ({ ...p, ciudad: e.target.value }))}
-                iconLeft={faCity}
-              />
-
-              <Input
-                label={form.esImportado ? "País de Origen *" : "País"}
-                placeholder={form.esImportado ? "Ej: China, Brasil, Italia..." : "Colombia"}
-                value={form.pais}
-                onChange={(e) => setForm((p) => ({ ...p, pais: e.target.value }))}
-                disabled={!form.esImportado}
-                iconLeft={faGlobe}
+                label="Dirección Física"
+                placeholder="Ej: Carrera 22 # 11-14 Zona Industrial"
+                value={form.direccion}
+                onChange={(e) => setForm((p) => ({ ...p, direccion: e.target.value }))}
+                error={errores.direccion}
+                iconLeft={faLocationDot}
               />
             </div>
           </div>
@@ -474,4 +335,3 @@ export function ModalFormProveedor({
 }
 
 export default ModalFormProveedor;
-

@@ -4,8 +4,6 @@ import {
   faMagnifyingGlass,
   faEye,
   faPenToSquare,
-  faToggleOn,
-  faToggleOff,
   faRotateLeft,
   faGlobe,
   faBuilding,
@@ -24,7 +22,7 @@ interface TablaProveedoresProps {
   categorias: CategoriaProveedor[];
   onVerDetalle: (proveedor: Proveedor) => void;
   onEditar: (proveedor: Proveedor) => void;
-  onToggleEstado: (proveedor: Proveedor) => void;
+  onToggleEstado?: (proveedor: Proveedor) => void;
 }
 
 export function TablaProveedores({
@@ -32,7 +30,6 @@ export function TablaProveedores({
   categorias,
   onVerDetalle,
   onEditar,
-  onToggleEstado,
 }: TablaProveedoresProps) {
   const [busqueda, setBusqueda] = useState("");
   const [filtroCategoria, setFiltroCategoria] = useState<string>("all");
@@ -147,15 +144,10 @@ export function TablaProveedores({
     },
     {
       key: "razonSocial",
-      header: "Razón Social / Ubicación",
+      header: "Razón Social",
       sortable: true,
       render: (p) => (
-        <div className="flex flex-col">
-          <span className="font-bold text-xs text-app-text">{p.razonSocial}</span>
-          <span className="text-[11px] text-app-muted">
-            {p.ciudad || "—"}, {p.pais || "Colombia"}
-          </span>
-        </div>
+        <span className="font-bold text-xs text-app-text">{p.razonSocial}</span>
       ),
     },
     {
@@ -229,17 +221,18 @@ export function TablaProveedores({
       key: "estado",
       header: "Estado",
       sortable: true,
+      align: "center",
       render: (p) => {
         const esActivo = p.estado === "Activo";
         return (
           <span
-            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${
+            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${
               esActivo
                 ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-                : "border-rose-500/30 bg-rose-500/15 text-rose-700 dark:text-rose-400"
+                : "border-slate-300 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
             }`}
           >
-            <span className={`size-1.5 rounded-full ${esActivo ? "bg-emerald-500" : "bg-rose-500"}`} />
+            <span className={`size-1.5 rounded-full ${esActivo ? "bg-emerald-500" : "bg-slate-400"}`} />
             {p.estado}
           </span>
         );
@@ -270,17 +263,6 @@ export function TablaProveedores({
               onEditar(p);
             }}
             title="Editar Proveedor"
-          />
-          <Button
-            size="sm"
-            variant="ghost"
-            icon={p.estado === "Activo" ? faToggleOn : faToggleOff}
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleEstado(p);
-            }}
-            title={p.estado === "Activo" ? "Desactivar proveedor" : "Activar proveedor"}
-            className={p.estado === "Activo" ? "text-emerald-600 dark:text-emerald-400" : "text-app-muted"}
           />
         </div>
       ),

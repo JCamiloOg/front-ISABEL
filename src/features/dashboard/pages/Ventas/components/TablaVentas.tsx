@@ -58,8 +58,10 @@ export function TablaVentas({
       // Búsqueda textual
       if (!busqueda.trim()) return true;
       const q = busqueda.toLowerCase().trim();
+      const qLimpio = q.replace(/^#/, "");
       return (
         v.codigoVenta.toLowerCase().includes(q) ||
+        v.codigoVenta.replace(/^VTA-\d{4}-/, "").toLowerCase().includes(qLimpio) ||
         v.cliente.nombre.toLowerCase().includes(q) ||
         v.cliente.documento.toLowerCase().includes(q) ||
         v.usuarioResponsable.toLowerCase().includes(q)
@@ -101,14 +103,17 @@ export function TablaVentas({
   const columns: TableColumn<Venta>[] = [
     {
       key: "codigoVenta",
-      header: "Código / Fecha",
+      header: "ID",
       sortable: true,
       render: (v) => (
         <div className="flex flex-col">
-          <span className="font-mono text-xs font-bold text-brand-royal dark:text-brand-sky">
-            {v.codigoVenta}
+          <span
+            className="font-mono text-xs font-bold text-brand-royal dark:text-brand-sky bg-brand-royal/10 dark:bg-brand-sky/15 px-2.5 py-0.5 rounded-lg w-fit"
+            title={`Código completo: ${v.codigoVenta}`}
+          >
+            #{v.codigoVenta.replace(/^VTA-\d{4}-/, "")}
           </span>
-          <span className="text-[11px] text-app-muted flex items-center gap-1 mt-0.5">
+          <span className="text-[11px] text-app-muted flex items-center gap-1 mt-1">
             <FontAwesomeIcon icon={faCalendarDay} className="text-[10px]" />
             {formatDate(v.fecha)}
           </span>
@@ -242,7 +247,7 @@ export function TablaVentas({
                 setBusqueda(e.target.value);
                 setPagina(1);
               }}
-              placeholder="Buscar por código de venta, cliente o vendedor..."
+              placeholder="Buscar por ID, cliente o vendedor..."
               iconLeft={faMagnifyingGlass}
             />
           </div>

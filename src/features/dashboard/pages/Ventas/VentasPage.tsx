@@ -139,8 +139,11 @@ export function VentasPage() {
             <p className="text-[11px] font-bold uppercase tracking-wider text-brand-royal dark:text-brand-sky">
               Dashboard / Ventas y Abonos
             </p>
-            <h1 className="mt-1 text-3xl font-extrabold text-app-text tracking-tight">
-              Gestión de Ventas y Abonos
+            <h1 className="mt-1 text-3xl font-extrabold text-app-text tracking-tight flex items-center gap-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky text-xl">
+                <FontAwesomeIcon icon={faDollarSign} />
+              </span>
+              <span>Gestión de Ventas y Abonos</span>
             </h1>
             <div className="mt-2.5 h-1 w-10 rounded-full bg-brand-sky" />
             <p className="mt-3 max-w-2xl text-sm text-app-muted leading-relaxed">
@@ -306,7 +309,6 @@ export function VentasPage() {
           setVentaSeleccionada(null);
         }}
         venta={ventaSeleccionada}
-        onAbrirAbonar={handleAbrirAbonar}
       />
     </div>
   );
