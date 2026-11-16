@@ -372,14 +372,14 @@ export default function ProductsPage() {
       loadedColores.length > 0
         ? loadedColores
         : [
-            {
-              idColor: 101,
-              nombreColor: "Negro",
-              imagenes: [],
-              estado: "Activo",
-              variantes: [{ numeroTalla: "40", stockActual: 10, descuento: 0, estado: "Activo" }],
-            },
-          ]
+          {
+            idColor: 101,
+            nombreColor: "Negro",
+            imagenes: [],
+            estado: "Activo",
+            variantes: [{ numeroTalla: "40", stockActual: 10, descuento: 0, estado: "Activo" }],
+          },
+        ]
     );
     setActiveFormColorIndex(0);
     setNewColorSelectId(101);
@@ -789,9 +789,8 @@ export default function ProductsPage() {
         return (
           <div className="flex flex-col items-center">
             <span
-              className={`font-extrabold text-sm ${
-                isLow ? "text-rose-600 dark:text-rose-400" : "text-app-text"
-              }`}
+              className={`font-extrabold text-sm ${isLow ? "text-rose-600 dark:text-rose-400" : "text-app-text"
+                }`}
             >
               {totalStockProd} pares
             </span>
@@ -829,16 +828,14 @@ export default function ProductsPage() {
           type="button"
           onClick={() => handleToggleEstado(prod)}
           title={`Hacer clic para cambiar a ${prod.estado === "Activo" ? "Inactivo" : "Activo"}`}
-          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold transition-all cursor-pointer ${
-            prod.estado === "Activo"
-              ? "bg-emerald-100/90 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-200"
-              : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-300"
-          }`}
+          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold transition-all cursor-pointer ${prod.estado === "Activo"
+            ? "bg-emerald-100/90 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-200"
+            : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-300"
+            }`}
         >
           <span
-            className={`h-1.5 w-1.5 rounded-full ${
-              prod.estado === "Activo" ? "bg-emerald-500" : "bg-slate-400"
-            }`}
+            className={`h-1.5 w-1.5 rounded-full ${prod.estado === "Activo" ? "bg-emerald-500" : "bg-slate-400"
+              }`}
           />
           {prod.estado}
         </button>
@@ -1196,14 +1193,12 @@ export default function ProductsPage() {
                     <button
                       type="button"
                       onClick={() => handleToggleColorEstadoInDetail(selectedColorIndex)}
-                      title={`Clic para cambiar estado del color a ${
-                        detailProduct.colores[selectedColorIndex].estado === "Activo" ? "Inactivo" : "Activo"
-                      }`}
-                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold transition-all cursor-pointer ${
-                        detailProduct.colores[selectedColorIndex].estado === "Activo"
-                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-200"
-                          : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-300"
-                      }`}
+                      title={`Clic para cambiar estado del color a ${detailProduct.colores[selectedColorIndex].estado === "Activo" ? "Inactivo" : "Activo"
+                        }`}
+                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold transition-all cursor-pointer ${detailProduct.colores[selectedColorIndex].estado === "Activo"
+                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-200"
+                        : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-300"
+                        }`}
                     >
                       <FontAwesomeIcon
                         icon={
@@ -1229,11 +1224,10 @@ export default function ProductsPage() {
                       key={color.idProductoColor}
                       type="button"
                       onClick={() => setSelectedColorIndex(idx)}
-                      className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold transition-all cursor-pointer border ${
-                        isSelected
-                          ? "border-brand-royal bg-brand-royal/10 text-brand-royal dark:border-brand-sky dark:bg-brand-sky/15 dark:text-brand-sky shadow-xs"
-                          : "border-app-border bg-app-surface text-app-muted hover:border-brand-royal/30"
-                      } ${color.estado === "Inactivo" ? "opacity-75" : ""}`}
+                      className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold transition-all cursor-pointer border ${isSelected
+                        ? "border-brand-royal bg-brand-royal/10 text-brand-royal dark:border-brand-sky dark:bg-brand-sky/15 dark:text-brand-sky shadow-xs"
+                        : "border-app-border bg-app-surface text-app-muted hover:border-brand-royal/30"
+                        } ${color.estado === "Inactivo" ? "opacity-75" : ""}`}
                     >
                       <span
                         className="h-3 w-3 rounded-full border border-white shadow-xs shrink-0"
@@ -1244,11 +1238,10 @@ export default function ProductsPage() {
                         ({color.variantes.length} {color.variantes.length === 1 ? "talla" : "tallas"})
                       </span>
                       <span
-                        className={`ml-1 text-[9px] px-1.5 py-0.5 rounded-full ${
-                          color.estado === "Activo"
-                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
-                            : "bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-                        }`}
+                        className={`ml-1 text-[9px] px-1.5 py-0.5 rounded-full ${color.estado === "Activo"
+                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
+                          : "bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                          }`}
                       >
                         {color.estado}
                       </span>
@@ -1298,11 +1291,10 @@ export default function ProductsPage() {
                           type="button"
                           onClick={() => handleToggleTallaEstadoInDetail(selectedColorIndex, v.idVariante)}
                           title={`Hacer clic para cambiar a ${v.estado === "Activo" ? "Inactivo" : "Activo"}`}
-                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
-                            v.estado === "Activo"
-                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-200"
-                              : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-300"
-                          }`}
+                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${v.estado === "Activo"
+                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-200"
+                            : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-300"
+                            }`}
                         >
                           <FontAwesomeIcon
                             icon={v.estado === "Activo" ? faToggleOn : faToggleOff}
@@ -1435,11 +1427,10 @@ export default function ProductsPage() {
               <button
                 type="button"
                 onClick={() => setFormPublico((prev) => !prev)}
-                className={`flex items-center justify-between rounded-xl border p-2.5 text-xs font-bold transition-all cursor-pointer ${
-                  formPublico
-                    ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
-                    : "border-app-border bg-app-surface text-app-muted"
-                }`}
+                className={`flex items-center justify-between rounded-xl border p-2.5 text-xs font-bold transition-all cursor-pointer ${formPublico
+                  ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
+                  : "border-app-border bg-app-surface text-app-muted"
+                  }`}
               >
                 <span>{formPublico ? "Visible para clientes (Público)" : "Privado (Solo personal)"}</span>
                 <FontAwesomeIcon icon={formPublico ? faToggleOn : faToggleOff} className="text-base" />
@@ -1492,11 +1483,10 @@ export default function ProductsPage() {
                 return (
                   <div
                     key={idx}
-                    className={`flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-bold transition-all ${
-                      isActive
-                        ? "border-brand-royal bg-brand-royal/10 text-brand-royal dark:border-brand-sky dark:bg-brand-sky/15 dark:text-brand-sky shadow-xs"
-                        : "border-app-border bg-app-surface text-app-muted hover:border-brand-royal/30"
-                    }`}
+                    className={`flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-bold transition-all ${isActive
+                      ? "border-brand-royal bg-brand-royal/10 text-brand-royal dark:border-brand-sky dark:bg-brand-sky/15 dark:text-brand-sky shadow-xs"
+                      : "border-app-border bg-app-surface text-app-muted hover:border-brand-royal/30"
+                      }`}
                   >
                     <button
                       type="button"
@@ -1518,11 +1508,10 @@ export default function ProductsPage() {
                       type="button"
                       onClick={() => handleToggleFormColorEstado(idx)}
                       title={`Color ${colorItem.estado}. Clic para cambiar.`}
-                      className={`text-[10px] px-2 py-0.5 rounded-full cursor-pointer transition-all ${
-                        colorItem.estado === "Activo"
-                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-200"
-                          : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-300"
-                      }`}
+                      className={`text-[10px] px-2 py-0.5 rounded-full cursor-pointer transition-all ${colorItem.estado === "Activo"
+                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-200"
+                        : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-300"
+                        }`}
                     >
                       {colorItem.estado}
                     </button>
@@ -1563,14 +1552,12 @@ export default function ProductsPage() {
                     <button
                       type="button"
                       onClick={() => handleToggleFormColorEstado(activeFormColorIndex)}
-                      title={`Clic para cambiar estado a ${
-                        formColores[activeFormColorIndex].estado === "Activo" ? "Inactivo" : "Activo"
-                      }`}
-                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold transition-all cursor-pointer ${
-                        formColores[activeFormColorIndex].estado === "Activo"
-                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-200"
-                          : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-300"
-                      }`}
+                      title={`Clic para cambiar estado a ${formColores[activeFormColorIndex].estado === "Activo" ? "Inactivo" : "Activo"
+                        }`}
+                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold transition-all cursor-pointer ${formColores[activeFormColorIndex].estado === "Activo"
+                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-200"
+                        : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-300"
+                        }`}
                     >
                       <FontAwesomeIcon
                         icon={
@@ -1748,11 +1735,10 @@ export default function ProductsPage() {
                               type="button"
                               onClick={() => handleToggleFormTallaEstado(vIdx)}
                               title={`Clic para cambiar estado a ${v.estado === "Activo" ? "Inactivo" : "Activo"}`}
-                              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold transition-all cursor-pointer ${
-                                v.estado === "Activo"
-                                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 hover:bg-emerald-200"
-                                  : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-300"
-                              }`}
+                              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold transition-all cursor-pointer ${v.estado === "Activo"
+                                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 hover:bg-emerald-200"
+                                : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-300"
+                                }`}
                             >
                               <FontAwesomeIcon icon={v.estado === "Activo" ? faToggleOn : faToggleOff} className="text-xs" />
                               <span>{v.estado}</span>

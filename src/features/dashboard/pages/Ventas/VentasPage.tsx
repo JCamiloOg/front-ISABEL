@@ -131,7 +131,7 @@ export function VentasPage() {
   };
 
   return (
-    <div className="min-h-full bg-app-bg p-6 text-app-text">
+    <div className="min-h-full bg-app-bg pb-6 text-app-text">
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
         {/* ── Encabezado Principal ── */}
         <header className="flex flex-wrap items-center justify-between gap-4 border-b border-app-border pb-6">
@@ -236,8 +236,8 @@ export function VentasPage() {
             type="button"
             onClick={() => setTabActiva("ventas")}
             className={`pb-3 px-1 text-sm font-bold border-b-2 transition flex items-center gap-2 ${tabActiva === "ventas"
-                ? "border-brand-royal text-brand-royal dark:border-brand-sky dark:text-brand-sky"
-                : "border-transparent text-app-muted hover:text-app-text"
+              ? "border-brand-royal text-brand-royal dark:border-brand-sky dark:text-brand-sky"
+              : "border-transparent text-app-muted hover:text-app-text"
               }`}
           >
             <FontAwesomeIcon icon={faCartPlus} />
@@ -251,8 +251,8 @@ export function VentasPage() {
             type="button"
             onClick={() => setTabActiva("abonos")}
             className={`pb-3 px-1 text-sm font-bold border-b-2 transition flex items-center gap-2 ${tabActiva === "abonos"
-                ? "border-brand-royal text-brand-royal dark:border-brand-sky dark:text-brand-sky"
-                : "border-transparent text-app-muted hover:text-app-text"
+              ? "border-brand-royal text-brand-royal dark:border-brand-sky dark:text-brand-sky"
+              : "border-transparent text-app-muted hover:text-app-text"
               }`}
           >
             <FontAwesomeIcon icon={faHandHoldingDollar} />
