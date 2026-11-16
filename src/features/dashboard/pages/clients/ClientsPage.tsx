@@ -15,13 +15,12 @@ import {
     faUserPlus,
     faEye,
     faPenToSquare,
-    faToggleOn,
-    faToggleOff,
     faTrash,
     faUsers,
     faFilter,
     faBox,
 } from "@fortawesome/free-solid-svg-icons";
+import { Switcher } from "../../components/Switcher";
 
 export const ClientsPage: React.FC = () => {
     const [clients, setClients] = useState<Client[]>(initialClients);
@@ -82,7 +81,11 @@ export const ClientsPage: React.FC = () => {
             setClients((previousClients) =>
                 previousClients.map((client) =>
                     client.id === selectedClient.id
-                        ? { ...client, ...formData }
+                        ? {
+                            ...client,
+                            ...formData,
+                            password: formData.password || client.password,
+                        }
                         : client
                 )
             );
@@ -217,99 +220,79 @@ export const ClientsPage: React.FC = () => {
             key: "estado",
             header: "Estado",
             render: (client) => (
-                <span
-                    className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
-                        client.status === "Activo"
-                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-400"
-                            : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-                    }`}
-                >
-                    {client.status}
-                </span>
+                <Switcher
+                    checked={client.status === "Activo"}
+                    onChange={() => handleToggleStatus(client.id)}
+                    size="sm"
+                    ariaLabel={`Estado de ${client.firstName} ${client.lastName}`}
+                />
             ),
         },
         {
             key: "acciones",
             header: "Acciones",
-            align: "right",
+            align: "center",
             render: (client) => (
-                <div className="flex items-center justify-end gap-1.5">
-                    {/* Ver detalles */}
-                    <button
-                        type="button"
-                        title="Ver detalle y compras"
+                <div className="flex items-center justify-center gap-1.5">
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        icon={faEye}
+                        title="Ver Detalle"
                         aria-label={`Ver detalle de ${client.firstName}`}
-                        onClick={() => {
+                        onClick={(event) => {
+                            event.stopPropagation();
                             setSelectedClient(client);
                             setIsDetailModalOpen(true);
                         }}
-                        className="p-1.5 hover:bg-slate-200/60 dark:hover:bg-slate-700/60 rounded-lg text-slate-600 dark:text-slate-300 cursor-pointer"
-                    >
-                        <FontAwesomeIcon icon={faEye} />
-                    </button>
+                    />
 
-                    {/* Editar */}
-                    <button
-                        type="button"
-                        title="Editar información"
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        icon={faPenToSquare}
+                        title="Editar Cliente"
                         aria-label={`Editar ${client.firstName}`}
-                        onClick={() => {
+                        onClick={(event) => {
+                            event.stopPropagation();
                             setSelectedClient(client);
                             setIsFormModalOpen(true);
                         }}
-                        className="p-1.5 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 rounded-lg text-indigo-600 dark:text-indigo-400 cursor-pointer"
-                    >
-                        <FontAwesomeIcon icon={faPenToSquare} />
-                    </button>
+                    />
 
-                    {/* Cambiar estado */}
-                    <button
-                        type="button"
-                        title="Cambiar estado"
-                        aria-label={`Cambiar estado de ${client.firstName}`}
-                        onClick={() => handleToggleStatus(client.id)}
-                        className="p-1.5 hover:bg-amber-50 dark:hover:bg-amber-950/50 rounded-lg text-amber-600 dark:text-amber-400 cursor-pointer"
-                    >
-                        <FontAwesomeIcon
-                            icon={client.status === "Activo" ? faToggleOn : faToggleOff}
-                        />
-                    </button>
-
-                    {/* Eliminar */}
-                    <button
-                        type="button"
-                        title="Eliminar cliente"
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        icon={faTrash}
+                        title="Eliminar Cliente"
                         aria-label={`Eliminar ${client.firstName}`}
-                        onClick={() => handleDeleteClient(client.id, `${client.firstName} ${client.lastName}`)}
-                        className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950/50 rounded-lg text-red-600 dark:text-red-400 cursor-pointer"
-                    >
-                        <FontAwesomeIcon icon={faTrash} />
-                    </button>
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            handleDeleteClient(client.id, `${client.firstName} ${client.lastName}`);
+                        }}
+                        className="text-rose-600 dark:text-rose-400"
+                    />
                 </div>
             ),
         },
     ];
 
     return (
-        <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto text-slate-900 dark:text-white">
+        <div className=" space-y-6 max-w-7xl mx-auto text-app-text">
             {/* Encabezado */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                    <div className="flex items-center gap-2">
-                        <span className="px-2.5 py-1 bg-slate-900 dark:bg-brand-royal text-white text-xs font-semibold rounded-md">
-                            ISABEL • Módulo Ventas
-                        </span>
-                        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                            Paradise Shoes
-                        </span>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-app-border pb-6">
+                <div className="flex items-center gap-2.5">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky">
+                        <FontAwesomeIcon icon={faUsers} className="text-lg" />
+                    </span>
+                    <div>
+                        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-app-text">
+                            Catálogo de Clientes
+                        </h1>
+                        <p className="text-sm text-app-muted">
+                            Gestión de compradores, empresas aliadas e historial comercial.
+                        </p>
                     </div>
-
-                    <h1 className="text-2xl font-extrabold tracking-tight mt-1">
-                        Gestión de Clientes
-                    </h1>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Administre la base de datos de compradores, empresas aliadas y su historial comercial.
-                    </p>
                 </div>
 
                 <Button
@@ -329,23 +312,23 @@ export const ClientsPage: React.FC = () => {
 
             {/* Métricas */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-white dark:bg-[#1E293B] p-4 rounded-xl border border-slate-200 dark:border-[#3E3A4A] shadow-sm flex items-center justify-between">
+                <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40 flex items-center justify-between">
                     <div>
-                        <p className="text-xs font-semibold text-slate-400 uppercase">
+                        <p className="text-xs font-semibold text-app-muted uppercase">
                             Total Clientes
                         </p>
-                        <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white mt-0.5">
+                        <h3 className="text-2xl font-extrabold text-app-text mt-0.5">
                             {clients.length}
                         </h3>
                     </div>
-                    <div className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl">
+                    <div className="p-3 bg-brand-sky/10 text-brand-royal dark:bg-brand-royal/20 dark:text-brand-sky rounded-xl">
                         <FontAwesomeIcon icon={faUsers} className="w-5 h-5" />
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-[#1E293B] p-4 rounded-xl border border-slate-200 dark:border-[#3E3A4A] shadow-sm flex items-center justify-between">
+                <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40 flex items-center justify-between">
                     <div>
-                        <p className="text-xs font-semibold text-slate-400 uppercase">
+                        <p className="text-xs font-semibold text-app-muted uppercase">
                             Clientes Activos
                         </p>
                         <h3 className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-0.5">
@@ -357,9 +340,9 @@ export const ClientsPage: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-[#1E293B] p-4 rounded-xl border border-slate-200 dark:border-[#3E3A4A] shadow-sm flex items-center justify-between">
+                <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40 flex items-center justify-between">
                     <div>
-                        <p className="text-xs font-semibold text-slate-400 uppercase">
+                        <p className="text-xs font-semibold text-app-muted uppercase">
                             Volumen Comercial
                         </p>
                         <h3 className="text-xl font-extrabold text-indigo-600 dark:text-indigo-400 mt-0.5">
@@ -379,7 +362,7 @@ export const ClientsPage: React.FC = () => {
             </div>
 
             {/* Búsqueda y filtros */}
-            <div className="bg-white dark:bg-[#1E293B] p-4 rounded-xl border border-slate-200 dark:border-[#3E3A4A] shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div className="rounded-2xl border border-app-border bg-app-surface p-4 sm:p-5 shadow-xs flex flex-col md:flex-row gap-4 items-center justify-between">
                 <Input
                     id="client-search"
                     type="search"
@@ -392,7 +375,7 @@ export const ClientsPage: React.FC = () => {
                     iconLeft={faMagnifyingGlass}
                     size="md"
                     containerClassName="w-full md:max-w-96"
-                    className="text-slate-900 dark:text-white placeholder:text-slate-400"
+                    className="text-app-text placeholder:text-app-muted"
                     aria-label="Buscar clientes"
                 />
 
@@ -401,7 +384,7 @@ export const ClientsPage: React.FC = () => {
                         icon={faFilter}
                         className="w-4 h-4 text-slate-400 shrink-0"
                     />
-                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                    <span className="text-xs font-semibold text-app-text whitespace-nowrap">
                         Estado:
                     </span>
 
@@ -414,7 +397,7 @@ export const ClientsPage: React.FC = () => {
                         }}
                         size="sm"
                         containerClassName="w-full md:w-40"
-                        className="text-slate-900 dark:text-white"
+                        className="text-app-text"
                         aria-label="Filtrar clientes por estado"
                         options={[
                             { value: "Todos", label: "Todos" },
@@ -426,7 +409,7 @@ export const ClientsPage: React.FC = () => {
             </div>
 
             {/* Tabla de clientes */}
-            <div className="bg-white dark:bg-[#1E293B] rounded-xl border border-slate-200 dark:border-[#3E3A4A] shadow-sm overflow-hidden">
+            <div className="rounded-2xl border border-app-border bg-app-surface shadow-xs overflow-hidden">
                 <div className="overflow-x-auto">
                     <Table<Client>
                         columns={columns}
