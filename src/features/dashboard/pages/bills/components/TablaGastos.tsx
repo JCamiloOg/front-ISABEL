@@ -45,6 +45,7 @@ export function TablaGastos({ gastos }: TablaGastosProps) {
       normalizar(
         [
           g.codigo,
+          g.codigo.replace(/^GAS-/, ""),
           g.concepto,
           g.fecha,
           formatoFecha(g.fecha),
@@ -91,11 +92,14 @@ export function TablaGastos({ gastos }: TablaGastosProps) {
   const columns: TableColumn<Gasto>[] = [
     {
       key: "codigo",
-      header: "Código",
+      header: "ID",
       sortable: true,
       render: (gasto) => (
-        <span className="font-mono text-xs font-bold text-brand-royal dark:text-brand-sky bg-brand-royal/10 dark:bg-brand-sky/15 px-2.5 py-1 rounded-lg">
-          {gasto.codigo}
+        <span
+          className="font-mono text-xs font-bold text-brand-royal dark:text-brand-sky bg-brand-royal/10 dark:bg-brand-sky/15 px-2.5 py-1 rounded-lg"
+          title={`Identificador interno: ${gasto.id}`}
+        >
+          #{gasto.codigo.replace(/^GAS-/, "")}
         </span>
       ),
     },
@@ -165,8 +169,9 @@ export function TablaGastos({ gastos }: TablaGastosProps) {
       <div className="flex flex-col gap-3 rounded-2xl border border-brand-sky/20 bg-app-surface p-4 sm:p-5 shadow-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 id="titulo-historial" className="text-lg font-bold text-app-text">
-              Historial de gastos
+            <h2 id="titulo-historial" className="text-lg font-bold text-app-text flex items-center gap-2">
+              <span>🧾</span>
+              <span>Historial de gastos</span>
             </h2>
             <p className="text-xs text-app-muted mt-0.5">
               Consulta y audita todos los egresos registrados por concepto y caja.
@@ -181,7 +186,7 @@ export function TablaGastos({ gastos }: TablaGastosProps) {
                   setBusqueda(e.target.value);
                   setPagina(1);
                 }}
-                placeholder="Buscar por código, concepto, caja..."
+                placeholder="Buscar por ID, concepto, caja..."
                 iconLeft={faMagnifyingGlass}
                 size="sm"
               />

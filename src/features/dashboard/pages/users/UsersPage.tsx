@@ -22,7 +22,6 @@ import {
   faUserShield,
   faBoxesPacking,
   faCheckCircle,
-  faShieldHalved,
 } from "@fortawesome/free-solid-svg-icons";
 
 export const UsersPage: React.FC = () => {

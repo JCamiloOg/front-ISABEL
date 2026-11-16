@@ -67,12 +67,7 @@ export function validarFormProveedor(
     errores.tipoProveedor = "Selecciona si es persona Natural o Jurídica.";
   }
 
-  // 5. Categorías (al menos una seleccionada)
-  if (!form.categoriaIds || form.categoriaIds.length === 0) {
-    errores.categorias = "Debes asociar al menos una categoría al proveedor.";
-  }
-
-  // 6. Validación de Correo Electrónico
+  // 5. Validación de Correo Electrónico
   if (form.email.trim() && !validarEmail(form.email)) {
     errores.email = "Ingresa una dirección de correo electrónico válida (ej: contacto@empresa.com).";
   }

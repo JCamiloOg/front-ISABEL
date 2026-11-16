@@ -112,6 +112,9 @@ export default function OrdersPageByUser() {
                 ...p.cliente,
                 nombre: userNombre,
                 email: userEmail,
+                telefono: p.cliente?.telefono || "3001234567",
+                tipoDocumento: p.cliente?.tipoDocumento || "CC",
+                documento: p.cliente?.documento || "1020304050",
                 ciudad: index % 2 === 0 ? "Medellín, Antioquia" : "Envigado, Antioquia",
                 direccion: "Carrera 45 # 68 - 24, Barrio El Poblado",
             },
@@ -470,12 +473,12 @@ export default function OrdersPageByUser() {
                                         <FontAwesomeIcon icon={faLocationDot} />
                                         Dirección de Entrega
                                     </span>
-                                    <p className="font-bold text-app-text">{selectedPedido.cliente.nombre}</p>
-                                    <p className="text-xs text-app-muted">{selectedPedido.cliente.direccion}</p>
-                                    <p className="text-xs text-app-muted">{selectedPedido.cliente.ciudad}</p>
+                                    <p className="font-bold text-app-text">{selectedPedido.cliente?.nombre}</p>
+                                    <p className="text-xs text-app-muted">{selectedPedido.cliente?.direccion}</p>
+                                    <p className="text-xs text-app-muted">{selectedPedido.cliente?.ciudad}</p>
                                     <div className="text-xs text-app-muted pt-1 flex items-center gap-2">
                                         <FontAwesomeIcon icon={faPhone} className="text-emerald-500 text-[10px]" />
-                                        <span>{selectedPedido.cliente.telefono}</span>
+                                        <span>{selectedPedido.cliente?.telefono}</span>
                                     </div>
                                 </div>
 

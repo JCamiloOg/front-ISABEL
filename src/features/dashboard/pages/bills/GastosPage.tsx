@@ -1,18 +1,17 @@
 import { useState, useEffect, useMemo } from "react";
-import { faPlus } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPlus, faReceipt } from "@fortawesome/free-solid-svg-icons";
 import { Button } from "../../../../shared/components/Button";
 import { Toast } from "../../../../shared/utils/alerts";
-import type { Almacen, Caja, DatosGasto, Gasto, TipoCaja } from "./types";
+import type { Almacen, Caja, DatosGasto, Gasto } from "./types";
 import {
   cargarAlmacen,
   formatoCOP,
   generarId,
   guardarAlmacen,
-  normalizar,
   siguienteCodigo,
 } from "./utils";
 import { CajaCard } from "./components/CajaCard";
-import { ModalCaja } from "./components/ModalCaja";
 import { ModalGasto } from "./components/ModalGasto";
 import { TablaGastos } from "./components/TablaGastos";
 
@@ -23,7 +22,6 @@ export function GastosPage() {
   const [conceptos, setConceptos] = useState<string[]>(almacenInicial.conceptos);
 
   const [modalGastoOpen, setModalGastoOpen] = useState(false);
-  const [modalCajaOpen, setModalCajaOpen] = useState(false);
 
   // Persistencia local automática
   useEffect(() => {
@@ -35,33 +33,6 @@ export function GastosPage() {
     () => cajas.reduce((suma, c) => suma + c.saldo, 0),
     [cajas],
   );
-
-  // Registrar una nueva caja / cuenta
-  const registrarCaja = (datos: { nombre: string; tipo: TipoCaja; saldo: number }) => {
-    if (cajas.some((c) => normalizar(c.nombre) === normalizar(datos.nombre))) {
-      Toast.fire({
-        icon: "error",
-        title: "Caja duplicada",
-        text: "Ya existe una caja con ese nombre.",
-      });
-      return;
-    }
-
-    const nueva: Caja = {
-      id: generarId("caja"),
-      nombre: datos.nombre,
-      tipo: datos.tipo,
-      saldo: datos.saldo,
-    };
-
-    setCajas((previas) => [...previas, nueva]);
-    setModalCajaOpen(false);
-    Toast.fire({
-      icon: "success",
-      title: "Caja registrada",
-      text: `${nueva.nombre} inició con ${formatoCOP(nueva.saldo)}.`,
-    });
-  };
 
   // Registrar nuevo concepto de gasto
   const agregarConcepto = (concepto: string) => {
@@ -116,33 +87,27 @@ export function GastosPage() {
   };
 
   return (
-    <div className="min-h-full bg-app-bg p-6 text-app-text">
+    <div className="min-h-full bg-app-bg pb-6 text-app-text">
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
         {/* Encabezado */}
-        <header className="flex flex-wrap items-end justify-between gap-4">
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-app-border pb-6">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-brand-royal dark:text-brand-sky">
-              Dashboard / Gastos
-            </p>
-            <h1 className="mt-1 text-3xl font-extrabold text-app-text tracking-tight">
-              Gestión de gastos
-            </h1>
-            <div className="mt-2.5 h-1 w-10 rounded-full bg-brand-sky" />
-            <p className="mt-3 max-w-2xl text-sm text-app-muted leading-relaxed">
-              Registra los egresos operativos del negocio y supervisa en tiempo real el saldo de tus
-              cuentas bancarias y cajas de efectivo.
-            </p>
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky">
+                <FontAwesomeIcon icon={faReceipt} className="text-lg" />
+              </span>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-app-text">
+                  Gestión de Gastos
+                </h1>
+                <p className="text-sm text-app-muted">
+                  Registra los egresos operativos del negocio y supervisa en tiempo real el saldo de tus cuentas bancarias y cajas
+                </p>
+              </div>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <Button
-              variant="outline"
-              size="md"
-              icon={faPlus}
-              onClick={() => setModalCajaOpen(true)}
-            >
-              Registrar caja
-            </Button>
             <Button
               variant="primary"
               size="md"
@@ -186,13 +151,6 @@ export function GastosPage() {
       </div>
 
       {/* Modales */}
-      <ModalCaja
-        isOpen={modalCajaOpen}
-        cajas={cajas}
-        onCerrar={() => setModalCajaOpen(false)}
-        onGuardar={registrarCaja}
-      />
-
       <ModalGasto
         isOpen={modalGastoOpen}
         cajas={cajas}
@@ -206,4 +164,3 @@ export function GastosPage() {
 }
 
 export default GastosPage;
-
