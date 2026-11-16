@@ -335,7 +335,6 @@ export default function PermissionsPage() {
                   <tr>
                     <th className="px-4 py-3 font-bold">ID Privilegio</th>
                     <th className="px-4 py-3 font-bold">Acción (Privilegio)</th>
-                    <th className="px-4 py-3 font-bold text-right">Disponibilidad</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-app-border">
@@ -351,12 +350,6 @@ export default function PermissionsPage() {
                           )}`}
                         >
                           {priv.nombre}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
-                          <FontAwesomeIcon icon={faCircleCheck} />
-                          Habilitado
                         </span>
                       </td>
                     </tr>
