@@ -9,8 +9,6 @@ import {
   faPenToSquare,
   faLayerGroup,
   faDollarSign,
-  faToggleOn,
-  faToggleOff,
   faWarehouse,
   faImage,
   faUpload,
@@ -22,6 +20,7 @@ import {
 
 import { MOCK_PRODUCTOS_PRISMA } from "../../../../data/products";
 import type { ProductoConRelaciones, Genero, Estado, ProductoColor } from "../../../../@types/Products";
+import { Switcher } from "../../components/Switcher";
 import { Button } from "../../../../shared/components/Button";
 import { Input } from "../../../../shared/components/Inputs/Input";
 import { Select } from "../../../../shared/components/Inputs/Select";
@@ -59,6 +58,23 @@ const COLOR_CATALOG: { idColor: number; nombre: string; hex: string }[] = [
   { idColor: 110, nombre: "Naranja", hex: "#ea580c" },
 ];
 
+// Catálogo de tallas sincronizado con la tabla 'tallas' en la base de datos
+export const TALLAS_DB_CATALOG = [
+  { idTalla: 1, numeroTalla: "34", tallaInternacional: "US 3.5" },
+  { idTalla: 2, numeroTalla: "35", tallaInternacional: "US 4.5" },
+  { idTalla: 3, numeroTalla: "36", tallaInternacional: "US 5" },
+  { idTalla: 4, numeroTalla: "37", tallaInternacional: "US 6" },
+  { idTalla: 5, numeroTalla: "38", tallaInternacional: "US 6.5" },
+  { idTalla: 6, numeroTalla: "39", tallaInternacional: "US 7.5" },
+  { idTalla: 7, numeroTalla: "40", tallaInternacional: "US 8" },
+  { idTalla: 8, numeroTalla: "41", tallaInternacional: "US 8.5" },
+  { idTalla: 9, numeroTalla: "42", tallaInternacional: "US 9" },
+  { idTalla: 10, numeroTalla: "43", tallaInternacional: "US 10" },
+  { idTalla: 11, numeroTalla: "44", tallaInternacional: "US 10.5" },
+  { idTalla: 12, numeroTalla: "45", tallaInternacional: "US 11.5" },
+  { idTalla: 13, numeroTalla: "46", tallaInternacional: "US 12" },
+];
+
 const getColorInfo = (idColor: number) => {
   return (
     COLOR_CATALOG.find((c) => c.idColor === idColor) || {
@@ -70,6 +86,8 @@ const getColorInfo = (idColor: number) => {
 };
 
 const getTallaInternacional = (numero: string): string => {
+  const match = TALLAS_DB_CATALOG.find((t) => t.numeroTalla === numero);
+  if (match) return match.tallaInternacional;
   const num = parseInt(numero, 10);
   if (isNaN(num)) return `Talla ${numero}`;
   const us = Math.max(4, (num - 32) * 0.8 + 4).toFixed(1).replace(".0", "");
@@ -445,10 +463,10 @@ export default function ProductsPage() {
     );
   };
 
-  // Manejo de Tallas en el Formulario
+  // Manejo de Tallas en el Formulario (provenientes de la tabla 'tallas' en DB)
   const handleAddTallaToActiveColor = () => {
     if (!newTallaNumero.trim()) {
-      Toast.fire({ icon: "warning", title: "Ingresa el número de talla" });
+      Toast.fire({ icon: "warning", title: "Selecciona una talla del catálogo" });
       return;
     }
 
@@ -464,7 +482,10 @@ export default function ProductsPage() {
       return;
     }
 
+    const tallaDb = TALLAS_DB_CATALOG.find((t) => t.numeroTalla === newTallaNumero.trim());
+
     const newVar: FormVarianteItem = {
+      idTalla: tallaDb?.idTalla,
       numeroTalla: newTallaNumero.trim(),
       stockActual: Number(newTallaStock) || 0,
       descuento: Number(newTallaDescuento) || 0,
@@ -479,8 +500,42 @@ export default function ProductsPage() {
 
     Toast.fire({
       icon: "success",
-      title: `Talla ${newTallaNumero} agregada`,
+      title: `Talla ${newTallaNumero} (${tallaDb?.tallaInternacional || ""}) agregada`,
     });
+  };
+
+  const handleUpdateTallaNumero = (varIdx: number, newNumero: string) => {
+    const activeColor = formColores[activeFormColorIndex];
+    if (!activeColor) return;
+
+    const exists = activeColor.variantes.some(
+      (v, idx) => idx !== varIdx && v.numeroTalla === newNumero
+    );
+    if (exists) {
+      Toast.fire({
+        icon: "warning",
+        title: `La talla ${newNumero} ya está registrada en este color`,
+      });
+      return;
+    }
+
+    const tallaDb = TALLAS_DB_CATALOG.find((t) => t.numeroTalla === newNumero);
+
+    setFormColores((prev) =>
+      prev.map((c, i) => {
+        if (i !== activeFormColorIndex) return c;
+        const updatedVars = c.variantes.map((v, idx) =>
+          idx === varIdx
+            ? {
+                ...v,
+                numeroTalla: newNumero,
+                idTalla: tallaDb?.idTalla || v.idTalla,
+              }
+            : v
+        );
+        return { ...c, variantes: updatedVars };
+      })
+    );
   };
 
   const handleRemoveTallaFromActiveColor = (varIdx: number) => {
@@ -825,23 +880,13 @@ export default function ProductsPage() {
       header: "Estado",
       align: "center",
       render: (prod) => (
-        <button
-          type="button"
-          onClick={() => handleToggleEstado(prod)}
-          title={`Hacer clic para cambiar a ${prod.estado === "Activo" ? "Inactivo" : "Activo"}`}
-          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold transition-all cursor-pointer ${
-            prod.estado === "Activo"
-              ? "bg-emerald-100/90 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-200"
-              : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-300"
-          }`}
-        >
-          <span
-            className={`h-1.5 w-1.5 rounded-full ${
-              prod.estado === "Activo" ? "bg-emerald-500" : "bg-slate-400"
-            }`}
+        <div className="flex items-center justify-center">
+          <Switcher
+            checked={prod.estado === "Activo"}
+            onChange={() => handleToggleEstado(prod)}
+            size="sm"
           />
-          {prod.estado}
-        </button>
+        </div>
       ),
     },
     {
@@ -1107,9 +1152,19 @@ export default function ProductsPage() {
         size="lg"
         footer={
           <div className="flex w-full items-center justify-between">
-            <span className="text-xs text-app-muted">
-              Estado General: <strong className="text-app-text">{detailProduct?.estado}</strong>
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-app-muted">Estado Principal:</span>
+              <Switcher
+                checked={detailProduct?.estado === "Activo"}
+                onChange={() => {
+                  if (!detailProduct) return;
+                  const nextEstado: Estado = detailProduct.estado === "Activo" ? "Inactivo" : "Activo";
+                  handleToggleEstado(detailProduct);
+                  setDetailProduct({ ...detailProduct, estado: nextEstado });
+                }}
+                size="sm"
+              />
+            </div>
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" onClick={() => setIsDetailOpen(false)}>
                 Cerrar
@@ -1193,28 +1248,11 @@ export default function ProductsPage() {
                     <span className="text-xs text-app-muted">
                       Estado de {getColorInfo(detailProduct.colores[selectedColorIndex].idColor).nombre}:
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => handleToggleColorEstadoInDetail(selectedColorIndex)}
-                      title={`Clic para cambiar estado del color a ${
-                        detailProduct.colores[selectedColorIndex].estado === "Activo" ? "Inactivo" : "Activo"
-                      }`}
-                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold transition-all cursor-pointer ${
-                        detailProduct.colores[selectedColorIndex].estado === "Activo"
-                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-200"
-                          : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-300"
-                      }`}
-                    >
-                      <FontAwesomeIcon
-                        icon={
-                          detailProduct.colores[selectedColorIndex].estado === "Activo"
-                            ? faToggleOn
-                            : faToggleOff
-                        }
-                        className="text-xs"
-                      />
-                      <span>{detailProduct.colores[selectedColorIndex].estado}</span>
-                    </button>
+                    <Switcher
+                      checked={detailProduct.colores[selectedColorIndex].estado === "Activo"}
+                      onChange={() => handleToggleColorEstadoInDetail(selectedColorIndex)}
+                      size="sm"
+                    />
                   </div>
                 )}
               </div>
@@ -1294,22 +1332,11 @@ export default function ProductsPage() {
                       </div>
 
                       <div className="text-right">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleTallaEstadoInDetail(selectedColorIndex, v.idVariante)}
-                          title={`Hacer clic para cambiar a ${v.estado === "Activo" ? "Inactivo" : "Activo"}`}
-                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
-                            v.estado === "Activo"
-                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-200"
-                              : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-300"
-                          }`}
-                        >
-                          <FontAwesomeIcon
-                            icon={v.estado === "Activo" ? faToggleOn : faToggleOff}
-                            className="text-xs"
-                          />
-                          <span>{v.estado}</span>
-                        </button>
+                        <Switcher
+                          checked={v.estado === "Activo"}
+                          onChange={() => handleToggleTallaEstadoInDetail(selectedColorIndex, v.idVariante)}
+                          size="sm"
+                        />
                       </div>
                     </div>
                   ))}
@@ -1419,31 +1446,28 @@ export default function ProductsPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Select
-              id="form-estado"
-              label="Estado Inicial del Calzado"
-              value={formEstado}
-              onChange={(e) => setFormEstado(e.target.value as Estado)}
-              options={[
-                { value: "Activo", label: "Activo (Disponible para venta)" },
-                { value: "Inactivo", label: "Inactivo (Oculto en catálogo)" },
-              ]}
-            />
+            <div className="flex flex-col justify-end">
+              <label className="text-xs font-semibold text-app-text mb-2">Estado Principal del Calzado</label>
+              <div className="rounded-xl border border-app-border bg-app-surface p-2.5">
+                <Switcher
+                  checked={formEstado === "Activo"}
+                  onChange={(checked) => setFormEstado(checked ? "Activo" : "Inactivo")}
+                  labels={{ active: "Activo (Disponible para venta)", inactive: "Inactivo (Oculto / Desactivado)" }}
+                  size="md"
+                />
+              </div>
+            </div>
 
             <div className="flex flex-col justify-end">
               <label className="text-xs font-semibold text-app-text mb-2">Visibilidad en Tienda Online</label>
-              <button
-                type="button"
-                onClick={() => setFormPublico((prev) => !prev)}
-                className={`flex items-center justify-between rounded-xl border p-2.5 text-xs font-bold transition-all cursor-pointer ${
-                  formPublico
-                    ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
-                    : "border-app-border bg-app-surface text-app-muted"
-                }`}
-              >
-                <span>{formPublico ? "Visible para clientes (Público)" : "Privado (Solo personal)"}</span>
-                <FontAwesomeIcon icon={formPublico ? faToggleOn : faToggleOff} className="text-base" />
-              </button>
+              <div className="rounded-xl border border-app-border bg-app-surface p-2.5">
+                <Switcher
+                  checked={formPublico}
+                  onChange={(checked) => setFormPublico(checked)}
+                  labels={{ active: "Visible para clientes (Público)", inactive: "Privado (Solo personal)" }}
+                  size="md"
+                />
+              </div>
             </div>
           </div>
 
@@ -1560,28 +1584,11 @@ export default function ProductsPage() {
 
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-app-muted">Estado del color:</span>
-                    <button
-                      type="button"
-                      onClick={() => handleToggleFormColorEstado(activeFormColorIndex)}
-                      title={`Clic para cambiar estado a ${
-                        formColores[activeFormColorIndex].estado === "Activo" ? "Inactivo" : "Activo"
-                      }`}
-                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold transition-all cursor-pointer ${
-                        formColores[activeFormColorIndex].estado === "Activo"
-                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-200"
-                          : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-300"
-                      }`}
-                    >
-                      <FontAwesomeIcon
-                        icon={
-                          formColores[activeFormColorIndex].estado === "Activo"
-                            ? faToggleOn
-                            : faToggleOff
-                        }
-                        className="text-xs"
-                      />
-                      <span>{formColores[activeFormColorIndex].estado}</span>
-                    </button>
+                    <Switcher
+                      checked={formColores[activeFormColorIndex].estado === "Activo"}
+                      onChange={() => handleToggleFormColorEstado(activeFormColorIndex)}
+                      size="sm"
+                    />
                   </div>
                 </div>
 
@@ -1652,17 +1659,24 @@ export default function ProductsPage() {
                     </span>
                   </div>
 
-                  {/* Barra rápida para agregar nueva talla */}
+                  {/* Barra rápida para agregar nueva talla mediante select de la tabla DB */}
                   <div className="flex flex-wrap items-end gap-2.5 p-3 rounded-xl bg-app-surface-alt border border-app-border">
-                    <div className="w-24">
-                      <label className="text-[11px] font-semibold text-app-muted block mb-1">Talla</label>
-                      <input
-                        type="text"
-                        placeholder="Ej. 40"
+                    <div className="w-44">
+                      <label className="text-[11px] font-semibold text-app-muted block mb-1">
+                        Talla (Tabla DB)
+                      </label>
+                      <select
                         value={newTallaNumero}
                         onChange={(e) => setNewTallaNumero(e.target.value)}
-                        className="h-8 w-full rounded-lg border border-app-border bg-app-surface px-2.5 text-xs font-bold text-app-text"
-                      />
+                        className="h-8 w-full rounded-lg border border-app-border bg-app-surface px-2 text-xs font-bold text-app-text focus:outline-hidden focus:border-brand-royal"
+                      >
+                        <option value="">Seleccionar talla...</option>
+                        {TALLAS_DB_CATALOG.map((t) => (
+                          <option key={t.idTalla} value={t.numeroTalla}>
+                            Talla {t.numeroTalla} · {t.tallaInternacional}
+                          </option>
+                        ))}
+                      </select>
                     </div>
 
                     <div className="w-24">
@@ -1715,10 +1729,17 @@ export default function ProductsPage() {
                           className="grid grid-cols-5 gap-2 p-2.5 items-center hover:bg-app-surface-alt/40 transition-colors"
                         >
                           <div className="flex items-center gap-1.5">
-                            <span className="flex h-6 w-8 items-center justify-center rounded bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky font-extrabold text-xs">
-                              {v.numeroTalla}
-                            </span>
-                            <span className="text-[10px] text-app-muted">({getTallaInternacional(v.numeroTalla)})</span>
+                            <select
+                              value={v.numeroTalla}
+                              onChange={(e) => handleUpdateTallaNumero(vIdx, e.target.value)}
+                              className="h-7 rounded border border-app-border bg-app-surface px-1 text-xs font-bold text-app-text focus:outline-hidden focus:border-brand-royal"
+                            >
+                              {TALLAS_DB_CATALOG.map((t) => (
+                                <option key={t.idTalla} value={t.numeroTalla}>
+                                  {t.numeroTalla} ({t.tallaInternacional})
+                                </option>
+                              ))}
+                            </select>
                           </div>
 
                           <div>
@@ -1743,20 +1764,12 @@ export default function ProductsPage() {
                             <span className="text-[10px] text-app-muted ml-1">%</span>
                           </div>
 
-                          <div className="text-center">
-                            <button
-                              type="button"
-                              onClick={() => handleToggleFormTallaEstado(vIdx)}
-                              title={`Clic para cambiar estado a ${v.estado === "Activo" ? "Inactivo" : "Activo"}`}
-                              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold transition-all cursor-pointer ${
-                                v.estado === "Activo"
-                                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 hover:bg-emerald-200"
-                                  : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-300"
-                              }`}
-                            >
-                              <FontAwesomeIcon icon={v.estado === "Activo" ? faToggleOn : faToggleOff} className="text-xs" />
-                              <span>{v.estado}</span>
-                            </button>
+                          <div className="flex justify-center">
+                            <Switcher
+                              checked={v.estado === "Activo"}
+                              onChange={() => handleToggleFormTallaEstado(vIdx)}
+                              size="sm"
+                            />
                           </div>
 
                           <div className="text-right">

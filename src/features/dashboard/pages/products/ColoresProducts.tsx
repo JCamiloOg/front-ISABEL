@@ -8,15 +8,13 @@ import {
   faEye,
   faPenToSquare,
   faLock,
-  faShoePrints,
   faCircleCheck,
   faCopy,
   faShieldHalved,
-  faBoxesStacked,
 } from "@fortawesome/free-solid-svg-icons";
 
 import type { Estado } from "../../../../@types/Products";
-import { MOCK_PRODUCTOS_PRISMA } from "../../../../data/products";
+import { Switcher } from "../../components/Switcher";
 import { Button } from "../../../../shared/components/Button";
 import { Input } from "../../../../shared/components/Inputs/Input";
 import { Select } from "../../../../shared/components/Inputs/Select";
@@ -29,14 +27,14 @@ export interface ColorItem {
   nombre: string;
   hex: string;
   estado: Estado;
-  descripcion: string;
+  descripcion?: string;
   fechaRegistro: string;
 }
 
-// Catálogo inicial de colores del ERP
+// Catálogo inicial de colores del ERP con IDs consecutivos (1, 2, 3...)
 const INITIAL_COLORS: ColorItem[] = [
   {
-    idColor: 101,
+    idColor: 1,
     nombre: "Negro Ébano",
     hex: "#1e293b",
     estado: "Activo",
@@ -44,7 +42,7 @@ const INITIAL_COLORS: ColorItem[] = [
     fechaRegistro: "2026-01-15",
   },
   {
-    idColor: 102,
+    idColor: 2,
     nombre: "Blanco Puro",
     hex: "#f8fafc",
     estado: "Activo",
@@ -52,7 +50,7 @@ const INITIAL_COLORS: ColorItem[] = [
     fechaRegistro: "2026-01-15",
   },
   {
-    idColor: 103,
+    idColor: 3,
     nombre: "Azul Royal",
     hex: "#1d4ed8",
     estado: "Activo",
@@ -60,7 +58,7 @@ const INITIAL_COLORS: ColorItem[] = [
     fechaRegistro: "2026-01-20",
   },
   {
-    idColor: 104,
+    idColor: 4,
     nombre: "Rojo Carmín",
     hex: "#dc2626",
     estado: "Activo",
@@ -68,7 +66,7 @@ const INITIAL_COLORS: ColorItem[] = [
     fechaRegistro: "2026-01-22",
   },
   {
-    idColor: 105,
+    idColor: 5,
     nombre: "Gris Oxford",
     hex: "#64748b",
     estado: "Activo",
@@ -76,7 +74,7 @@ const INITIAL_COLORS: ColorItem[] = [
     fechaRegistro: "2026-02-01",
   },
   {
-    idColor: 106,
+    idColor: 6,
     nombre: "Verde Militar",
     hex: "#15803d",
     estado: "Activo",
@@ -84,7 +82,7 @@ const INITIAL_COLORS: ColorItem[] = [
     fechaRegistro: "2026-02-05",
   },
   {
-    idColor: 107,
+    idColor: 7,
     nombre: "Beige / Arena",
     hex: "#d97706",
     estado: "Activo",
@@ -92,7 +90,7 @@ const INITIAL_COLORS: ColorItem[] = [
     fechaRegistro: "2026-02-10",
   },
   {
-    idColor: 108,
+    idColor: 8,
     nombre: "Amarillo Mostaza",
     hex: "#eab308",
     estado: "Inactivo",
@@ -100,7 +98,7 @@ const INITIAL_COLORS: ColorItem[] = [
     fechaRegistro: "2026-02-15",
   },
   {
-    idColor: 109,
+    idColor: 9,
     nombre: "Rosa Pastel",
     hex: "#ec4899",
     estado: "Activo",
@@ -108,7 +106,7 @@ const INITIAL_COLORS: ColorItem[] = [
     fechaRegistro: "2026-02-18",
   },
   {
-    idColor: 110,
+    idColor: 10,
     nombre: "Café Cuero",
     hex: "#78350f",
     estado: "Activo",
@@ -121,48 +119,31 @@ export default function ColoresProducts() {
   const [colores, setColores] = useState<ColorItem[]>(INITIAL_COLORS);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterEstado, setFilterEstado] = useState<string>("all");
-  const [filterAsociados, setFilterAsociados] = useState<string>("all");
 
   // Paginación y ordenación
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(8);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" }>({
-    key: "nombre",
+    key: "id",
     direction: "asc",
   });
 
-  // Modal Crear / Editar
+  // Modal Crear / Editar (solo color y nombre)
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingColor, setEditingColor] = useState<ColorItem | null>(null);
   const [formNombre, setFormNombre] = useState("");
   const [formHex, setFormHex] = useState("#2563eb");
-  const [formEstado, setFormEstado] = useState<Estado>("Activo");
-  const [formDescripcion, setFormDescripcion] = useState("");
 
   // Modal Ver Detalle
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [detailColor, setDetailColor] = useState<ColorItem | null>(null);
-
-  // Obtener calzados asociados a un color desde los datos de productos
-  const getShoesForColor = (idColor: number) => {
-    return MOCK_PRODUCTOS_PRISMA.filter((p) =>
-      p.colores.some((c) => c.idColor === idColor)
-    );
-  };
 
   // Métricas del catálogo de colores
   const metrics = useMemo(() => {
     const total = colores.length;
     const activos = colores.filter((c) => c.estado === "Activo").length;
     const inactivos = total - activos;
-
-    // Conteo total de asociaciones con zapatos
-    let totalZapatosConColor = 0;
-    colores.forEach((c) => {
-      totalZapatosConColor += getShoesForColor(c.idColor).length;
-    });
-
-    return { total, activos, inactivos, totalZapatosConColor };
+    return { total, activos, inactivos };
   }, [colores]);
 
   // Manejo de ordenamiento
@@ -190,31 +171,22 @@ export default function ColoresProducts() {
           c.idColor.toString().includes(q);
 
         const matchesEstado = filterEstado === "all" || c.estado === filterEstado;
-
-        const shoesCount = getShoesForColor(c.idColor).length;
-        const matchesAsociados =
-          filterAsociados === "all" ||
-          (filterAsociados === "with_shoes" && shoesCount > 0) ||
-          (filterAsociados === "without_shoes" && shoesCount === 0);
-
-        return matchesQuery && matchesEstado && matchesAsociados;
+        return matchesQuery && matchesEstado;
       })
       .sort((a, b) => {
         const factor = sortConfig.direction === "asc" ? 1 : -1;
+        if (sortConfig.key === "id") {
+          return (a.idColor - b.idColor) * factor;
+        }
         if (sortConfig.key === "nombre") {
           return a.nombre.localeCompare(b.nombre) * factor;
         }
         if (sortConfig.key === "hex") {
           return a.hex.localeCompare(b.hex) * factor;
         }
-        if (sortConfig.key === "asociados") {
-          const countA = getShoesForColor(a.idColor).length;
-          const countB = getShoesForColor(b.idColor).length;
-          return (countA - countB) * factor;
-        }
         return 0;
       });
-  }, [colores, searchQuery, filterEstado, filterAsociados, sortConfig]);
+  }, [colores, searchQuery, filterEstado, sortConfig]);
 
   // Paginación
   const totalPages = Math.ceil(filteredColores.length / itemsPerPage) || 1;
@@ -226,12 +198,11 @@ export default function ColoresProducts() {
   const handleResetFilters = () => {
     setSearchQuery("");
     setFilterEstado("all");
-    setFilterAsociados("all");
-    setSortConfig({ key: "nombre", direction: "asc" });
+    setSortConfig({ key: "id", direction: "asc" });
     setCurrentPage(1);
   };
 
-  // Toggle directo de estado del color
+  // Toggle directo de estado del color mediante switch
   const handleToggleEstado = (color: ColorItem) => {
     const nextEstado: Estado = color.estado === "Activo" ? "Inactivo" : "Activo";
     setColores((prev) =>
@@ -246,23 +217,19 @@ export default function ColoresProducts() {
     });
   };
 
-  // Abrir modal de creación
+  // Abrir modal de creación (solo color y nombre)
   const handleOpenCreateModal = () => {
     setEditingColor(null);
     setFormNombre("");
     setFormHex("#2563eb");
-    setFormEstado("Activo");
-    setFormDescripcion("");
     setIsFormOpen(true);
   };
 
-  // Abrir modal de edición
+  // Abrir modal de edición (solo color y nombre)
   const handleOpenEditModal = (color: ColorItem) => {
     setEditingColor(color);
     setFormNombre(color.nombre);
     setFormHex(color.hex);
-    setFormEstado(color.estado);
-    setFormDescripcion(color.descripcion);
     setIsFormOpen(true);
   };
 
@@ -302,8 +269,6 @@ export default function ColoresProducts() {
                 ...c,
                 nombre: formNombre.trim(),
                 hex: formHex.trim().toLowerCase(),
-                estado: formEstado,
-                descripcion: formDescripcion.trim(),
               }
             : c
         )
@@ -325,22 +290,22 @@ export default function ColoresProducts() {
         return;
       }
 
+      // Generar nuevo ID correlativo desde 1, 2, 3...
       const newId =
-        colores.length > 0 ? Math.max(...colores.map((c) => c.idColor)) + 1 : 101;
+        colores.length > 0 ? Math.max(...colores.map((c) => c.idColor)) + 1 : 1;
 
       const newColor: ColorItem = {
         idColor: newId,
         nombre: formNombre.trim(),
         hex: formHex.trim().toLowerCase(),
-        estado: formEstado,
-        descripcion: formDescripcion.trim() || "Color registrado en catálogo de calzado",
+        estado: "Activo",
         fechaRegistro: new Date().toISOString().split("T")[0],
       };
 
-      setColores((prev) => [newColor, ...prev]);
+      setColores((prev) => [...prev, newColor]);
       Toast.fire({
         icon: "success",
-        title: `Color "${formNombre}" agregado con éxito`,
+        title: `Color "${formNombre}" agregado con ID #${newId}`,
       });
     }
 
@@ -359,6 +324,18 @@ export default function ColoresProducts() {
   // Columnas para la tabla global Table
   const tableColumns: TableColumn<ColorItem>[] = [
     {
+      key: "id",
+      header: "ID",
+      width: "w-20",
+      align: "center",
+      sortable: true,
+      render: (color) => (
+        <span className="font-mono text-xs font-black text-slate-600 dark:text-slate-300">
+          #{color.idColor}
+        </span>
+      ),
+    },
+    {
       key: "nombre",
       header: "Color / Muestra",
       sortable: true,
@@ -376,9 +353,6 @@ export default function ColoresProducts() {
               title={color.nombre}
             >
               {color.nombre}
-            </p>
-            <p className="text-xs text-app-muted truncate max-w-xs">
-              {color.descripcion}
             </p>
           </div>
         </div>
@@ -407,53 +381,17 @@ export default function ColoresProducts() {
       ),
     },
     {
-      key: "asociados",
-      header: "Calzados Asociados",
-      sortable: true,
-      align: "center",
-      render: (color) => {
-        const shoes = getShoesForColor(color.idColor);
-        return (
-          <button
-            type="button"
-            onClick={() => openDetail(color)}
-            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold border transition-all cursor-pointer ${
-              shoes.length > 0
-                ? "bg-brand-royal/10 text-brand-royal border-brand-royal/20 dark:bg-brand-sky/15 dark:text-brand-sky dark:border-brand-sky/20 hover:bg-brand-royal/20"
-                : "bg-app-surface-alt text-app-muted border-app-border"
-            }`}
-            title="Hacer clic para ver modelos de zapatos asociados"
-          >
-            <FontAwesomeIcon icon={faShoePrints} className="text-xs" />
-            <span>
-              {shoes.length} {shoes.length === 1 ? "modelo" : "modelos"}
-            </span>
-          </button>
-        );
-      },
-    },
-    {
       key: "estado",
       header: "Estado",
       align: "center",
       render: (color) => (
-        <button
-          type="button"
-          onClick={() => handleToggleEstado(color)}
-          title={`Hacer clic para cambiar a ${color.estado === "Activo" ? "Inactivo" : "Activo"}`}
-          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold transition-all cursor-pointer ${
-            color.estado === "Activo"
-              ? "bg-emerald-100/90 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-200"
-              : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-300"
-          }`}
-        >
-          <span
-            className={`h-1.5 w-1.5 rounded-full ${
-              color.estado === "Activo" ? "bg-emerald-500" : "bg-slate-400"
-            }`}
+        <div className="flex items-center justify-center">
+          <Switcher
+            checked={color.estado === "Activo"}
+            onChange={() => handleToggleEstado(color)}
+            size="sm"
           />
-          {color.estado}
-        </button>
+        </div>
       ),
     },
     {
@@ -467,7 +405,7 @@ export default function ColoresProducts() {
           <button
             type="button"
             onClick={() => openDetail(color)}
-            title="Ver detalles del color y calzado asociado"
+            title="Ver detalles del color"
             className="flex h-8 w-8 items-center justify-center rounded-lg border border-app-border text-app-muted hover:border-brand-royal hover:text-brand-royal dark:hover:border-brand-sky dark:hover:text-brand-sky hover:bg-brand-royal/5 transition-all cursor-pointer"
           >
             <FontAwesomeIcon icon={faEye} className="text-xs" />
@@ -482,10 +420,10 @@ export default function ColoresProducts() {
             <FontAwesomeIcon icon={faPenToSquare} className="text-xs" />
           </button>
 
-          {/* Acción de eliminación bloqueada por zapatos asociados */}
+          {/* Acción de eliminación bloqueada */}
           <div
             className="flex h-8 w-8 items-center justify-center rounded-lg border border-app-border/40 text-app-muted/40 bg-app-surface-alt cursor-not-allowed"
-            title="No se puede eliminar: el color tiene zapatos o existencias asociadas"
+            title="No se puede eliminar: el color forma parte del catálogo protegido de calzado"
           >
             <FontAwesomeIcon icon={faLock} className="text-xs" />
           </div>
@@ -570,24 +508,24 @@ export default function ColoresProducts() {
             <span className="text-xs text-app-muted">disponibles</span>
           </div>
           <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-            Listos para nuevos calzados
+            Disponibles para calzado
           </p>
         </div>
 
         <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-app-muted">Calzados Vinculados</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-brand-royal dark:bg-brand-royal/20 dark:text-brand-sky">
-              <FontAwesomeIcon icon={faShoePrints} className="text-xs" />
+            <p className="text-xs font-semibold text-app-muted">Colores Inactivos</p>
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+              <FontAwesomeIcon icon={faLock} className="text-xs" />
             </span>
           </div>
           <div className="mt-2.5 flex items-baseline gap-2">
             <span className="text-3xl font-black tracking-tight text-app-text">
-              {metrics.totalZapatosConColor}
+              {metrics.inactivos}
             </span>
-            <span className="text-xs text-app-muted">asociaciones</span>
+            <span className="text-xs text-app-muted">pausados</span>
           </div>
-          <p className="mt-1 text-xs text-app-muted">Modelos activos en stock</p>
+          <p className="mt-1 text-xs text-app-muted">Fuera de temporada</p>
         </div>
 
         <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40">
@@ -609,24 +547,14 @@ export default function ColoresProducts() {
         </div>
       </div>
 
-      {/* Banner de información de integridad */}
-      <div className="rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/30 p-4 text-xs text-amber-900 dark:text-amber-200 flex items-center gap-3">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-200/80 dark:bg-amber-800/60 text-amber-800 dark:text-amber-200">
-          <FontAwesomeIcon icon={faLock} />
-        </span>
-        <p>
-          <strong>Política de integridad del inventario:</strong> Los colores no pueden eliminarse del sistema porque tienen modelos de zapatos, variantes de tallas y ventas asociadas. Si no deseas utilizar un color en nuevas producciones, cámbialo a estado <strong>Inactivo</strong>.
-        </p>
-      </div>
-
       {/* Barra de Filtros y Búsqueda */}
       <div className="rounded-2xl border border-app-border bg-app-surface p-4 sm:p-5 shadow-xs space-y-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="w-full lg:max-w-md">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="w-full sm:max-w-md">
             <Input
               id="search-colors"
               type="search"
-              placeholder="Buscar por nombre de color o código HEX..."
+              placeholder="Buscar por ID, nombre de color o código HEX..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -637,7 +565,7 @@ export default function ColoresProducts() {
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div className="w-full sm:w-56">
             <Select
               id="filter-color-estado"
               value={filterEstado}
@@ -652,21 +580,6 @@ export default function ColoresProducts() {
               ]}
               size="sm"
             />
-
-            <Select
-              id="filter-color-asociados"
-              value={filterAsociados}
-              onChange={(e) => {
-                setFilterAsociados(e.target.value);
-                setCurrentPage(1);
-              }}
-              options={[
-                { value: "all", label: "Zapatos: Todos" },
-                { value: "with_shoes", label: "Con calzado asociado" },
-                { value: "without_shoes", label: "Sin calzado asociado" },
-              ]}
-              size="sm"
-            />
           </div>
         </div>
 
@@ -676,7 +589,7 @@ export default function ColoresProducts() {
             Mostrando <strong>{filteredColores.length}</strong> de{" "}
             <strong>{colores.length}</strong> colores registrados
           </span>
-          {(searchQuery || filterEstado !== "all" || filterAsociados !== "all") && (
+          {(searchQuery || filterEstado !== "all") && (
             <button
               onClick={handleResetFilters}
               className="font-semibold text-brand-royal dark:text-brand-sky hover:underline cursor-pointer"
@@ -710,12 +623,12 @@ export default function ColoresProducts() {
         emptyDescription="Prueba modificando la búsqueda o los filtros de estado."
       />
 
-      {/* MODAL CREAR / EDITAR COLOR */}
+      {/* MODAL CREAR / EDITAR COLOR (SOLO NOMBRE Y COLOR) */}
       <Modal
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        title={editingColor ? "Editar Color de Calzado" : "Registrar Nuevo Color"}
-        description="Ingresa el nombre, código hexadecimal y estado para las variantes de productos"
+        title={editingColor ? "Editar Color" : "Registrar Nuevo Color"}
+        description="Ingresa el nombre y selecciona la tonalidad del color"
         size="md"
         footer={
           <div className="flex w-full items-center justify-end gap-2">
@@ -732,7 +645,7 @@ export default function ColoresProducts() {
           <Input
             id="form-color-nombre"
             label="Nombre del Color"
-            placeholder="Ej. Azul Índigo, Verde Olivo, Terracota"
+            placeholder="Ej. Azul Índigo, Verde Olivo, Blanco Puro"
             value={formNombre}
             onChange={(e) => setFormNombre(e.target.value)}
             required
@@ -741,7 +654,7 @@ export default function ColoresProducts() {
           {/* Selector de color HEX interactivo */}
           <div className="space-y-2">
             <label className="text-xs font-bold text-app-text block">
-              Tonalidad / Código Hexadecimal
+              Color / Tonalidad
             </label>
             <div className="flex items-center gap-3 p-3 rounded-xl border border-app-border bg-app-surface-alt">
               {/* Color picker nativo */}
@@ -775,50 +688,31 @@ export default function ColoresProducts() {
               </div>
             </div>
             <p className="text-[11px] text-app-muted">
-              Puedes hacer clic en el selector visual de color o escribir el código hexadecimal manualmente.
+              Haz clic en el cuadro de color para elegir con el selector visual o escribe el código HEX.
             </p>
-          </div>
-
-          <Select
-            id="form-color-estado"
-            label="Estado Inicial"
-            value={formEstado}
-            onChange={(e) => setFormEstado(e.target.value as Estado)}
-            options={[
-              { value: "Activo", label: "Activo (Disponible para nuevos calzados)" },
-              { value: "Inactivo", label: "Inactivo (Oculto en catálogo)" },
-            ]}
-          />
-
-          <Input
-            id="form-color-desc"
-            label="Descripción / Uso sugerido (Opcional)"
-            placeholder="Ej. Tono oscuro para líneas de running y calzado casual"
-            value={formDescripcion}
-            onChange={(e) => setFormDescripcion(e.target.value)}
-          />
-
-          <div className="rounded-xl border border-app-border bg-app-surface-alt p-3 text-xs text-app-muted flex items-start gap-2.5">
-            <FontAwesomeIcon icon={faLock} className="text-xs text-brand-royal dark:text-brand-sky mt-0.5" />
-            <span>
-              <strong>Nota de seguridad:</strong> Una vez registrado, este color quedará protegido y no podrá eliminarse ya que formará parte del historial de calzado.
-            </span>
           </div>
         </form>
       </Modal>
 
-      {/* MODAL DETALLE DE COLOR Y CALZADO ASOCIADO */}
+      {/* MODAL DETALLE DE COLOR */}
       <Modal
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
         title={detailColor?.nombre || "Detalle de Color"}
         description={`Código: ${detailColor?.hex.toUpperCase() || ""} · ID #${detailColor?.idColor}`}
-        size="lg"
+        size="md"
         footer={
           <div className="flex w-full items-center justify-between">
-            <span className="text-xs text-app-muted">
-              Estado: <strong className="text-app-text">{detailColor?.estado}</strong>
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-app-muted">Estado:</span>
+              <Switcher
+                checked={detailColor?.estado === "Activo"}
+                onChange={() => {
+                  if (detailColor) handleToggleEstado(detailColor);
+                }}
+                size="sm"
+              />
+            </div>
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" onClick={() => setIsDetailOpen(false)}>
                 Cerrar
@@ -841,7 +735,7 @@ export default function ColoresProducts() {
         }
       >
         {detailColor && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Banner visual del color */}
             <div
               className="rounded-2xl p-6 shadow-sm border border-black/10 flex flex-col sm:flex-row items-center justify-between gap-4"
@@ -852,7 +746,7 @@ export default function ColoresProducts() {
             >
               <div>
                 <span className="text-[11px] font-bold uppercase tracking-wider opacity-80">
-                  Tonalidad de Calzado
+                  ID #{detailColor.idColor}
                 </span>
                 <h3 className="text-2xl font-black">{detailColor.nombre}</h3>
                 <p className="text-xs font-mono font-bold mt-1 opacity-90">
@@ -863,86 +757,20 @@ export default function ColoresProducts() {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => handleToggleEstado(detailColor)}
-                  className="rounded-xl px-4 py-2 text-xs font-bold bg-white/90 text-slate-900 shadow hover:bg-white transition-all cursor-pointer"
+                  onClick={() => handleCopyHex(detailColor.hex)}
+                  className="rounded-xl px-4 py-2 text-xs font-bold bg-white/90 text-slate-900 shadow hover:bg-white transition-all cursor-pointer flex items-center gap-1.5"
                 >
-                  Cambiar a {detailColor.estado === "Activo" ? "Inactivo" : "Activo"}
+                  <FontAwesomeIcon icon={faCopy} />
+                  Copiar HEX
                 </button>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="rounded-xl border border-app-border bg-app-surface-alt p-3.5 space-y-1">
-                <span className="text-[11px] font-semibold text-app-muted block">Descripción</span>
-                <p className="text-xs font-medium text-app-text">
-                  {detailColor.descripcion || "Sin descripción adicional registrada."}
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-app-border bg-app-surface-alt p-3.5 space-y-1">
-                <span className="text-[11px] font-semibold text-app-muted block">Fecha de Registro</span>
-                <p className="text-xs font-medium text-app-text">
-                  {detailColor.fechaRegistro || "2026-01-15"}
-                </p>
-              </div>
-            </div>
-
-            {/* Listado de Calzados Asociados */}
-            <div className="space-y-3 pt-2 border-t border-app-border">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold text-app-text uppercase tracking-wider flex items-center gap-2">
-                  <FontAwesomeIcon icon={faShoePrints} className="text-brand-royal dark:text-brand-sky" />
-                  Modelos de Calzado Asociados ({getShoesForColor(detailColor.idColor).length})
-                </h4>
-                <span className="text-xs text-app-muted">
-                  Vinculación en inventario
-                </span>
-              </div>
-
-              {getShoesForColor(detailColor.idColor).length > 0 ? (
-                <div className="divide-y divide-app-border rounded-xl border border-app-border bg-app-surface overflow-hidden">
-                  {getShoesForColor(detailColor.idColor).map((prod) => {
-                    const colorVariant = prod.colores.find((c) => c.idColor === detailColor.idColor);
-                    const prodImg =
-                      colorVariant?.imagenes?.[0] ||
-                      prod.colores?.[0]?.imagenes?.[0] ||
-                      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=200&q=80";
-
-                    return (
-                      <div
-                        key={prod.idProducto}
-                        className="p-3 flex items-center justify-between hover:bg-app-surface-alt/50 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={prodImg}
-                            alt={prod.nombre}
-                            className="h-10 w-10 rounded-lg object-cover border border-app-border"
-                          />
-                          <div>
-                            <p className="font-bold text-xs text-app-text">{prod.nombre}</p>
-                            <span className="text-[11px] text-app-muted font-mono">{prod.sku}</span>
-                          </div>
-                        </div>
-
-                        <div className="text-right">
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-app-muted">
-                            <FontAwesomeIcon icon={faBoxesStacked} className="text-[10px]" />
-                            {colorVariant?.variantes.length || 0} tallas en este color
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="rounded-xl border border-dashed border-app-border p-6 text-center text-app-muted">
-                  <FontAwesomeIcon icon={faShoePrints} className="text-2xl mb-2 text-app-muted/50" />
-                  <p className="text-xs">
-                    Este color no está asociado a ningún modelo de calzado actualmente.
-                  </p>
-                </div>
-              )}
+            <div className="rounded-xl border border-app-border bg-app-surface-alt p-3.5 space-y-1">
+              <span className="text-[11px] font-semibold text-app-muted block">Fecha de Registro</span>
+              <p className="text-xs font-medium text-app-text">
+                {detailColor.fechaRegistro || "2026-01-15"}
+              </p>
             </div>
           </div>
         )}
