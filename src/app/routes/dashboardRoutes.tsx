@@ -11,6 +11,8 @@ import ClientesPage from "../../features/dashboard/pages/clients/ClientsPage";
 import DevolucionesPage from "../../features/dashboard/pages/Devoluciones";
 import BoxesPage from "../../features/dashboard/pages/Boxes/BoxesPage";
 import UsersPage from "../../features/dashboard/pages/users/UsersPage";
+import RolesPage from "../../features/dashboard/pages/Roles/RolesPage";
+import PermissionsPage from "../../features/dashboard/pages/Permissions/PermissionsPage";
 
 export const dashboardLayout = createRoute({
   getParentRoute: () => rootRoute,
@@ -128,13 +130,13 @@ export const usersRoute = createRoute({
 export const rolesRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/roles",
-  component: () => <></>,
+  component: () => <RolesPage/>,
 });
 
 export const permissionsRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/permissions",
-  component: () => <></>,
+  component: () => <PermissionsPage/>,
 });
 
 export const dashboardRoutes = dashboardLayout.addChildren([
