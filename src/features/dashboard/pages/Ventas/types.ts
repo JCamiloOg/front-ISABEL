@@ -58,6 +58,7 @@ export interface Venta {
   subtotal: number;
   descuento: number;
   iva: number;
+  porcentajeIva?: number;
   total: number;
   metodoPago?: MetodoPagoVenta;
   comprobanteUrl?: string;

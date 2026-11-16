@@ -198,29 +198,34 @@ export default function BoxesPage() {
 
   return (
     <div className="space-y-8 animate-fadeIn">
-      {/* ─── Encabezado ─── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* ─── Encabezado Principal y Acciones ─── */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-app-border pb-6">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-sky/15 text-brand-royal dark:text-brand-sky border border-brand-sky/30 text-xs font-bold tracking-wider uppercase mb-2">
-            <FontAwesomeIcon icon={faVault} className="text-xs" />
-            <span>Tesorería y Liquidez</span>
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky">
+              <FontAwesomeIcon icon={faVault} className="text-lg" />
+            </span>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-app-text">
+                Gestión de Cajas Menores y Cuentas
+              </h1>
+              <p className="text-sm text-app-muted">
+                Supervisa los fondos disponibles en efectivo y cuentas bancarias, controla saldos y activa o pausa cajas operativas
+              </p>
+            </div>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-app-text tracking-tight">
-            Gestión de Cajas Menores y Cuentas
-          </h1>
-          <p className="text-sm text-app-muted mt-1">
-            Supervisa los fondos disponibles en efectivo y cuentas bancarias, controla saldos y activa o pausa cajas operativas.
-          </p>
         </div>
 
-        <Button
-          variant="primary"
-          icon={faPlus}
-          onClick={() => setIsCreateOpen(true)}
-          className="shadow-md shadow-brand-royal/20"
-        >
-          Añadir Nueva Caja
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="primary"
+            icon={faPlus}
+            onClick={() => setIsCreateOpen(true)}
+            className="shadow-md shadow-brand-royal/20"
+          >
+            Añadir Nueva Caja
+          </Button>
+        </div>
       </div>
 
       {/* ─── Métricas de Fondos ─── */}

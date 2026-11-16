@@ -18,14 +18,12 @@ interface ModalDetalleVentaProps {
   isOpen: boolean;
   onClose: () => void;
   venta: Venta | null;
-  onAbrirAbonar?: (venta: Venta) => void;
 }
 
 export function ModalDetalleVenta({
   isOpen,
   onClose,
   venta,
-  onAbrirAbonar,
 }: ModalDetalleVentaProps) {
   if (!venta) return null;
 
@@ -35,7 +33,7 @@ export function ModalDetalleVenta({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Detalle de Venta: ${venta.codigoVenta}`}
+      title={`Detalle de Venta — ID #${venta.codigoVenta.replace(/^VTA-\d{4}-/, "")} (${venta.codigoVenta})`}
       description={`Registrada el ${formatDate(venta.fecha)} por ${venta.usuarioResponsable}`}
       icon={faReceipt}
       size="xl"
@@ -55,19 +53,6 @@ export function ModalDetalleVenta({
           </div>
 
           <div className="flex items-center gap-2.5">
-            {esCredito && venta.saldoPendiente > 0 && onAbrirAbonar && (
-              <Button
-                variant="primary"
-                size="md"
-                icon={faHandHoldingDollar}
-                onClick={() => {
-                  onClose();
-                  onAbrirAbonar(venta);
-                }}
-              >
-                Registrar Abono
-              </Button>
-            )}
             <Button variant="outline" size="md" onClick={onClose}>
               Cerrar
             </Button>
@@ -174,7 +159,7 @@ export function ModalDetalleVenta({
               </div>
             )}
             <div className="flex justify-between w-64 text-app-muted">
-              <span>IVA (19%):</span>
+              <span>IVA ({venta.porcentajeIva ?? 19}%):</span>
               <span className="font-semibold text-app-text">{formatCOP(venta.iva)}</span>
             </div>
             <div className="flex justify-between w-64 border-t border-brand-sky/20 pt-1.5 text-sm font-extrabold text-brand-royal dark:text-brand-sky">

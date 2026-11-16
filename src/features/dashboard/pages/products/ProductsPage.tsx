@@ -390,14 +390,14 @@ export default function ProductsPage() {
       loadedColores.length > 0
         ? loadedColores
         : [
-            {
-              idColor: 101,
-              nombreColor: "Negro",
-              imagenes: [],
-              estado: "Activo",
-              variantes: [{ numeroTalla: "40", stockActual: 10, descuento: 0, estado: "Activo" }],
-            },
-          ]
+          {
+            idColor: 101,
+            nombreColor: "Negro",
+            imagenes: [],
+            estado: "Activo",
+            variantes: [{ numeroTalla: "40", stockActual: 10, descuento: 0, estado: "Activo" }],
+          },
+        ]
     );
     setActiveFormColorIndex(0);
     setNewColorSelectId(101);
@@ -844,9 +844,8 @@ export default function ProductsPage() {
         return (
           <div className="flex flex-col items-center">
             <span
-              className={`font-extrabold text-sm ${
-                isLow ? "text-rose-600 dark:text-rose-400" : "text-app-text"
-              }`}
+              className={`font-extrabold text-sm ${isLow ? "text-rose-600 dark:text-rose-400" : "text-app-text"
+                }`}
             >
               {totalStockProd} pares
             </span>
@@ -1267,11 +1266,10 @@ export default function ProductsPage() {
                       key={color.idProductoColor}
                       type="button"
                       onClick={() => setSelectedColorIndex(idx)}
-                      className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold transition-all cursor-pointer border ${
-                        isSelected
-                          ? "border-brand-royal bg-brand-royal/10 text-brand-royal dark:border-brand-sky dark:bg-brand-sky/15 dark:text-brand-sky shadow-xs"
-                          : "border-app-border bg-app-surface text-app-muted hover:border-brand-royal/30"
-                      } ${color.estado === "Inactivo" ? "opacity-75" : ""}`}
+                      className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold transition-all cursor-pointer border ${isSelected
+                        ? "border-brand-royal bg-brand-royal/10 text-brand-royal dark:border-brand-sky dark:bg-brand-sky/15 dark:text-brand-sky shadow-xs"
+                        : "border-app-border bg-app-surface text-app-muted hover:border-brand-royal/30"
+                        } ${color.estado === "Inactivo" ? "opacity-75" : ""}`}
                     >
                       <span
                         className="h-3 w-3 rounded-full border border-white shadow-xs shrink-0"
@@ -1282,11 +1280,10 @@ export default function ProductsPage() {
                         ({color.variantes.length} {color.variantes.length === 1 ? "talla" : "tallas"})
                       </span>
                       <span
-                        className={`ml-1 text-[9px] px-1.5 py-0.5 rounded-full ${
-                          color.estado === "Activo"
-                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
-                            : "bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-                        }`}
+                        className={`ml-1 text-[9px] px-1.5 py-0.5 rounded-full ${color.estado === "Activo"
+                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
+                          : "bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                          }`}
                       >
                         {color.estado}
                       </span>
@@ -1516,11 +1513,10 @@ export default function ProductsPage() {
                 return (
                   <div
                     key={idx}
-                    className={`flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-bold transition-all ${
-                      isActive
-                        ? "border-brand-royal bg-brand-royal/10 text-brand-royal dark:border-brand-sky dark:bg-brand-sky/15 dark:text-brand-sky shadow-xs"
-                        : "border-app-border bg-app-surface text-app-muted hover:border-brand-royal/30"
-                    }`}
+                    className={`flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-bold transition-all ${isActive
+                      ? "border-brand-royal bg-brand-royal/10 text-brand-royal dark:border-brand-sky dark:bg-brand-sky/15 dark:text-brand-sky shadow-xs"
+                      : "border-app-border bg-app-surface text-app-muted hover:border-brand-royal/30"
+                      }`}
                   >
                     <button
                       type="button"
@@ -1542,11 +1538,10 @@ export default function ProductsPage() {
                       type="button"
                       onClick={() => handleToggleFormColorEstado(idx)}
                       title={`Color ${colorItem.estado}. Clic para cambiar.`}
-                      className={`text-[10px] px-2 py-0.5 rounded-full cursor-pointer transition-all ${
-                        colorItem.estado === "Activo"
-                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-200"
-                          : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-300"
-                      }`}
+                      className={`text-[10px] px-2 py-0.5 rounded-full cursor-pointer transition-all ${colorItem.estado === "Activo"
+                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-200"
+                        : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-300"
+                        }`}
                     >
                       {colorItem.estado}
                     </button>

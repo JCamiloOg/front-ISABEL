@@ -1,5 +1,4 @@
 import type { DetalleVentaItem, Venta } from "./types";
-import { IVA_RATE } from "./constants";
 
 export function formatCOP(val: number): string {
   return new Intl.NumberFormat("es-CO", {
@@ -43,11 +42,16 @@ export function generarCodigoVenta(ventas: Venta[]): string {
   return `VTA-${anio}-${String(maximo + 1).padStart(4, "0")}`;
 }
 
-export function calcularTotalesVenta(items: DetalleVentaItem[], descuento: number = 0) {
+export function calcularTotalesVenta(
+  items: DetalleVentaItem[],
+  descuento: number = 0,
+  porcentajeIva: number = 19
+) {
   const subtotal = items.reduce((acc, it) => acc + it.subtotal, 0);
   const descuentoAplicado = Math.min(Math.max(0, descuento), subtotal);
   const baseGravable = Math.max(0, subtotal - descuentoAplicado);
-  const iva = Math.round(baseGravable * IVA_RATE);
+  const tasaIva = Math.max(0, porcentajeIva) / 100;
+  const iva = Math.round(baseGravable * tasaIva);
   const total = baseGravable + iva;
 
   return {

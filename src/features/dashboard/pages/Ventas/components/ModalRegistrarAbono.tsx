@@ -153,7 +153,7 @@ export function ModalRegistrarAbono({
       isOpen={isOpen}
       onClose={handleReset}
       title="Registrar Abono a Crédito"
-      description={`Abono para la venta ${venta.codigoVenta} a nombre de ${venta.cliente.nombre}`}
+      description={`Abono para la venta con consecutivo ${venta.codigoVenta} a nombre de ${venta.cliente.nombre}`}
       icon={faHandHoldingDollar}
       size="md"
       footer={

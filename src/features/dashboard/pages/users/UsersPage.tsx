@@ -3,6 +3,7 @@ import type { Usuario, UsuarioFormData } from "../../../../@types/Users";
 import { initialUsuarios, TIPOS_DOCUMENTO, ROLES_SISTEMA } from "../../../../data/mockUsers";
 import { UserModal } from "./components/UserModal";
 import { UserDetailModal } from "./components/UserDetailModal";
+import Switcher from "../../components/Switcher";
 import Input from "../../../../shared/components/Inputs/Input";
 import Select from "../../../../shared/components/Inputs/Select";
 import Button from "../../../../shared/components/Button";
@@ -14,15 +15,12 @@ import {
   faUserPlus,
   faEye,
   faPenToSquare,
-  faToggleOn,
-  faToggleOff,
   faTrash,
   faUsers,
   faFilter,
   faUserShield,
   faBoxesPacking,
   faCheckCircle,
-  faShieldHalved,
 } from "@fortawesome/free-solid-svg-icons";
 
 export const UsersPage: React.FC = () => {
@@ -94,11 +92,11 @@ export const UsersPage: React.FC = () => {
         prev.map((u) =>
           u.id_usuario === selectedUser.id_usuario
             ? {
-                ...u,
-                ...formData,
-                tipo_documento: tipoDocObj,
-                rol: rolObj,
-              }
+              ...u,
+              ...formData,
+              tipo_documento: tipoDocObj,
+              rol: rolObj,
+            }
             : u
         )
       );
@@ -140,11 +138,10 @@ export const UsersPage: React.FC = () => {
           <p>Usuario: <strong class="text-[#0E2347] font-bold">${user.nombre} ${user.apellido}</strong></p>
           <p class="text-slate-500">Rol: <strong class="text-[#2B62D9] font-bold">${user.rol?.nombre}</strong></p>
           <p class="text-[11px] text-slate-400 pt-1">
-            ${
-              nuevoEstado
-                ? "El usuario podrá volver a ingresar al sistema con sus credenciales."
-                : "El acceso al sistema quedará suspendido temporalmente."
-            }
+            ${nuevoEstado
+          ? "El usuario podrá volver a ingresar al sistema con sus credenciales."
+          : "El acceso al sistema quedará suspendido temporalmente."
+        }
           </p>
         </div>
       `,
@@ -241,11 +238,10 @@ export const UsersPage: React.FC = () => {
         const isAdmin = u.id_rol === 1;
         return (
           <span
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border shadow-2xs ${
-              isAdmin
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border shadow-2xs ${isAdmin
                 ? "bg-brand-royal/10 text-brand-royal dark:text-brand-sky border-brand-royal/20"
                 : "bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-500/20"
-            }`}
+              }`}
           >
             <FontAwesomeIcon icon={isAdmin ? faUserShield : faBoxesPacking} className="text-[10px]" />
             <span>{isAdmin ? "Administrador" : "Bodeguero"}</span>
@@ -275,114 +271,89 @@ export const UsersPage: React.FC = () => {
       header: "Estado",
       align: "center",
       render: (u) => (
-        <span
-          className={`px-2.5 py-1 text-xs font-bold rounded-full ${
-            u.estado
-              ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20"
-              : "bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20"
-          }`}
-        >
-          {u.estado ? "Activo" : "Inactivo"}
-        </span>
+        <div onClick={(e) => e.stopPropagation()}>
+          <Switcher
+            checked={u.estado}
+            onChange={() => handleToggleStatus(u)}
+            size="sm"
+          />
+        </div>
       ),
     },
     {
       key: "acciones",
       header: "Acciones",
-      align: "right",
+      align: "center",
       render: (u) => (
-        <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
-          {/* Ver detalle */}
-          <button
-            type="button"
-            title="Ver detalles"
-            aria-label={`Ver detalle de ${u.nombre}`}
+        <div className="flex items-center justify-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+          <Button
+            size="sm"
+            variant="ghost"
+            icon={faEye}
             onClick={() => {
               setSelectedUser(u);
               setIsDetailModalOpen(true);
             }}
-            className="p-1.5 hover:bg-brand-sky/15 rounded-lg text-brand-royal dark:text-brand-sky cursor-pointer transition-colors"
-          >
-            <FontAwesomeIcon icon={faEye} />
-          </button>
-
-          {/* Editar */}
-          <button
-            type="button"
-            title="Editar usuario"
-            aria-label={`Editar ${u.nombre}`}
+            title="Ver detalles"
+          />
+          <Button
+            size="sm"
+            variant="ghost"
+            icon={faPenToSquare}
             onClick={() => {
               setSelectedUser(u);
               setIsFormModalOpen(true);
             }}
-            className="p-1.5 hover:bg-indigo-500/15 rounded-lg text-indigo-600 dark:text-indigo-400 cursor-pointer transition-colors"
-          >
-            <FontAwesomeIcon icon={faPenToSquare} />
-          </button>
-
-          {/* Cambiar estado */}
-          <button
-            type="button"
-            title={u.estado ? "Desactivar usuario" : "Activar usuario"}
-            aria-label={`Cambiar estado de ${u.nombre}`}
-            onClick={() => handleToggleStatus(u)}
-            className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
-              u.estado
-                ? "text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/15"
-                : "text-slate-400 hover:bg-slate-500/15"
-            }`}
-          >
-            <FontAwesomeIcon icon={u.estado ? faToggleOn : faToggleOff} />
-          </button>
-
-          {/* Eliminar */}
-          <button
-            type="button"
-            title="Eliminar usuario"
-            aria-label={`Eliminar ${u.nombre}`}
+            title="Editar usuario"
+          />
+          <Button
+            size="sm"
+            variant="ghost"
+            icon={faTrash}
             onClick={() => handleDeleteUser(u)}
-            className="p-1.5 hover:bg-rose-500/15 rounded-lg text-rose-600 dark:text-rose-400 cursor-pointer transition-colors"
-          >
-            <FontAwesomeIcon icon={faTrash} />
-          </button>
+            title="Eliminar usuario"
+            className="text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-500/10"
+          />
         </div>
       ),
     },
   ];
 
   return (
-    <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto text-app-text animate-fadeIn">
-      {/* ─── Encabezado ─── */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className="space-y-8 animate-fadeIn">
+      {/* ─── Encabezado Principal y Acciones ─── */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-app-border pb-6">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-1 bg-brand-navy text-white dark:bg-brand-royal text-xs font-bold rounded-md">
-              ISABEL • Configuración
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky">
+              <FontAwesomeIcon icon={faUsers} className="text-lg" />
             </span>
-            <span className="text-xs text-app-muted font-medium">Personal Interno</span>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-app-text">
+                Gestión de Usuarios
+              </h1>
+              <p className="text-sm text-app-muted">
+                Administre los accesos y credenciales de Administradores y Bodegueros del sistema Calzado ISABEL
+              </p>
+            </div>
           </div>
-
-          <h1 className="text-2xl font-extrabold tracking-tight mt-1 text-app-text">
-            Gestión de Usuarios
-          </h1>
-          <p className="text-sm text-app-muted">
-            Administre los accesos y credenciales de Administradores y Bodegueros del sistema Calzado ISABEL.
-          </p>
         </div>
 
-        <Button
-          type="button"
-          variant="primary"
-          size="md"
-          icon={faUserPlus}
-          className="shadow-md shadow-brand-royal/20"
-          onClick={() => {
-            setSelectedUser(null);
-            setIsFormModalOpen(true);
-          }}
-        >
-          Registrar Nuevo Usuario
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            variant="primary"
+            size="md"
+            icon={faUserPlus}
+            className="shadow-md shadow-brand-royal/20"
+            onClick={() => {
+              setSelectedUser(null);
+              setIsFormModalOpen(true);
+            }}
+          >
+            Registrar Nuevo Usuario
+          </Button>
+        </div>
       </div>
 
       {/* ─── Métricas de Usuarios ─── */}

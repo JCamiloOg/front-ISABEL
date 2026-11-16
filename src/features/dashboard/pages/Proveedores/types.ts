@@ -34,12 +34,12 @@ export interface FormProveedor {
   razonSocial: string;
   tipoProveedor: TipoProveedor;
   esImportado: boolean;
-  categoriaIds: number[];
+  categoriaIds?: number[];
   telefono: string;
   email: string;
   direccion: string;
-  ciudad: string;
-  pais: string;
+  ciudad?: string;
+  pais?: string;
 }
 
 export type ErroresProveedor = Partial<
