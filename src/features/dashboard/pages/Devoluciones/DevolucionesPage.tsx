@@ -37,7 +37,7 @@ export function DevolucionesPage() {
 
   const [isEstadoOpen, setIsEstadoOpen] = useState(false);
   const [idEstado, setIdEstado] = useState<string | null>(null);
-  const [accionEstado, setAccionEstado] = useState<AccionEstado>("Aprobada");
+  const [accionEstado, setAccionEstado] = useState<AccionEstado | null>(null);
 
   // Las referencias se derivan de la lista para que siempre estén actualizadas
   const devolucionAEditar = useMemo(
@@ -171,32 +171,32 @@ export function DevolucionesPage() {
     setIsDetalleOpen(true);
   };
 
-  const handleAbrirEstado = (d: Devolucion, accion: AccionEstado) => {
+  const handleAbrirEstado = (d: Devolucion, accion?: AccionEstado) => {
     setIdEstado(d.idDevolucion);
-    setAccionEstado(accion);
+    setAccionEstado(accion ?? null);
     setIsEstadoOpen(true);
   };
 
   return (
-    <div className="min-h-full bg-app-bg p-6 text-app-text">
+    <div className="min-h-full bg-app-bg pb-6 text-app-text">
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
-        {/* ── Encabezado Principal ── */}
-        <header className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-brand-royal dark:text-brand-sky">
-              Dashboard / Gestión de Ventas / Devoluciones
-            </p>
-            <h1 className="mt-1 text-3xl font-extrabold text-app-text tracking-tight">
-              Gestión de Devoluciones
-            </h1>
-            <div className="mt-2.5 h-1 w-10 rounded-full bg-brand-sky" />
-            <p className="mt-3 max-w-2xl text-sm text-app-muted leading-relaxed">
-              Registra y da seguimiento a las devoluciones de calzado por garantía u otros motivos, controlando
-              el producto, la talla y la cantidad devuelta, y resolviendo cada solicitud con trazabilidad.
-            </p>
+        {/* Encabezado Principal */}
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-app-border pb-6">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky">
+              <FontAwesomeIcon icon={faRotateLeft} className="text-lg" />
+            </span>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-app-text">
+                Catálogo de Devoluciones
+              </h1>
+              <p className="text-sm text-app-muted">
+                Registra y da seguimiento a las solicitudes de devolución de tus clientes.
+              </p>
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-3">
             <Button variant="primary" size="md" icon={faPlus} onClick={handleAbrirRegistrar}>
               Registrar Devolución
             </Button>
@@ -263,8 +263,7 @@ export function DevolucionesPage() {
           devoluciones={devoluciones}
           onVerDetalle={handleAbrirDetalle}
           onEditar={handleAbrirEditar}
-          onAprobar={(d) => handleAbrirEstado(d, "Aprobada")}
-          onRechazar={(d) => handleAbrirEstado(d, "Rechazada")}
+          onCambiarEstado={(d) => handleAbrirEstado(d)}
         />
       </div>
 

@@ -16,9 +16,12 @@ export interface Client {
   phone: string;
   email: string;
   address: string;
+  password?: string;
   status: ClientStatus;
   commercialHistory: CommercialHistory;
   createdAt: string;
 }
 
-export type ClientFormData = Omit<Client, 'id' | 'createdAt' | 'commercialHistory'>;
+export type ClientFormData = Omit<Client, 'id' | 'createdAt' | 'commercialHistory' | 'password'> & {
+  password: string;
+};

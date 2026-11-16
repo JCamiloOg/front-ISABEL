@@ -38,9 +38,12 @@ export interface Pedido {
   subtotal: number;
   costoEnvio: number;
   descuentoTotal: number;
+  iva?: number;
+  ivaPorcentaje?: number;
   total: number;
   montoAbono?: number;
   imagenComprobante?: string;
+  comprobanteNombre?: string;
   observaciones?: string;
   notas?: string;
   guiaTransportadora?: string;

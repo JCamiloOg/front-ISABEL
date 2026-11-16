@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react";
 import type { FormEvent } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
+import {
+  faCheck,
+  faXmark,
+  faTriangleExclamation,
+  faRotateLeft,
+} from "@fortawesome/free-solid-svg-icons";
 import Modal from "../../../../../shared/components/Modal";
 import { Button } from "../../../../../shared/components/Button";
 import { Textarea } from "../../../../../shared/components/Inputs/Textarea";
@@ -15,7 +20,7 @@ interface ModalCambiarEstadoProps {
   isOpen: boolean;
   onClose: () => void;
   devolucion: Devolucion | null;
-  accion: AccionEstado;
+  accion: AccionEstado | null;
   /** `motivoRechazo` solo viene informado cuando la acción es "Rechazada". */
   onConfirmar: (devolucion: Devolucion, accion: AccionEstado, motivoRechazo?: string) => void;
 }
@@ -27,11 +32,13 @@ export function ModalCambiarEstado({
   accion,
   onConfirmar,
 }: ModalCambiarEstadoProps) {
+  const [accionSeleccionada, setAccionSeleccionada] = useState<AccionEstado | null>(accion);
   const [motivoRechazo, setMotivoRechazo] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (isOpen) {
+      setAccionSeleccionada(accion);
       setMotivoRechazo("");
       setError("");
     }
@@ -39,10 +46,15 @@ export function ModalCambiarEstado({
 
   if (!devolucion) return null;
 
-  const esRechazo = accion === "Rechazada";
+  const esRechazo = accionSeleccionada === "Rechazada";
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+
+    if (!accionSeleccionada) {
+      setError("Selecciona el nuevo estado");
+      return;
+    }
 
     if (esRechazo) {
       const limpio = motivoRechazo.trim();
@@ -54,20 +66,20 @@ export function ModalCambiarEstado({
         setError(`Describe el motivo con al menos ${MOTIVO_MIN_LENGTH} caracteres`);
         return;
       }
-      onConfirmar(devolucion, accion, limpio);
+      onConfirmar(devolucion, accionSeleccionada, limpio);
       return;
     }
 
-    onConfirmar(devolucion, accion);
+    onConfirmar(devolucion, accionSeleccionada);
   };
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={esRechazo ? "Rechazar Devolución" : "Aprobar Devolución"}
+      title="Cambiar Estado de Devolución"
       description={`${devolucion.codigoDevolucion} · ${devolucion.cliente.nombre}`}
-      icon={esRechazo ? faXmark : faCheck}
+      icon={esRechazo ? faXmark : accionSeleccionada === "Aprobada" ? faCheck : faRotateLeft}
       size="md"
       footer={
         <div className="flex w-full items-center justify-end gap-3">
@@ -77,11 +89,12 @@ export function ModalCambiarEstado({
           <Button
             variant="primary"
             size="md"
-            icon={esRechazo ? faXmark : faCheck}
+            icon={esRechazo ? faXmark : accionSeleccionada === "Aprobada" ? faCheck : faRotateLeft}
             type="submit"
             form="form-cambiar-estado"
+            disabled={!accionSeleccionada}
           >
-            {esRechazo ? "Confirmar Rechazo" : "Confirmar Aprobación"}
+            Guardar Estado
           </Button>
         </div>
       }
@@ -113,6 +126,38 @@ export function ModalCambiarEstado({
           </p>
         </div>
 
+        <div>
+          <p className="mb-1.5 text-xs font-bold text-app-text">Nuevo estado *</p>
+          <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Nuevo estado">
+            {(["Aprobada", "Rechazada"] as AccionEstado[]).map((estado) => {
+              const isSelected = accionSeleccionada === estado;
+              const estadoEsRechazo = estado === "Rechazada";
+              return (
+                <button
+                  key={estado}
+                  type="button"
+                  role="radio"
+                  aria-checked={isSelected}
+                  onClick={() => {
+                    setAccionSeleccionada(estado);
+                    setError("");
+                  }}
+                  className={`flex items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-bold transition ${
+                    isSelected
+                      ? estadoEsRechazo
+                        ? "border-rose-600 bg-rose-600 text-white shadow-sm"
+                        : "border-emerald-600 bg-emerald-600 text-white shadow-sm"
+                      : "border-brand-sky/30 bg-app-surface text-app-muted hover:border-brand-royal"
+                  }`}
+                >
+                  <FontAwesomeIcon icon={estadoEsRechazo ? faXmark : faCheck} />
+                  {estado}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {esRechazo ? (
           <Textarea
             label="Motivo del rechazo *"
@@ -127,12 +172,22 @@ export function ModalCambiarEstado({
             }}
             error={error}
           />
-        ) : (
+        ) : accionSeleccionada === "Aprobada" ? (
           <p className="text-sm leading-relaxed text-app-muted">
             Al aprobar, la devolución quedará registrada con la fecha de resolución de hoy y las
             {" "}
             <strong className="text-app-text">{devolucion.cantidad}</strong> unidad(es) se contarán como
             devueltas de la venta.
+          </p>
+        ) : (
+          <p className="text-sm leading-relaxed text-app-muted">
+            Selecciona si deseas aprobar o rechazar esta devolución.
+          </p>
+        )}
+
+        {error && !esRechazo && (
+          <p className="text-xs font-medium text-rose-600 dark:text-rose-400" role="alert">
+            {error}
           </p>
         )}
 

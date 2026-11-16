@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import type { Client, ClientFormData, DocumentType } from '../../../../../../@types/client';
 import Modal from '../../../../../../shared/components/Modal';
-import { faUserPlus, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
+import Input from '../../../../../../shared/components/Inputs/Input';
+import { Switcher } from '../../../../components/Switcher';
+import { faUserPlus, faPenToSquare, faLock } from '@fortawesome/free-solid-svg-icons';
 
 interface ClientModalProps {
   isOpen: boolean;
@@ -18,6 +20,7 @@ const initialFormState: ClientFormData = {
   phone: '',
   email: '',
   address: '',
+  password: '',
   status: 'Activo',
 };
 
@@ -40,6 +43,7 @@ export const ClientModal: React.FC<ClientModalProps> = ({
         phone: clientToEdit.phone,
         email: clientToEdit.email,
         address: clientToEdit.address,
+        password: '',
         status: clientToEdit.status,
       });
     } else {
@@ -57,6 +61,9 @@ export const ClientModal: React.FC<ClientModalProps> = ({
       newErrors.email = 'Ingrese un correo electrónico válido.';
     }
     if (!formData.address.trim()) newErrors.address = 'La dirección es obligatoria.';
+    if ((!clientToEdit && !formData.password) || (formData.password && formData.password.length < 6)) {
+      newErrors.password = 'La contraseña debe tener al menos 6 caracteres.';
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -220,18 +227,31 @@ export const ClientModal: React.FC<ClientModalProps> = ({
           {errors.address && <span className="text-xs text-[#DC2626] mt-1 block">{errors.address}</span>}
         </div>
 
-        <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-[#0E2347] dark:text-slate-300 mb-1">
-            Estado Operativo
-          </label>
-          <select
-            value={formData.status}
-            onChange={(e) => setFormData({ ...formData, status: e.target.value as 'Activo' | 'Inactivo' })}
-            className="w-full px-3 py-2 border border-[#E2E8F0] dark:border-[#1E3A8A] rounded-xl text-sm text-[#0E2347] dark:text-[#FFFFFF] bg-[#FFFFFF] dark:bg-[#091322] focus:outline-none focus:ring-2 focus:ring-[#2B62D9]/20"
-          >
-            <option value="Activo">Activo</option>
-            <option value="Inactivo">Inactivo</option>
-          </select>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-[#0E2347] dark:text-slate-300 mb-2">
+              Estado Operativo
+            </label>
+            <Switcher
+              checked={formData.status === 'Activo'}
+              onChange={(checked) => setFormData({ ...formData, status: checked ? 'Activo' : 'Inactivo' })}
+              ariaLabel="Estado operativo del cliente"
+            />
+          </div>
+          <Input
+            id="client-password"
+            type="password"
+            label={clientToEdit ? 'Nueva Contraseña (Opcional)' : 'Contraseña *'}
+            value={formData.password}
+            onChange={(e) => {
+              setFormData({ ...formData, password: e.target.value });
+              if (errors.password) setErrors((previous) => ({ ...previous, password: '' }));
+            }}
+            placeholder={clientToEdit ? 'Dejar vacío para conservarla' : 'Mínimo 6 caracteres'}
+            autoComplete="new-password"
+            iconLeft={faLock}
+            error={errors.password}
+          />
         </div>
       </form>
     </Modal>

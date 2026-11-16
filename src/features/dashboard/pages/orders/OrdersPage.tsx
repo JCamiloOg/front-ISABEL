@@ -4,6 +4,7 @@ import {
   faBoxesStacked,
   faMagnifyingGlass,
   faEye,
+  faPenToSquare,
   faClock,
   faBoxOpen,
   faTruck,
@@ -370,36 +371,43 @@ export default function OrdersPage() {
       render: (pedido) => {
         const cfg = ESTADO_CONFIG[pedido.estado] || ESTADO_CONFIG.Pendiente;
         return (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleOpenStatusModal(pedido);
-            }}
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-transform hover:scale-105 cursor-pointer shadow-2xs ${cfg.bg} ${cfg.text} ${cfg.border}`}
-            title="Haz clic para cambiar estado"
+          <span
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border shadow-2xs ${cfg.bg} ${cfg.text} ${cfg.border}`}
           >
             <FontAwesomeIcon icon={cfg.icon} className="text-[10px]" />
             <span>{cfg.label}</span>
-          </button>
+          </span>
         );
       },
     },
     {
       key: "acciones",
       header: "Acciones",
-      align: "right",
+      align: "center",
       render: (pedido) => (
-        <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
-          <button
-            type="button"
-            onClick={() => handleOpenDetail(pedido)}
-            className="p-2 rounded-xl text-brand-royal dark:text-brand-sky hover:bg-brand-sky/15 dark:hover:bg-brand-sky/20 transition-colors cursor-pointer"
-            title="Ver detalle del pedido"
+        <div className="flex items-center justify-center gap-1.5">
+          <Button
+            size="sm"
+            variant="ghost"
+            icon={faEye}
+            onClick={(event) => {
+              event.stopPropagation();
+              handleOpenDetail(pedido);
+            }}
+            title="Ver Detalle"
             aria-label={`Ver pedido ${pedido.codigoPedido}`}
-          >
-            <FontAwesomeIcon icon={faEye} className="text-sm" />
-          </button>
+          />
+          <Button
+            size="sm"
+            variant="ghost"
+            icon={faPenToSquare}
+            onClick={(event) => {
+              event.stopPropagation();
+              handleOpenStatusModal(pedido);
+            }}
+            title="Cambiar estado"
+            aria-label={`Cambiar estado del pedido ${pedido.codigoPedido}`}
+          />
         </div>
       ),
     },
@@ -407,19 +415,20 @@ export default function OrdersPage() {
 
   return (
     <div className="space-y-8 animate-fadeIn">
-      {/* ─── Encabezado de la Sección ─── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-sky/15 text-brand-royal dark:text-brand-sky border border-brand-sky/30 text-xs font-bold tracking-wider uppercase mb-2">
-            <FontAwesomeIcon icon={faBoxesStacked} className="text-xs" />
-            <span>Gestión de Ventas</span>
+      {/* Encabezado Principal */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-app-border pb-6">
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky">
+            <FontAwesomeIcon icon={faBoxesStacked} className="text-lg" />
+          </span>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-app-text">
+              Catálogo de Pedidos
+            </h1>
+            <p className="text-sm text-app-muted">
+              Supervisa, gestiona y despacha los pedidos de tus clientes.
+            </p>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-app-text tracking-tight">
-            Pedidos de Clientes
-          </h1>
-          <p className="text-sm text-app-muted mt-1">
-            Supervisa, gestiona y despacha los pedidos vinculados al directorio general de clientes.
-          </p>
         </div>
 
         <div className="flex items-center gap-2.5">
@@ -608,9 +617,6 @@ export default function OrdersPage() {
               <div className="flex items-center gap-2">
                 <Button variant="outline" onClick={() => setIsDetailOpen(false)}>
                   Cerrar
-                </Button>
-                <Button variant="primary" onClick={() => handleOpenStatusModal(selectedPedido)}>
-                  Cambiar Estado
                 </Button>
               </div>
             </div>
@@ -805,12 +811,33 @@ export default function OrdersPage() {
                   <span className="font-semibold">-{formatCOP(selectedPedido.descuentoTotal)}</span>
                 </div>
               )}
+              {selectedPedido.iva !== undefined && (
+                <div className="flex justify-between text-xs text-app-muted">
+                  <span>
+                    IVA ({(selectedPedido.ivaPorcentaje ?? 19).toLocaleString("es-CO")}%):
+                  </span>
+                  <span className="font-semibold text-app-text">{formatCOP(selectedPedido.iva)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-xs text-app-muted">
                 <span>Costo de Despacho / Envío:</span>
                 <span className="font-semibold text-app-text">
                   {selectedPedido.costoEnvio === 0 ? "Gratis (Mayorista)" : formatCOP(selectedPedido.costoEnvio)}
                 </span>
               </div>
+              {selectedPedido.imagenComprobante && (
+                <div className="flex justify-between gap-3 text-xs text-app-muted">
+                  <span>Comprobante de pago:</span>
+                  <a
+                    href={selectedPedido.imagenComprobante}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-semibold text-brand-royal hover:underline dark:text-brand-sky"
+                  >
+                    {selectedPedido.comprobanteNombre || "Ver comprobante"}
+                  </a>
+                </div>
+              )}
               <div className="flex justify-between items-baseline pt-2 border-t border-app-border text-base">
                 <span className="font-extrabold text-app-text">Total Liquidado:</span>
                 <span className="text-xl font-black text-brand-royal dark:text-brand-sky">

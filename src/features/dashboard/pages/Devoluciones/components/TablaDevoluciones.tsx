@@ -4,8 +4,7 @@ import {
   faMagnifyingGlass,
   faEye,
   faPenToSquare,
-  faCheck,
-  faXmark,
+  faToggleOn,
   faRotateLeft,
   faCalendarDay,
   faShoePrints,
@@ -24,16 +23,14 @@ interface TablaDevolucionesProps {
   devoluciones: Devolucion[];
   onVerDetalle: (devolucion: Devolucion) => void;
   onEditar: (devolucion: Devolucion) => void;
-  onAprobar: (devolucion: Devolucion) => void;
-  onRechazar: (devolucion: Devolucion) => void;
+  onCambiarEstado: (devolucion: Devolucion) => void;
 }
 
 export function TablaDevoluciones({
   devoluciones,
   onVerDetalle,
   onEditar,
-  onAprobar,
-  onRechazar,
+  onCambiarEstado,
 }: TablaDevolucionesProps) {
   const [busqueda, setBusqueda] = useState("");
   const [filtroEstado, setFiltroEstado] = useState<string>("all");
@@ -217,25 +214,12 @@ export function TablaDevoluciones({
               <Button
                 size="sm"
                 variant="ghost"
-                icon={faCheck}
-                title="Aprobar devolución"
-                aria-label={`Aprobar ${d.codigoDevolucion}`}
-                className="text-emerald-600 dark:text-emerald-400"
+                icon={faToggleOn}
+                title="Cambiar estado"
+                aria-label={`Cambiar estado de ${d.codigoDevolucion}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  onAprobar(d);
-                }}
-              />
-              <Button
-                size="sm"
-                variant="ghost"
-                icon={faXmark}
-                title="Rechazar devolución"
-                aria-label={`Rechazar ${d.codigoDevolucion}`}
-                className="text-rose-600 dark:text-rose-400"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRechazar(d);
+                  onCambiarEstado(d);
                 }}
               />
             </>
