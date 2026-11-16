@@ -90,22 +90,21 @@ export function GastosPage() {
     <div className="min-h-full bg-app-bg p-6 text-app-text">
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
         {/* Encabezado */}
-        <header className="flex flex-wrap items-end justify-between gap-4">
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-app-border pb-6">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-brand-royal dark:text-brand-sky">
-              Dashboard / Gastos
-            </p>
-            <h1 className="mt-1 text-3xl font-extrabold text-app-text tracking-tight flex items-center gap-3">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky text-xl">
-                <FontAwesomeIcon icon={faReceipt} />
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky">
+                <FontAwesomeIcon icon={faReceipt} className="text-lg" />
               </span>
-              <span>Gestión de gastos</span>
-            </h1>
-            <div className="mt-2.5 h-1 w-10 rounded-full bg-brand-sky" />
-            <p className="mt-3 max-w-2xl text-sm text-app-muted leading-relaxed">
-              Registra los egresos operativos del negocio y supervisa en tiempo real el saldo de tus
-              cuentas bancarias y cajas de efectivo.
-            </p>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-app-text">
+                  Gestión de Gastos
+                </h1>
+                <p className="text-sm text-app-muted">
+                  Registra los egresos operativos del negocio y supervisa en tiempo real el saldo de tus cuentas bancarias y cajas
+                </p>
+              </div>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">

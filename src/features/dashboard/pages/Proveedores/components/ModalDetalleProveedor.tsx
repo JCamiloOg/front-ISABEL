@@ -7,7 +7,6 @@ import {
   faLocationDot,
   faCalendarDay,
   faPenToSquare,
-  faCity,
 } from "@fortawesome/free-solid-svg-icons";
 
 import Modal from "../../../../../shared/components/Modal";
@@ -80,7 +79,7 @@ export function ModalDetalleProveedor({
         <div className="rounded-xl border border-brand-sky/20 bg-brand-royal/5 dark:bg-brand-sky/5 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-brand-royal dark:text-brand-sky">
-              {proveedor.tipoProveedor} • {proveedor.esImportado ? `Importado (${proveedor.pais || "Extranjero"})` : "Nacional (Colombia)"}
+              {proveedor.tipoProveedor}
             </span>
             <h3 className="text-lg font-extrabold text-app-text mt-0.5">
               {proveedor.razonSocial}
@@ -99,11 +98,11 @@ export function ModalDetalleProveedor({
           </div>
         </div>
 
-        {/* Datos de Contacto y Ubicación */}
+        {/* Datos de Contacto */}
         <div className="rounded-xl border border-brand-sky/20 bg-app-surface p-4 flex flex-col gap-3">
           <h4 className="text-xs font-bold text-app-text uppercase tracking-wider border-b border-brand-sky/15 pb-2 flex items-center gap-2">
             <FontAwesomeIcon icon={faLocationDot} className="text-brand-royal dark:text-brand-sky" />
-            Canales de Contacto y Ubicación
+            Canales de Contacto
           </h4>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
@@ -130,18 +129,6 @@ export function ModalDetalleProveedor({
                 <span className="font-bold text-app-text">{proveedor.direccion || "No registrada"}</span>
               </div>
             </div>
-
-            {(proveedor.ciudad || proveedor.pais) && (
-              <div className="flex items-center gap-2.5 rounded-lg bg-app-bg p-2.5 sm:col-span-2">
-                <FontAwesomeIcon icon={faCity} className="text-brand-royal dark:text-brand-sky" />
-                <div>
-                  <span className="text-[10px] text-app-muted block">Origen:</span>
-                  <span className="font-bold text-app-text">
-                    {[proveedor.ciudad, proveedor.pais].filter(Boolean).join(", ")}
-                  </span>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>

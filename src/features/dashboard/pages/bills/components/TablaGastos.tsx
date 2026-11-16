@@ -92,7 +92,7 @@ export function TablaGastos({ gastos }: TablaGastosProps) {
   const columns: TableColumn<Gasto>[] = [
     {
       key: "codigo",
-      header: "ID / Consecutivo",
+      header: "ID",
       sortable: true,
       render: (gasto) => (
         <span
@@ -186,7 +186,7 @@ export function TablaGastos({ gastos }: TablaGastosProps) {
                   setBusqueda(e.target.value);
                   setPagina(1);
                 }}
-                placeholder="Buscar por código, concepto, caja..."
+                placeholder="Buscar por ID, concepto, caja..."
                 iconLeft={faMagnifyingGlass}
                 size="sm"
               />

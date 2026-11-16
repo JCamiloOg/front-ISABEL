@@ -138,22 +138,21 @@ export function ProveedoresPage() {
     <div className="min-h-full bg-app-bg p-6 text-app-text">
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
         {/* ── Encabezado Principal ── */}
-        <header className="flex flex-wrap items-end justify-between gap-4">
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-app-border pb-6">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-brand-royal dark:text-brand-sky">
-              Dashboard / Compras y Proveedores
-            </p>
-            <h1 className="mt-1 text-3xl font-extrabold text-app-text tracking-tight flex items-center gap-3">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky text-xl">
-                <FontAwesomeIcon icon={faIndustry} />
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky">
+                <FontAwesomeIcon icon={faIndustry} className="text-lg" />
               </span>
-              <span>Gestión de Proveedores</span>
-            </h1>
-            <div className="mt-2.5 h-1 w-10 rounded-full bg-brand-sky" />
-            <p className="mt-3 max-w-2xl text-sm text-app-muted leading-relaxed">
-              Administra los fabricantes y distribuidores de materias primas, insumos y calzado, sus categorías
-              suministradas y su procedencia nacional o internacional.
-            </p>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-app-text">
+                  Gestión de Proveedores
+                </h1>
+                <p className="text-sm text-app-muted">
+                  Administra los fabricantes y distribuidores de materias primas, insumos y calzado
+                </p>
+              </div>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">

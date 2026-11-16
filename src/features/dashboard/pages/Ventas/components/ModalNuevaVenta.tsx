@@ -408,10 +408,10 @@ export function ModalNuevaVenta({
           </h3>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {/* Consecutivo generado automáticamente */}
+            {/* ID generado automáticamente */}
             <div>
               <label className="text-xs font-bold text-app-text mb-1.5 block">
-                ID / Consecutivo
+                ID
               </label>
               <div className="flex items-center gap-2 rounded-xl border border-brand-sky/30 bg-brand-royal/5 px-3 py-2.5 text-xs font-mono font-bold text-brand-royal dark:bg-brand-sky/10 dark:text-brand-sky">
                 <FontAwesomeIcon icon={faBarcode} />
