@@ -7,7 +7,6 @@ import {
   faEye,
   faShieldHalved,
   faLayerGroup,
-  faCircleCheck,
 } from "@fortawesome/free-solid-svg-icons";
 
 import { Button } from "../../../../shared/components/Button";

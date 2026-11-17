@@ -18,7 +18,7 @@ function App() {
       <RouterProvider router={router} />
       <TanStackRouterDevtools router={router} position="top-left" />
     </>
-  )
+  );
 }
 
-export default App
+export default App;

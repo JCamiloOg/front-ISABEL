@@ -181,7 +181,7 @@ export default function ProductPage() {
             precioVenta: producto.precioVenta,
             cantidad: quantity,
             sku: producto.sku
-        }
+        };
 
         addToCart(productCart);
 

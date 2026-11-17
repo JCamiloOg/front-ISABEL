@@ -111,8 +111,6 @@ export default function DashboardPage() {
   const formatearMillones = (val: number) =>
     val >= 1000000 ? `$${(val / 1000000).toFixed(1)}M` : `$${(val / 1000).toFixed(0)}K`;
 
-  const formatearMoneda = (val: number) => `$${val.toLocaleString("es-CO")}`;
-
   return (
     <div className="space-y-8 animate-fadeIn">
       {/* Encabezado Principal (Patrón ISABEL unificado) */}
@@ -159,11 +157,10 @@ export default function DashboardPage() {
                 key={periodo}
                 type="button"
                 onClick={() => setPeriodoVentas(periodo)}
-                className={`rounded-lg px-3 py-1 font-bold transition-colors cursor-pointer ${
-                  periodoVentas === periodo
-                    ? "bg-brand-royal text-white shadow-xs"
-                    : "text-app-muted hover:bg-app-surface hover:text-app-text"
-                }`}
+                className={`rounded-lg px-3 py-1 font-bold transition-colors cursor-pointer ${periodoVentas === periodo
+                  ? "bg-brand-royal text-white shadow-xs"
+                  : "text-app-muted hover:bg-app-surface hover:text-app-text"
+                  }`}
               >
                 {periodo}
               </button>
@@ -335,7 +332,15 @@ export default function DashboardPage() {
                 <Tooltip
                   cursor={{ fill: "rgba(148, 163, 184, 0.1)" }}
                   contentStyle={tooltipStyle}
-                  formatter={(value: number) => formatearMoneda(value)}
+                  formatter={(value, name) => {
+                    // 1. Validar si el valor no es un número (ej. undefined o string)
+                    if (typeof value !== 'number') {
+                      return [String(value ?? ''), String(name ?? '')];
+                    }
+
+                    // 2. Aquí TypeScript ya sabe con certeza que `value` es `number`
+                    return [`$${value.toFixed(2)}`, String(name ?? '')];
+                  }}
                 />
                 <Bar dataKey="ventas" name="Ventas" fill="#2B62D9" radius={[4, 4, 0, 0]} barSize={18} />
                 <Bar dataKey="gastos" name="Gastos" fill="#52A5E8" radius={[4, 4, 0, 0]} barSize={18} />
@@ -379,7 +384,15 @@ export default function DashboardPage() {
                 />
                 <Tooltip
                   contentStyle={tooltipStyle}
-                  formatter={(value: number) => [formatearMoneda(value), "Ganancia Neta"]}
+                  formatter={(value, name) => {
+                    // 1. Validar si el valor no es un número (ej. undefined o string)
+                    if (typeof value !== 'number') {
+                      return [String(value ?? ''), String(name ?? '')];
+                    }
+
+                    // 2. Aquí TypeScript ya sabe con certeza que `value` es `number`
+                    return [`$${value.toFixed(2)}`, String(name ?? '')];
+                  }}
                 />
                 <Area
                   type="monotone"
@@ -434,7 +447,15 @@ export default function DashboardPage() {
                 <Tooltip
                   cursor={{ fill: "rgba(148, 163, 184, 0.1)" }}
                   contentStyle={tooltipStyle}
-                  formatter={(value: number) => [`${value} pares`, "Stock Actual"]}
+                  formatter={(value, name) => {
+                    // 1. Validar si el valor no es un número (ej. undefined o string)
+                    if (typeof value !== 'number') {
+                      return [String(value ?? ''), String(name ?? '')];
+                    }
+
+                    // 2. Aquí TypeScript ya sabe con certeza que `value` es `number`
+                    return [`$${value.toFixed(2)}`, String(name ?? '')];
+                  }}
                 />
                 <Bar dataKey="stock" name="Stock" fill="#2B62D9" radius={[0, 6, 6, 0]} barSize={16} />
               </BarChart>
@@ -478,7 +499,15 @@ export default function DashboardPage() {
                 <Tooltip
                   cursor={{ fill: "rgba(148, 163, 184, 0.1)" }}
                   contentStyle={tooltipStyle}
-                  formatter={(value: number) => [`${value} pares`, "Stock Actual"]}
+                  formatter={(value, name) => {
+                    // 1. Validar si el valor no es un número (ej. undefined o string)
+                    if (typeof value !== 'number') {
+                      return [String(value ?? ''), String(name ?? '')];
+                    }
+
+                    // 2. Aquí TypeScript ya sabe con certeza que `value` es `number`
+                    return [`$${value.toFixed(2)}`, String(name ?? '')];
+                  }}
                 />
                 <Bar dataKey="stock" name="Stock" fill="#F43F5E" radius={[0, 6, 6, 0]} barSize={16} />
               </BarChart>
@@ -531,7 +560,15 @@ export default function DashboardPage() {
                 <Tooltip
                   cursor={{ fill: "rgba(148, 163, 184, 0.1)" }}
                   contentStyle={tooltipStyle}
-                  formatter={(value: number) => [formatearMoneda(value), "Saldo Pendiente"]}
+                  formatter={(value, name) => {
+                    // 1. Validar si el valor no es un número (ej. undefined o string)
+                    if (typeof value !== 'number') {
+                      return [String(value ?? ''), String(name ?? '')];
+                    }
+
+                    // 2. Aquí TypeScript ya sabe con certeza que `value` es `number`
+                    return [`$${value.toFixed(2)}`, String(name ?? '')];
+                  }}
                 />
                 <Bar dataKey="deuda" name="Deuda" fill="#F59E0B" radius={[0, 6, 6, 0]} barSize={16} />
               </BarChart>
@@ -581,7 +618,15 @@ export default function DashboardPage() {
                 <Tooltip
                   cursor={{ fill: "rgba(148, 163, 184, 0.1)" }}
                   contentStyle={tooltipStyle}
-                  formatter={(value: number) => [formatearMoneda(value), "Total Comprado"]}
+                  formatter={(value, name) => {
+                    // 1. Validar si el valor no es un número (ej. undefined o string)
+                    if (typeof value !== 'number') {
+                      return [String(value ?? ''), String(name ?? '')];
+                    }
+
+                    // 2. Aquí TypeScript ya sabe con certeza que `value` es `number`
+                    return [`$${value.toFixed(2)}`, String(name ?? '')];
+                  }}
                 />
                 <Bar dataKey="total" name="Compras" fill="#10B981" radius={[0, 6, 6, 0]} barSize={16} />
               </BarChart>

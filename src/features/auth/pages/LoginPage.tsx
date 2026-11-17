@@ -35,8 +35,8 @@ export default function LoginPage() {
         }).then(() => {
             navigate({
                 to: "/",
-            })
-        })
+            });
+        });
         // Preparado para conectar con autenticación
     };
 
