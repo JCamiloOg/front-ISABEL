@@ -88,9 +88,8 @@ export default function Table<T = unknown>(props: TableComponentProps<T>) {
     return (
       <div className="flex-1">
         <section
-          className={`rounded-2xl border border-app-border bg-app-surface/90 p-5 sm:p-6 shadow-sm backdrop-blur-sm transition-all duration-200 ${
-            props.className || ""
-          }`}
+          className={`rounded-2xl border border-app-border bg-app-surface/90 p-5 sm:p-6 shadow-sm backdrop-blur-sm transition-all duration-200 ${props.className || ""
+            }`}
         >
           {props.children}
         </section>
@@ -133,6 +132,7 @@ export default function Table<T = unknown>(props: TableComponentProps<T>) {
     }
   };
 
+  // eslint-disable-next-line
   const visiblePages = useMemo(() => {
     if (!pagination) return [];
     const { currentPage, totalPages } = pagination;
@@ -169,11 +169,9 @@ export default function Table<T = unknown>(props: TableComponentProps<T>) {
                   <th
                     key={col.key}
                     scope="col"
-                    className={`py-3.5 px-4 text-xs font-bold tracking-wider uppercase text-app-muted select-none ${
-                      col.width ? col.width : ""
-                    } ${col.headerClassName || ""} ${
-                      canSort ? "cursor-pointer hover:text-brand-royal dark:hover:text-brand-sky" : ""
-                    }`}
+                    className={`py-3.5 px-4 text-xs font-bold tracking-wider uppercase text-app-muted select-none ${col.width ? col.width : ""
+                      } ${col.headerClassName || ""} ${canSort ? "cursor-pointer hover:text-brand-royal dark:hover:text-brand-sky" : ""
+                      }`}
                     onClick={() => canSort && onSort(col.key)}
                   >
                     <div className={`flex items-center gap-2 ${getAlignmentClass(col.align)}`}>
@@ -243,20 +241,18 @@ export default function Table<T = unknown>(props: TableComponentProps<T>) {
                   <tr
                     key={key}
                     onClick={() => onRowClick && onRowClick(row, index)}
-                    className={`transition-colors duration-150 ${
-                      hoverable
-                        ? "hover:bg-app-surface-alt/70 dark:hover:bg-brand-navy/35"
-                        : ""
-                    } ${onRowClick ? "cursor-pointer" : ""}`}
+                    className={`transition-colors duration-150 ${hoverable
+                      ? "hover:bg-app-surface-alt/70 dark:hover:bg-brand-navy/35"
+                      : ""
+                      } ${onRowClick ? "cursor-pointer" : ""}`}
                   >
                     {columns.map((col) => {
                       const value = (row as Record<string, unknown>)[col.key];
                       return (
                         <td
                           key={`${key}-${col.key}`}
-                          className={`py-3.5 px-4 text-sm text-app-text align-middle ${
-                            getAlignmentClass(col.align).split(" ")[0]
-                          } ${col.cellClassName || ""}`}
+                          className={`py-3.5 px-4 text-sm text-app-text align-middle ${getAlignmentClass(col.align).split(" ")[0]
+                            } ${col.cellClassName || ""}`}
                         >
                           {col.render ? col.render(row, index) : (value as ReactNode) ?? "-"}
                         </td>
@@ -347,11 +343,10 @@ export default function Table<T = unknown>(props: TableComponentProps<T>) {
                     key={`page-${pageNumber}`}
                     type="button"
                     onClick={() => pagination.onPageChange(pageNumber)}
-                    className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      isActive
-                        ? "bg-brand-royal text-white shadow-xs dark:bg-brand-royal"
-                        : "border border-app-border bg-app-surface text-app-text hover:border-brand-royal/40 hover:bg-app-surface-alt"
-                    }`}
+                    className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold transition-all cursor-pointer ${isActive
+                      ? "bg-brand-royal text-white shadow-xs dark:bg-brand-royal"
+                      : "border border-app-border bg-app-surface text-app-text hover:border-brand-royal/40 hover:bg-app-surface-alt"
+                      }`}
                   >
                     {pageNumber}
                   </button>
@@ -485,9 +480,8 @@ Table.Row = ({
   return (
     <tr
       onClick={onClick}
-      className={`group rounded-2xl bg-app-surface border border-app-border/80 shadow-2xs hover:shadow-sm transition-all duration-150 ${
-        onClick ? "cursor-pointer hover:bg-brand-royal/5 dark:hover:bg-brand-sky/10" : "hover:bg-app-surface-alt/70"
-      } ${className}`}
+      className={`group rounded-2xl bg-app-surface border border-app-border/80 shadow-2xs hover:shadow-sm transition-all duration-150 ${onClick ? "cursor-pointer hover:bg-brand-royal/5 dark:hover:bg-brand-sky/10" : "hover:bg-app-surface-alt/70"
+        } ${className}`}
     >
       {children}
     </tr>
@@ -680,11 +674,10 @@ Table.Pagination = ({
               key={p}
               type="button"
               onClick={() => onPageChange(p as number)}
-              className={`min-w-8.5 h-8.5 px-2 rounded-xl text-xs font-bold transition cursor-pointer ${
-                p === currentPage
-                  ? "bg-brand-royal text-white shadow-xs"
-                  : "bg-app-surface border border-app-border text-app-text hover:bg-app-surface-alt hover:border-brand-royal/40"
-              }`}
+              className={`min-w-8.5 h-8.5 px-2 rounded-xl text-xs font-bold transition cursor-pointer ${p === currentPage
+                ? "bg-brand-royal text-white shadow-xs"
+                : "bg-app-surface border border-app-border text-app-text hover:bg-app-surface-alt hover:border-brand-royal/40"
+                }`}
             >
               {p}
             </button>

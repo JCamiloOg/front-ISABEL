@@ -17,7 +17,7 @@ import CategoriaProduct from "../../features/dashboard/pages/products/CategoriaP
 import MarcaProducts from "../../features/dashboard/pages/products/MarcaProducts";
 import TipoProducts from "../../features/dashboard/pages/products/TipoProducts";
 import CategoriaProveedor from "../../features/dashboard/pages/Proveedores/CategoriaProveedor";
-import Compras from "../../features/dashboard/pages/Compras/Compras";
+import Purchases from "../../features/dashboard/pages/Compras/Purchases";
 import RolesPage from "../../features/dashboard/pages/Roles/RolesPage";
 import PermissionsPage from "../../features/dashboard/pages/Permissions/PermissionsPage";
 
@@ -99,7 +99,7 @@ export const supplierRoute = createRoute({
 export const shoppingRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/shopping",
-  component: () => <Compras />,
+  component: () => <Purchases />,
 });
 
 // ── Gestión de ventas ──
@@ -137,13 +137,13 @@ export const usersRoute = createRoute({
 export const rolesRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/roles",
-  component: () => <RolesPage/>,
+  component: () => <RolesPage />,
 });
 
 export const permissionsRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/permissions",
-  component: () => <PermissionsPage/>,
+  component: () => <PermissionsPage />,
 });
 
 export const dashboardRoutes = dashboardLayout.addChildren([

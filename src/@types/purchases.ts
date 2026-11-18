@@ -4,7 +4,7 @@
 
 import type { Supplier } from './suppliers';
 import type { CashRegister } from './cash-registers';
-import type { ProductVariant } from './products';
+import type { ProductVariantWithRelations } from './products';
 
 /** Encabezado de órdenes de compra a proveedores (ID en formato UUID) */
 export interface Purchase {
@@ -34,5 +34,5 @@ export interface PurchaseDetail {
 
 export interface PurchaseDetailWithRelations extends PurchaseDetail {
   purchase?: Purchase;
-  variant?: ProductVariant;
+  variant?: ProductVariantWithRelations;
 }
