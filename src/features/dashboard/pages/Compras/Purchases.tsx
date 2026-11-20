@@ -19,24 +19,34 @@ import { Select } from "../../../../shared/components/Inputs/Select";
 import Table, { type SortDirection } from "../../../../shared/components/Table";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { PurchaseWithRelations } from "../../../../@types";
-import { getAllPurchases, getPurchaseByID } from "./services/shoppingsServices";
+import { createPurchase, getAllPurchases, getPurchaseByID, updatePurchase, updatePurchaseStatus } from "./services/shoppingsServices";
 import { Toast } from "../../../../shared/utils/alerts";
 import { isAxiosError } from "axios";
 import { PurchaseDetailModal } from "./components/PurchaseDetailModal";
-import { PurchaseFormModal, type PurchaseFormData } from "./components/PurchaseFormModal";
+import { PurchaseFormModal, type PurchaFormDataEdit, type PurchaseFormDataCreate } from "./components/PurchaseFormModal";
+import { PurchaseStatusModal, type PurchaseStatus } from "./components/PurchaseStatusModal";
+import type { CashRegister } from "../../../../@types";
 
 export default function Purchases() {
   const [purchases, setPurchases] = useState<Omit<PurchaseWithRelations, "purchaseDetails">[]>([]);
+  const [cashRegisters, setCashRegisters] = useState<Pick<CashRegister, "name" | "id" | "currentBalance">[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Estado para el modal de detalle por ID
   const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
   const [selectedPurchase, setSelectedPurchase] = useState<PurchaseWithRelations | null>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState<boolean>(false);
+  const [isLoadingEdit, setIsLoadingEdit] = useState<boolean>(false);
+
+  // Estado para el modal de cambio de estado
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState<boolean>(false);
+  const [statusTargetPurchase, setStatusTargetPurchase] = useState<Omit<PurchaseWithRelations, "purchaseDetails"> | null>(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState<boolean>(false);
 
   // Estado para el modal de creación y edición
   const [isFormModalOpen, setIsFormModalOpen] = useState<boolean>(false);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
+  const [onSubmitLoading, setOnSubmitLoading] = useState<boolean>(false);
 
   // Filtros y búsqueda
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -55,6 +65,7 @@ export default function Purchases() {
 
       if (response.status === 200) {
         setPurchases(response.data.shoppings || []);
+        setCashRegisters(response.data.cashRegister || []);
       }
     } catch (error) {
       if (isAxiosError(error)) {
@@ -71,8 +82,6 @@ export default function Purchases() {
 
   const findPurchaseByID = useCallback(async (id: string) => {
     try {
-      setIsLoadingDetail(true);
-      setIsDetailModalOpen(true);
       const response = await getPurchaseByID(id);
 
       if (response.status === 200) {
@@ -86,8 +95,6 @@ export default function Purchases() {
           text: "Por favor, intenta nuevamente",
         });
       }
-    } finally {
-      setIsLoadingDetail(false);
     }
   }, []);
 
@@ -118,17 +125,6 @@ export default function Purchases() {
   };
 
   // Normalizador de estado para soportar variantes de mayúsculas/acentos
-  const normalizeStatus = (status?: string | null): "Completada" | "Pendiente" | "Cancelada" => {
-    if (!status) return "Pendiente";
-    const s = status.trim().toLowerCase();
-    if (s.includes("completad") || s.includes("recibid") || s.includes("entregad") || s === "completed") {
-      return "Completada";
-    }
-    if (s.includes("cancelad") || s.includes("anulad") || s === "cancelled") {
-      return "Cancelada";
-    }
-    return "Pendiente";
-  };
 
   // Métricas calculadas en base a las compras registradas
   const metrics = useMemo(() => {
@@ -137,8 +133,8 @@ export default function Purchases() {
     let canceladas = 0;
 
     purchases.forEach((p) => {
-      const norm = normalizeStatus(p.status);
-      if (norm === "Completada") completadas++;
+      const norm = p.status;
+      if (norm === "Recibida") completadas++;
       else if (norm === "Pendiente") pendientes++;
       else if (norm === "Cancelada") canceladas++;
     });
@@ -154,10 +150,9 @@ export default function Purchases() {
   // Filtrado
   const filteredPurchases = useMemo(() => {
     return purchases.filter((item) => {
-      const normStatus = normalizeStatus(item.status);
 
       // Filtro de estado
-      if (statusFilter !== "all" && normStatus !== statusFilter) {
+      if (statusFilter !== "all" && item.status !== statusFilter) {
         return false;
       }
 
@@ -195,7 +190,7 @@ export default function Purchases() {
         const dateB = b.orderDate ? new Date(b.orderDate).getTime() : 0;
         cmp = dateA - dateB;
       } else if (sortKey === "status") {
-        cmp = normalizeStatus(a.status).localeCompare(normalizeStatus(b.status));
+        cmp = a.status.localeCompare(b.status);
       }
 
       return sortDir === "asc" ? cmp : -cmp;
@@ -214,13 +209,53 @@ export default function Purchases() {
   const hasActiveFilters = searchTerm.trim() !== "" || statusFilter !== "all";
 
   // Manejadores de acciones
-  const handleViewDetail = (purchase: Omit<PurchaseWithRelations, "purchaseDetails">) => {
-    findPurchaseByID(purchase.id);
+  const handleViewDetail = async (purchase: Omit<PurchaseWithRelations, "purchaseDetails">) => {
+    setIsLoadingDetail(true);
+    setIsDetailModalOpen(true);
+    // Peticion
+    await findPurchaseByID(purchase.id);
+    setIsLoadingDetail(false);
   };
 
   const handleCloseDetailModal = () => {
     setIsDetailModalOpen(false);
     setSelectedPurchase(null);
+  };
+
+  const handleOpenStatusModal = (purchase: Omit<PurchaseWithRelations, "purchaseDetails">) => {
+    setStatusTargetPurchase(purchase);
+    setIsStatusModalOpen(true);
+  };
+
+  const handleCloseStatusModal = () => {
+    setIsStatusModalOpen(false);
+    setStatusTargetPurchase(null);
+  };
+
+  const handleUpdateStatus = async (purchaseId: string, newStatus: PurchaseStatus) => {
+    try {
+      setIsUpdatingStatus(true);
+      const res = await updatePurchaseStatus(purchaseId, newStatus);
+      if (res.status === 200 || res.status === 204) {
+        Toast.fire({
+          icon: "success",
+          title: "Estado actualizado",
+          text: `La compra #${purchaseId.slice(0, 8)} ahora está ${newStatus}.`,
+        });
+        handleCloseStatusModal();
+        await findPurchases();
+      }
+    } catch (error) {
+      if (isAxiosError(error)) {
+        Toast.fire({
+          icon: "error",
+          title: error.response?.data?.message || "Error al actualizar el estado.",
+          text: "Por favor, intenta nuevamente",
+        });
+      }
+    } finally {
+      setIsUpdatingStatus(false);
+    }
   };
 
   const handleOpenCreateModal = () => {
@@ -230,35 +265,49 @@ export default function Purchases() {
   };
 
   const handleEdit = async (purchase: Omit<PurchaseWithRelations, "purchaseDetails">) => {
-    try {
-      setIsLoading(true);
-      const response = await getPurchaseByID(purchase.id);
-      if (response.status === 200 && response.data.shoppings) {
-        setSelectedPurchase(response.data.shoppings);
-      } else {
-        setSelectedPurchase(purchase as PurchaseWithRelations);
-      }
-    } catch {
-      setSelectedPurchase(purchase as PurchaseWithRelations);
-    } finally {
-      setIsLoading(false);
-      setFormMode("edit");
-      setIsFormModalOpen(true);
-    }
+    setIsLoadingEdit(true);
+    setFormMode("edit");
+    setIsFormModalOpen(true);
+    await findPurchaseByID(purchase.id);
+    setIsLoadingEdit(false);
   };
 
   const handleCloseFormModal = () => {
     setIsFormModalOpen(false);
     setSelectedPurchase(null);
+    setFormMode("create");
   };
 
-  const handleFormSubmit = (data: PurchaseFormData) => {
-    console.log(`[Purchases] Guardar datos (${formMode}):`, data);
-    Toast.fire({
-      icon: "success",
-      title: formMode === "create" ? "Compra registrada" : "Compra actualizada",
-      text: "Datos procesados en consola (console.log).",
-    });
+  const handleFormSubmit = async (data: PurchaseFormDataCreate | PurchaFormDataEdit, onClose: () => void) => {
+    try {
+      setOnSubmitLoading(true);
+      let res;
+      if (formMode === "create") {
+        res = await createPurchase(data as PurchaseFormDataCreate);
+
+      } else {
+        res = await updatePurchase(selectedPurchase!.id, data);
+      }
+
+      if (res.status === 201 || res.status === 200) {
+        Toast.fire({
+          icon: "success",
+          title: res.data.message,
+        });
+        await findPurchases();
+        onClose();
+      }
+    } catch (error) {
+      if (isAxiosError(error)) {
+        Toast.fire({
+          icon: "error",
+          title: "Error al guardar",
+          text: error.response?.data.message || "Error de conexión",
+        });
+      }
+    } finally {
+      setOnSubmitLoading(false);
+    }
   };
 
 
@@ -505,7 +554,7 @@ export default function Purchases() {
               />
             ) : (
               paginatedPurchases.map((row) => {
-                const normStatus = normalizeStatus(row.status);
+                const normStatus = row.status;
                 const date = row.orderDate ? new Date(row.orderDate) : null;
 
                 return (
@@ -576,24 +625,34 @@ export default function Purchases() {
 
                     {/* Estado */}
                     <Table.Cell className="text-center">
-                      {normStatus === "Completada" && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
-                          <span className="size-1.5 rounded-full bg-emerald-500" />
-                          Completada
-                        </span>
-                      )}
-                      {normStatus === "Cancelada" && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-500/15 px-2.5 py-1 text-[11px] font-bold text-rose-700 dark:text-rose-400">
-                          <span className="size-1.5 rounded-full bg-rose-500" />
-                          Cancelada
-                        </span>
-                      )}
-                      {normStatus === "Pendiente" && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/15 px-2.5 py-1 text-[11px] font-bold text-amber-700 dark:text-amber-400">
-                          <span className="size-1.5 rounded-full bg-amber-500" />
-                          Pendiente
-                        </span>
-                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenStatusModal(row);
+                        }}
+                        title="Haz clic para cambiar el estado"
+                        className="group inline-flex items-center gap-1.5 rounded-full outline-none transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95"
+                      >
+                        {normStatus === "Recibida" && (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 group-hover:bg-emerald-500/20 group-hover:border-emerald-500/40 transition-colors">
+                            <span className="size-1.5 rounded-full bg-emerald-500 shadow-xs" />
+                            Recibida
+                          </span>
+                        )}
+                        {normStatus === "Cancelada" && (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/25 bg-rose-500/10 px-3 py-1 text-xs font-bold text-rose-700 dark:text-rose-400 group-hover:bg-rose-500/20 group-hover:border-rose-500/40 transition-colors">
+                            <span className="size-1.5 rounded-full bg-rose-500 shadow-xs" />
+                            Cancelada
+                          </span>
+                        )}
+                        {normStatus === "Pendiente" && (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-700 dark:text-amber-400 group-hover:bg-amber-500/20 group-hover:border-amber-500/40 transition-colors">
+                            <span className="size-1.5 rounded-full bg-amber-500 shadow-xs" />
+                            Pendiente
+                          </span>
+                        )}
+                      </button>
                     </Table.Cell>
 
                     {/* Acciones */}
@@ -657,8 +716,20 @@ export default function Purchases() {
         isOpen={isFormModalOpen}
         onClose={handleCloseFormModal}
         mode={formMode}
+        onSubmitLoading={onSubmitLoading}
         purchase={selectedPurchase}
         onSubmit={handleFormSubmit}
+        isLoading={isLoadingEdit}
+        cashRegisters={cashRegisters}
+      />
+
+      {/* Modal de Cambio de Estado */}
+      <PurchaseStatusModal
+        isOpen={isStatusModalOpen}
+        onClose={handleCloseStatusModal}
+        purchase={statusTargetPurchase}
+        onUpdateStatus={handleUpdateStatus}
+        isLoading={isUpdatingStatus}
       />
     </div>
   );

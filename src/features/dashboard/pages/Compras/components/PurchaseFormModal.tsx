@@ -4,7 +4,6 @@ import {
   faCartPlus,
   faPenToSquare,
   faBuilding,
-  faCashRegister,
   faCalendarDay,
   faPercent,
   faPlus,
@@ -12,31 +11,35 @@ import {
   faBoxesStacked,
   faFloppyDisk,
   faXmark,
-  faClock,
   faShoePrints,
   faCheck,
   faLayerGroup,
   faCartShopping,
   faImage,
+  faBan,
+  faReceipt,
 } from "@fortawesome/free-solid-svg-icons";
 
 import Modal from "../../../../../shared/components/Modal";
 import { Button } from "../../../../../shared/components/Button";
 import { Input } from "../../../../../shared/components/Inputs/Input";
-import { Select } from "../../../../../shared/components/Inputs/Select";
 import SelectBySearch, { type SelectBySearchOption } from "../../../../../shared/components/Inputs/SelectBySearch";
+import { CashRegisterSelector } from "../../../components/CashRegisterSelector";
 import type {
   ProductColorWithRelations,
   ProductVariantWithRelations,
   ProductWithRelations,
   PurchaseWithRelations,
   Supplier,
+  CashRegister,
 } from "../../../../../@types";
-import { getProducts, getSupplier } from "../services/shoppingsServices";
+import { addVariantShopping, deleteVariantInShopping, getProducts, getSupplier, updateVariantInShopping } from "../services/shoppingsServices";
+import { Toast } from "../../../../../shared/utils/alerts";
+import { isAxiosError } from "axios";
 
 // Fila añadida a la tabla de detalle
 export interface PurchaseDetailRow {
-  variantId: number | string;
+  variantId: number;
   quantity: number;
   unitPrice: number;
   // Metadata enriquecida para mostrar en la tabla inferior
@@ -49,19 +52,28 @@ export interface PurchaseDetailRow {
   currentStock: number;
 }
 
-export interface PurchaseFormData {
-  id?: string;
-  supplierId: string;
-  cashRegisterId: number | string;
-  orderDate: string;
-  deliveryDate?: string;
-  status: string;
-  vat: number | string;
+export interface PurchaseFormDataCreate {
+  purchaseInfo: {
+    id?: string;
+    supplierId: string;
+    cashRegisterId: number;
+    orderDate: string;
+    vat: number;
+  }
   purchaseDetails: {
-    variantId: number | string;
-    quantity: number | string;
-    unitPrice: number | string;
+    variantId: number;
+    quantity: number;
+    unitPrice: number;
   }[];
+}
+
+export interface PurchaFormDataEdit {
+  purchaseInfo: {
+    supplierId: string;
+    cashRegisterId: number;
+    orderDate: string;
+    vat: number;
+  }
 }
 
 interface PurchaseFormModalProps {
@@ -69,7 +81,10 @@ interface PurchaseFormModalProps {
   onClose: () => void;
   mode: "create" | "edit";
   purchase: PurchaseWithRelations | null;
-  onSubmit?: (data: PurchaseFormData) => void;
+  onSubmit?: (data: PurchaseFormDataCreate | PurchaFormDataEdit, onClose: () => void) => void;
+  isLoading?: boolean;
+  cashRegisters?: Pick<CashRegister, "name" | "id" | "currentBalance">[];
+  onSubmitLoading: boolean;
 }
 
 export function PurchaseFormModal({
@@ -78,17 +93,21 @@ export function PurchaseFormModal({
   mode,
   purchase,
   onSubmit,
+  isLoading = false,
+  onSubmitLoading,
+  cashRegisters = [],
 }: PurchaseFormModalProps) {
   // Estado general de la compra
   const [supplierId, setSupplierId] = useState<string>("");
   const [cashRegisterId, setCashRegisterId] = useState<number | string>(1);
   const [orderDate, setOrderDate] = useState<string>(new Date().toISOString().split("T")[0]);
-  const [deliveryDate, setDeliveryDate] = useState<string>("");
-  const [status, setStatus] = useState<string>("Pendiente");
   const [vat, setVat] = useState<number | string>(19);
+  const [invoiceNumber, setInvoiceNumber] = useState<string>("");
+
 
   // Lista definitiva de detalles agregados a la tabla inferior
   const [addedDetails, setAddedDetails] = useState<PurchaseDetailRow[]>([]);
+  const [isEditLoading, setIsEditLoading] = useState(false);
 
   // Estados temporales del Selector Superior (Builder de Variante)
   const [selectedProduct, setSelectedProduct] = useState<ProductWithRelations | null>(null);
@@ -177,18 +196,13 @@ export function PurchaseFormModal({
     if (mode === "edit" && purchase) {
       // eslint-disable-next-line
       setSupplierId(purchase.supplierId || purchase.supplier?.document || "");
-      setCashRegisterId(purchase.cashRegisterId || 1);
+      setCashRegisterId(purchase.cashRegister?.id || 1);
+      setInvoiceNumber(purchase.id || "");
       setOrderDate(
         purchase.orderDate
           ? new Date(purchase.orderDate).toISOString().split("T")[0]
           : new Date().toISOString().split("T")[0]
       );
-      setDeliveryDate(
-        purchase.deliveryDate
-          ? new Date(purchase.deliveryDate).toISOString().split("T")[0]
-          : ""
-      );
-      setStatus(purchase.status || "Pendiente");
       setVat(purchase.vat ?? 19);
 
       if (purchase.supplier) {
@@ -236,9 +250,9 @@ export function PurchaseFormModal({
       // Modo Crear
       setSupplierId("");
       setCashRegisterId(1);
+      setInvoiceNumber("");
+      setCashRegisterId(cashRegisters.length > 0 ? cashRegisters[0].id : 1);
       setOrderDate(new Date().toISOString().split("T")[0]);
-      setDeliveryDate("");
-      setStatus("Pendiente");
       setVat(19);
       setAddedDetails([]);
     }
@@ -248,7 +262,7 @@ export function PurchaseFormModal({
     setSelectedColor(null);
     setSelectedVariants({});
     setErrors({});
-  }, [mode, purchase, isOpen]);
+  }, [mode, purchase, isOpen, cashRegisters]);
 
   // Selección de Producto
   const handleSelectProduct = (option?: SelectBySearchOption<ProductWithRelations>) => {
@@ -311,27 +325,72 @@ export function PurchaseFormModal({
   };
 
   // Agregar las tallas seleccionadas a la tabla de compras definitiva
-  const handleAddSelectedToCart = () => {
+  const handleAddSelectedToCart = async () => {
     if (!selectedProduct || !selectedColor) return;
 
     const variantEntries = Object.entries(selectedVariants);
     if (variantEntries.length === 0) return;
 
     const newRows: PurchaseDetailRow[] = [];
+    let updatedSucces = 0;
+    let addSuccess = 0;
 
-    variantEntries.forEach(([varIdStr, cfg]) => {
+    for (const [varIdStr, cfg] of variantEntries) {
       const varId = Number(varIdStr);
       const variantObj = selectedColor.productVariants?.find((v) => v.id === varId);
-
-      const existingIndex = addedDetails.findIndex((d) => Number(d.variantId) === varId);
-      if (existingIndex >= 0) {
+      const existingItem = addedDetails.find((d) => Number(d.variantId) === varId);
+      if (existingItem) {
         // Si ya existía, actualizamos cantidad y precio
-        const updated = [...addedDetails];
-        updated[existingIndex].quantity += cfg.quantity;
-        updated[existingIndex].unitPrice = cfg.unitPrice;
-        setAddedDetails(updated);
+        const newQuantity = existingItem.quantity + cfg.quantity;
+
+        if (mode === "edit") {
+          try {
+            setIsEditLoading(true);
+            const res = await updateVariantInShopping(
+              {
+                variantId: varId,
+                quantity: newQuantity,
+                unitPrice: cfg.unitPrice
+              },
+              invoiceNumber,
+              varId
+            );
+
+            if (res.status === 200) {
+              updatedSucces++;
+
+              setAddedDetails((prev) =>
+                prev.map((row) =>
+                  Number(row.variantId) === varId
+                    ? { ...row, quantity: newQuantity, unitPrice: cfg.unitPrice }
+                    : row
+                )
+              );
+            }
+          } catch (error) {
+            if (isAxiosError(error)) {
+              Toast.fire({
+                icon: "error",
+                title: error.response?.data.message
+              });
+            }
+          } finally {
+            setIsEditLoading(false);
+            // Resetear las tallas marcadas tras agregarlas
+            setSelectedVariants({});
+
+          }
+        } else {
+          setAddedDetails((prev) =>
+            prev.map((row) =>
+              Number(row.variantId) === varId
+                ? { ...row, quantity: newQuantity, unitPrice: cfg.unitPrice }
+                : row
+            )
+          );
+        }
       } else {
-        newRows.push({
+        const rowData: PurchaseDetailRow = {
           variantId: varId,
           quantity: cfg.quantity,
           unitPrice: cfg.unitPrice,
@@ -342,29 +401,160 @@ export function PurchaseFormModal({
           image: selectedColor.colorImages?.[0]?.image || selectedColor.image || null,
           sizeNumber: variantObj?.size?.sizeNumber || variantObj?.sizeId || "N/A",
           currentStock: variantObj?.currentStock || 0,
-        });
-      }
-    });
+        };
 
-    if (newRows.length > 0) {
-      setAddedDetails((prev) => [...prev, ...newRows]);
+        if (mode === "edit") {
+          setIsEditLoading(true);
+          try {
+            const res = await addVariantShopping(
+              {
+                variantId: varId,
+                quantity: cfg.quantity,
+                unitPrice: cfg.unitPrice
+              },
+              invoiceNumber
+            );
+
+            if (res.status === 201) {
+              addSuccess++;
+
+              newRows.push(rowData);
+            }
+          } catch (error) {
+            if (isAxiosError(error)) {
+              Toast.fire({
+                icon: "error",
+                title: error.response?.data.message
+              });
+            }
+          } finally {
+            setIsEditLoading(false);
+            // Resetear las tallas marcadas tras agregarlas
+            setSelectedVariants({});
+          }
+        } else {
+          newRows.push(rowData);
+        }
+      }
     }
 
-    // Resetear las tallas marcadas tras agregarlas
-    setSelectedVariants({});
+    let message = "Detalle de la compra actualizado existosamente";
+    let icon = "success";
+
+    if (updatedSucces > 0 && addSuccess > 0) {
+      message = `Se ${updatedSucces > 1 ? "han actualizado" : "ha actualizado"} ${updatedSucces} y se han añadido ${addSuccess} ${addSuccess > 1 ? "productos" : "producto"}!`; icon = "success";
+    }
+    if (updatedSucces > 0 && addSuccess == 0) {
+      message = `Se ${updatedSucces > 1 ? "han actualizado" : "ha actualizado"} ${updatedSucces} ${updatedSucces > 1 ? "productos" : "producto"}!`;
+      icon = "success";
+    }
+    if (updatedSucces == 0 && addSuccess > 0) {
+      message = `Se ${addSuccess > 1 ? "han añadido" : "ha añadido"} ${addSuccess} ${addSuccess > 1 ? "productos" : "producto"}!`;
+      icon = "success";
+    }
+
+
+    Toast.fire({
+      icon: icon as "success" | "error" | "info" | "warning",
+      title: "Detalle de la compra actualizado existosamente",
+      titleText: message
+    });
+
+    if (newRows.length > 0) setAddedDetails((prev) => [...prev, ...newRows]);
+
+    if (mode === "edit") setSelectedVariants({});
+
+
     setErrors((prev) => ({ ...prev, purchaseDetails: "" }));
   };
 
   // Eliminar un ítem de la tabla inferior
-  const handleRemoveAddedRow = (variantId: number | string) => {
-    setAddedDetails((prev) => prev.filter((row) => row.variantId !== variantId));
+  const handleRemoveAddedRow = async (variantId: number) => {
+    try {
+      if (mode === "edit") {
+        const res = await deleteVariantInShopping(invoiceNumber, variantId);
+
+        if (res.status === 200) {
+          Toast.fire({
+            icon: "success",
+            title: res.data.message
+          });
+
+          setAddedDetails((prev) => prev.filter((row) => row.variantId !== variantId));
+        }
+      }
+
+      if (mode === "create") setAddedDetails((prev) => prev.filter((row) => row.variantId !== variantId));
+    } catch (error) {
+      if (isAxiosError(error)) {
+        Toast.fire({
+          icon: "error",
+          title: error.response?.data.message
+        });
+      }
+    }
   };
 
+  const addedDetailsRef = useRef(addedDetails);
+
+  useEffect(() => {
+    addedDetailsRef.current = addedDetails;
+  }, [addedDetails]);
+
+  // 2. Un timer por cada variantId (así editar una fila no cancela el guardado de otra)
+  const debounceTimersRef = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
+
+  // Limpiar timers pendientes si el componente se desmonta
+  useEffect(() => {
+    const timers = debounceTimersRef.current;
+    return () => {
+      Object.values(timers).forEach(clearTimeout);
+    };
+  }, []);
+
   // Actualizar cantidad o precio directamente en la tabla inferior
-  const handleUpdateAddedRow = (variantId: number | string, field: "quantity" | "unitPrice", val: number) => {
+  const handleUpdateAddedRow = async (variantId: number, field: "quantity" | "unitPrice", val: number) => {
+    // Actualizar el estado local AL INSTANTE para que el input responda fluido
     setAddedDetails((prev) =>
       prev.map((row) => (row.variantId === variantId ? { ...row, [field]: val } : row))
     );
+
+    if (mode !== "edit") return;
+
+    if (debounceTimersRef.current[variantId]) clearTimeout(debounceTimersRef.current[variantId]);
+
+    debounceTimersRef.current[variantId] = setTimeout(async () => {
+      try {
+        const currentDetail = addedDetailsRef.current.find(
+          (row) => row.variantId === variantId
+        );
+        if (!currentDetail) return;
+
+        const payLoad = {
+          variantId: Number(variantId),
+          quantity: field === "quantity" ? val : currentDetail.quantity,
+          unitPrice: field === "unitPrice" ? val : currentDetail.unitPrice,
+        };
+
+        const res = await updateVariantInShopping(payLoad, invoiceNumber, variantId);
+
+        if (res.status === 200) {
+          Toast.fire({
+            icon: "success",
+            title: res.data.message,
+          });
+        }
+      } catch (error) {
+        if (isAxiosError(error)) {
+          Toast.fire({
+            icon: "error",
+            title: error.response?.data.message,
+          });
+        }
+      } finally {
+        delete debounceTimersRef.current[variantId];
+      }
+    }, 600);
   };
 
   // Cálculos en tiempo real
@@ -401,38 +591,43 @@ export function PurchaseFormModal({
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = (e?: React.FormEvent) => {
+  const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
     if (!validate()) return;
 
-    const payload: PurchaseFormData = {
-      id: purchase?.id,
-      supplierId,
-      cashRegisterId,
-      orderDate,
-      deliveryDate: deliveryDate || undefined,
-      status,
-      vat,
-      purchaseDetails: addedDetails.map((row) => ({
-        variantId: row.variantId,
-        quantity: row.quantity,
-        unitPrice: row.unitPrice,
-      })),
-    };
+    let payload: PurchaseFormDataCreate | PurchaFormDataEdit;
 
-    console.log("=== [SUBMIT PURCHASE DATA] ===", {
-      mode,
-      payload,
-      resumenFinanciero: { subtotal, iva: vatAmount, total },
-      detallesCompletos: addedDetails,
-    });
-
-    if (onSubmit) {
-      onSubmit(payload);
+    if (mode === "create") {
+      payload = {
+        purchaseInfo: {
+          id: purchase?.id,
+          supplierId,
+          cashRegisterId: Number(cashRegisterId),
+          orderDate,
+          vat: Number(vat),
+        },
+        purchaseDetails: addedDetails.map((row) => ({
+          variantId: Number(row.variantId),
+          quantity: Number(row.quantity),
+          unitPrice: Number(row.unitPrice),
+        })),
+      };
+    } else {
+      payload = {
+        purchaseInfo: {
+          supplierId,
+          cashRegisterId: Number(cashRegisterId),
+          orderDate,
+          vat: Number(vat),
+        }
+      };
     }
 
-    onClose();
+    if (onSubmit) {
+      onSubmit(payload, onClose);
+    }
+
   };
 
   // Listado de tallas y variantes del color activo
@@ -455,495 +650,530 @@ export function PurchaseFormModal({
             <FontAwesomeIcon icon={faXmark} className="text-xs mr-1.5" />
             Cancelar
           </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={handleSubmit}
-            type="button"
-            className="shadow-sm hover:shadow-md transition-all active:scale-95"
-          >
-            <FontAwesomeIcon icon={faFloppyDisk} className="text-xs mr-1.5" />
-            {mode === "create" ? "Guardar Compra" : "Actualizar Compra"}
-          </Button>
+          {
+            mode === "create" && (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleSubmit}
+                type="button"
+                loadingText="Guardando..."
+                isLoading={onSubmitLoading}
+                className="shadow-sm hover:shadow-md transition-all active:scale-95"
+              >
+                <FontAwesomeIcon icon={faFloppyDisk} className="text-xs mr-1.5" />
+                {"Guardar Compra"}
+              </Button>
+            )
+          }
         </div>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Sección 1: Datos de Proveedor, Caja y Fechas */}
-        <div className="p-4 rounded-2xl border border-app-border bg-app-surface-alt/50 space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b border-app-border/70">
-            <span className="flex size-6 items-center justify-center rounded-lg bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky text-xs">
-              <FontAwesomeIcon icon={faBuilding} />
-            </span>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-app-muted">
-              Datos Principales de la Orden
-            </h4>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            <div className="sm:col-span-2 lg:col-span-2">
-              <SelectBySearch<Supplier>
-                label="Proveedor *"
-                placeholder="Buscar por razón social, NIT o correo..."
-                searchPlaceholder="Escribe para buscar proveedor..."
-                options={supplierOptions}
-                value={supplierId}
-                onChange={(val) => setSupplierId(String(val))}
-                onSearchChange={handleSupplierSearch}
-                isLoading={isSearchingSupplier}
-                error={errors.supplierId}
-                iconLeft={faBuilding}
-                size="md"
-              />
-            </div>
-
-            <div>
-              <Select
-                label="Caja o Cuenta Afectada *"
-                id="cashRegisterId"
-                value={cashRegisterId}
-                onChange={(e) => setCashRegisterId(Number(e.target.value) || e.target.value)}
-                options={[
-                  { value: 1, label: "Caja Principal - Operativa" },
-                  { value: 2, label: "Cuenta Bancaria Bancolombia" },
-                  { value: 3, label: "Caja Chica Auxiliar" },
-                ]}
-                iconLeft={<FontAwesomeIcon icon={faCashRegister} className="text-app-muted text-xs" />}
-                size="md"
-              />
-            </div>
-
-            <div>
-              <Select
-                label="Estado de la Compra *"
-                id="purchaseStatus"
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                options={[
-                  { value: "Pendiente", label: "Pendiente" },
-                  { value: "Completada", label: "Completada" },
-                  { value: "Cancelada", label: "Cancelada" },
-                ]}
-                iconLeft={<FontAwesomeIcon icon={faClock} className="text-app-muted text-xs" />}
-                size="md"
-              />
-            </div>
-
-            <div>
-              <Input
-                label="Fecha de la Orden *"
-                id="orderDate"
-                type="date"
-                value={orderDate}
-                onChange={(e) => setOrderDate(e.target.value)}
-                error={errors.orderDate}
-                iconLeft={<FontAwesomeIcon icon={faCalendarDay} className="text-app-muted text-xs" />}
-                className="bg-app-surface text-xs"
-              />
-            </div>
-
-            <div>
-              <Input
-                label="IVA (%)"
-                id="vat"
-                type="number"
-                min="0"
-                max="100"
-                step="1"
-                value={vat}
-                onChange={(e) => setVat(e.target.value)}
-                iconLeft={<FontAwesomeIcon icon={faPercent} className="text-app-muted text-xs" />}
-                className="bg-app-surface text-xs"
-              />
-            </div>
-          </div>
+      {isLoading && mode === "edit" ? (
+        <div className="py-16 flex flex-col items-center justify-center gap-3">
+          <div className="size-10 rounded-full border-3 border-brand-royal/20 border-t-brand-royal animate-spin" />
+          <p className="text-sm font-semibold text-app-muted">Cargando detalles de la compra...</p>
         </div>
-
-        {/* Sección 2: Selector Interactivo de Productos, Colores y Tallas (Exacto a la imagen) */}
-        <div className="rounded-2xl border border-app-border bg-app-surface shadow-xs transition-all">
-          {/* Header del bloque interactivo */}
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-app-border/70 bg-app-surface-alt/40 px-5 py-3 rounded-t-2xl">
-            <div className="flex items-center gap-2.5">
-              <span className="flex size-6 items-center justify-center rounded-lg bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky text-xs">
-                <FontAwesomeIcon icon={faLayerGroup} />
-              </span>
-              <span className="text-xs font-bold tracking-tight text-app-text">
-                Selección de Productos y Tallas en Inventario
-              </span>
-            </div>
-            <span className="text-[11px] text-app-muted">
-              Solo se muestran colores y tallas con existencias disponibles
-            </span>
+      ) : !purchase && mode === "edit" ? (
+        <div className="py-12 text-center">
+          <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-500 mb-3 border border-rose-200">
+            <FontAwesomeIcon icon={faBan} className="text-lg" />
           </div>
-
-          <div className="p-5 space-y-4">
-            {/* Fila: Seleccionar Producto y Color Disponible */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-              {/* Dropdown de Producto */}
-              <div className="lg:col-span-7">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-app-muted mb-1.5 block">
-                  SELECCIONAR PRODUCTO
-                </label>
-                <SelectBySearch<ProductWithRelations>
-                  placeholder="Seleccionar calzado..."
-                  searchPlaceholder="Escribe para buscar calzado..."
-                  options={productOptions}
-                  value={selectedProduct?.id}
-                  onChange={(_, opt) => handleSelectProduct(opt)}
-                  onSearchChange={handleProductSearch}
-                  isLoading={isSearchingProducts}
-                  iconLeft={faShoePrints}
-                  size="md"
-                />
-              </div>
-
-              {/* Pills de Color Disponible */}
-              <div className="lg:col-span-5">
-                <label className="text-[11px] font-bold tracking-wider text-app-muted mb-1.5 block">
-                  Color Disponible *
-                </label>
-
-                {!selectedProduct ? (
-                  <div className="text-xs text-app-muted italic py-2.5">
-                    Selecciona un producto para ver colores
-                  </div>
-                ) : availableColors.length === 0 ? (
-                  <div className="text-xs text-app-muted italic py-2.5">
-                    Sin colores registrados para este producto
-                  </div>
-                ) : (
-                  <div className="flex flex-wrap gap-2 pt-0.5">
-                    {availableColors.map((colorObj) => {
-                      const isColorActive = selectedColor?.id === colorObj.id;
-                      const colorName = colorObj.color?.name || `Color #${colorObj.colorId}`;
-                      const hex = colorObj.color?.hex;
-
-                      return (
-                        <button
-                          key={colorObj.id}
-                          type="button"
-                          onClick={() => handleSelectColor(colorObj)}
-                          className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer ${isColorActive
-                            ? "bg-brand-royal text-white shadow-xs dark:bg-brand-royal ring-2 ring-brand-royal/30"
-                            : "border border-app-border bg-app-surface text-app-text hover:border-brand-royal/40 hover:bg-app-surface-alt"
-                            }`}
-                        >
-                          {hex && (
-                            <span
-                              className="size-2.5 rounded-full border border-white/30 inline-block shrink-0 shadow-2xs"
-                              style={{ backgroundColor: hex }}
-                            />
-                          )}
-                          <span>{colorName}</span>
-                          {isColorActive && <FontAwesomeIcon icon={faCheck} className="text-[10px] ml-0.5" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Sub-Panel: Tallas Disponibles + Cantidades por Talla */}
-            {selectedProduct && selectedColor && (
-              <div className="rounded-xl border border-app-border/80 bg-app-surface-alt/40 p-4 space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-xs font-bold text-app-text">
-                    Tallas disponibles para{" "}
-                    <span className="text-brand-royal dark:text-brand-sky">
-                      {selectedColor.color?.name || "el color seleccionado"}
-                    </span>
-                    :
-                  </span>
-                  <span className="text-[11px] text-app-muted">
-                    Selecciona una o varias tallas para configurar cantidades
-                  </span>
-                </div>
-
-                {availableVariants.length === 0 ? (
-                  <p className="text-xs text-app-muted italic">
-                    No hay tallas registradas para esta combinación de color.
-                  </p>
-                ) : (
-                  <div className="flex flex-wrap gap-2.5">
-                    {availableVariants.map((variantObj) => {
-                      const isVariantActive = Boolean(selectedVariants[variantObj.id]);
-                      const sizeNumber = variantObj.size?.sizeNumber || variantObj.sizeId;
-                      const stock = variantObj.currentStock;
-
-                      return (
-                        <button
-                          key={variantObj.id}
-                          type="button"
-                          onClick={() => handleToggleVariant(variantObj)}
-                          className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer ${isVariantActive
-                            ? "bg-brand-royal text-white shadow-xs dark:bg-brand-royal ring-2 ring-brand-royal/30 font-bold"
-                            : "border border-app-border bg-app-surface text-app-text hover:border-brand-royal/40 hover:bg-app-surface"
-                            }`}
-                        >
-                          <span>Talla {sizeNumber}</span>
-                          <span
-                            className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono ${isVariantActive ? "bg-white/20 text-white font-bold" : "bg-app-surface-alt text-app-muted"
-                              }`}
-                          >
-                            {stock} disp.
-                          </span>
-                          {isVariantActive && <FontAwesomeIcon icon={faCheck} className="text-[10px]" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {/* Sub-tabla flotante para configurar cantidad y precio de las tallas marcadas */}
-                {selectedCount > 0 && (
-                  <div className="rounded-xl border border-app-border bg-app-surface overflow-hidden shadow-2xs mt-3">
-                    <div className="flex items-center justify-between px-4 py-2.5 bg-app-surface-alt/75 border-b border-app-border text-xs">
-                      <span className="font-bold text-app-text">
-                        Cantidades y Precios por Talla ({selectedProduct.name} -{" "}
-                        {selectedColor.color?.name || "Color seleccionado"})
-                      </span>
-                      <span className="text-app-muted text-[11px]">
-                        {selectedCount} {selectedCount === 1 ? "talla seleccionada" : "tallas seleccionadas"}
-                      </span>
-                    </div>
-
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-xs border-collapse">
-                        <thead>
-                          <tr className="border-b border-app-border/70 text-app-muted uppercase font-bold text-[10px] tracking-wider bg-app-surface-alt/30">
-                            <th className="py-2.5 px-3 w-16">Talla</th>
-                            <th className="py-2.5 px-3 w-36 text-center">Cantidad a Comprar</th>
-                            <th className="py-2.5 px-3 w-36 text-right">Precio Unitario</th>
-                            <th className="py-2.5 px-3 w-32 text-right">Subtotal</th>
-                            <th className="py-2.5 px-3 w-28 text-center">Existencias</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-app-border/60">
-                          {selectedVariantKeys.map((vId) => {
-                            const variantObj = selectedColor.productVariants?.find((v) => v.id === vId);
-                            const cfg = selectedVariants[vId];
-                            const lineSubtotal = (cfg.quantity || 0) * (cfg.unitPrice || 0);
-
-                            return (
-                              <tr key={vId} className="hover:bg-app-surface-alt/40 transition-colors">
-                                <td className="py-2.5 px-3">
-                                  <span className="inline-block rounded-md border border-app-border bg-app-surface-alt px-2.5 py-1 text-xs font-bold text-app-text">
-                                    {variantObj?.size?.sizeNumber || variantObj?.sizeId || "N/A"}
-                                  </span>
-                                </td>
-                                <td className="py-2.5 px-3 text-center">
-                                  <input
-                                    type="number"
-                                    min="1"
-                                    value={cfg.quantity}
-                                    onChange={(e) =>
-                                      handleVariantParamChange(vId, "quantity", Math.max(1, Number(e.target.value)))
-                                    }
-                                    className="w-20 rounded-lg border border-app-border bg-app-surface py-1 px-2 text-center text-xs font-bold text-app-text outline-none focus:border-brand-royal"
-                                  />
-                                </td>
-                                <td className="py-2.5 px-3 text-right">
-                                  <div className="relative inline-block w-28">
-                                    <input
-                                      type="number"
-                                      min="0"
-                                      value={cfg.unitPrice}
-                                      onChange={(e) =>
-                                        handleVariantParamChange(vId, "unitPrice", Number(e.target.value))
-                                      }
-                                      className="w-full rounded-lg border border-app-border bg-app-surface py-1 pr-2 pl-5 text-right text-xs font-medium text-app-text outline-none focus:border-brand-royal"
-                                    />
-                                    <span className="absolute left-2 top-1 text-[11px] text-app-muted">$</span>
-                                  </div>
-                                </td>
-                                <td className="py-2.5 px-3 text-right font-bold text-brand-royal dark:text-brand-sky font-mono">
-                                  {formatCurrency(lineSubtotal)}
-                                </td>
-                                <td className="py-2.5 px-3 text-center text-emerald-600 dark:text-emerald-400 font-semibold text-[11px]">
-                                  {variantObj?.currentStock || 0} unidades disp.
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    <div className="p-3 bg-app-surface-alt/30 border-t border-app-border flex justify-end">
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        icon={faPlus}
-                        onClick={handleAddSelectedToCart}
-                        type="button"
-                        className="shadow-sm"
-                      >
-                        + Agregar tallas seleccionadas ({selectedCount}) a la compra
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          <p className="text-sm font-bold text-app-text">No se pudo cargar la información</p>
+          <p className="mt-1 text-xs text-app-muted">
+            Intenta nuevamente o contacta al administrador del sistema.
+          </p>
         </div>
+      ) : (
 
-        {/* Sección 3: Tabla Definitiva de Detalles Agregados (Como la imagen inferior) */}
-        <div className="space-y-3 pt-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Sección 1: Datos de Proveedor, Caja y Fechas */}
+          <div className="p-4 rounded-2xl border border-app-border bg-app-surface-alt/50 space-y-4">
+            <div className="flex items-center gap-2 pb-2 border-b border-app-border/70">
               <span className="flex size-6 items-center justify-center rounded-lg bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky text-xs">
-                <FontAwesomeIcon icon={faCartShopping} />
+                <FontAwesomeIcon icon={faBuilding} />
               </span>
-              <h4 className="text-sm font-bold text-app-text">
-                Detalle de Productos en la Compra
+              <h4 className="text-xs font-bold uppercase tracking-wider text-app-muted">
+                Datos Principales de la Orden
               </h4>
             </div>
-            <span className="text-xs text-app-muted font-medium">
-              {addedDetails.length} {addedDetails.length === 1 ? "ítem agregado" : "ítems agregados"}
-            </span>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3 items-start">
+                <div className="sm:col-span-2 lg:col-span-3 space-y-2">
+                  <Input
+                    label="N° de factura (opcional)"
+                    placeholder="Ingrese el número de factura"
+                    type="text"
+                    value={invoiceNumber}
+                    onChange={(e) => setInvoiceNumber(e.target.value)}
+                    error={errors.invoiceNumber}
+                    iconLeft={faReceipt}
+                    disabled={mode === "edit"}
+                  />
+                  <SelectBySearch<Supplier>
+                    label="Proveedor *"
+                    placeholder="Buscar por razón social, NIT o correo..."
+                    searchPlaceholder="Escribe para buscar proveedor..."
+                    options={supplierOptions}
+                    value={supplierId}
+                    onChange={(val) => setSupplierId(String(val))}
+                    onSearchChange={handleSupplierSearch}
+                    isLoading={isSearchingSupplier}
+                    error={errors.supplierId}
+                    iconLeft={faBuilding}
+                    size="md"
+                  />
+                </div>
+
+                <div>
+                  <Input
+                    label="Fecha de la Orden *"
+                    id="orderDate"
+                    type="date"
+                    value={orderDate}
+                    onChange={(e) => setOrderDate(e.target.value)}
+                    error={errors.orderDate}
+                    iconLeft={<FontAwesomeIcon icon={faCalendarDay} className="text-app-muted text-xs" />}
+                    className="bg-app-surface text-xs"
+                  />
+                </div>
+
+                <div>
+                  <Input
+                    label="IVA (%)"
+                    id="vat"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={vat}
+                    onChange={(e) => setVat(e.target.value)}
+                    iconLeft={<FontAwesomeIcon icon={faPercent} className="text-app-muted text-xs" />}
+                    className="bg-app-surface text-xs"
+                  />
+                </div>
+              </div>
+
+              {/* Selector de Cajas y Cuentas en Tarjetas Horizontales */}
+              <div className="pt-2 border-t border-app-border/70">
+                <CashRegisterSelector
+                  cashRegisters={cashRegisters}
+                  value={cashRegisterId}
+                  onChange={(val) => setCashRegisterId(val)}
+                  label="Caja o Cuenta Bancaria Afectada *"
+                />
+              </div>
+              {
+                mode === "edit" && (
+                  <div>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={handleSubmit}
+                      type="button"
+                      loadingText="Actualizando..."
+                      isLoading={onSubmitLoading}
+                      className="shadow-sm hover:shadow-md transition-all active:scale-95"
+                    >
+                      <FontAwesomeIcon icon={faFloppyDisk} className="text-xs mr-1.5" />
+                      {"Actualizar información de la compra"}
+                    </Button>
+                  </div>
+                )
+              }
+            </div>
           </div>
 
-          {errors.purchaseDetails && (
-            <p className="text-xs text-rose-500 font-semibold">{errors.purchaseDetails}</p>
-          )}
+          {/* Sección 2: Selector Interactivo de Productos, Colores y Tallas (Exacto a la imagen) */}
+          <div className="rounded-2xl border border-app-border bg-app-surface shadow-xs transition-all">
+            {/* Header del bloque interactivo */}
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-app-border/70 bg-app-surface-alt/40 px-5 py-3 rounded-t-2xl">
+              <div className="flex items-center gap-2.5">
+                <span className="flex size-6 items-center justify-center rounded-lg bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky text-xs">
+                  <FontAwesomeIcon icon={faLayerGroup} />
+                </span>
+                <span className="text-xs font-bold tracking-tight text-app-text">
+                  Selección de Productos y Tallas en Inventario
+                </span>
+              </div>
+              <span className="text-[11px] text-app-muted">
+                Solo se muestran colores y tallas con existencias disponibles
+              </span>
+            </div>
 
-          {/* Tabla Limpia y Compacta */}
-          <div className="overflow-x-auto rounded-2xl border border-app-border bg-app-surface shadow-2xs">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-app-border bg-app-surface-alt/75 text-app-muted uppercase font-bold text-[10px] tracking-wider">
-                  <th className="py-3 px-4">PRODUCTO / VARIANTE</th>
-                  <th className="py-3 px-4 text-center w-24">TALLA</th>
-                  <th className="py-3 px-4 text-center w-28">CANTIDAD</th>
-                  <th className="py-3 px-4 text-right w-36">PRECIO UNITARIO</th>
-                  <th className="py-3 px-4 text-right w-36">SUBTOTAL</th>
-                  <th className="py-3 px-4 text-center w-20">ACCIÓN</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-app-border/70">
-                {addedDetails.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-app-muted italic">
-                      <FontAwesomeIcon icon={faBoxesStacked} className="text-xl mb-1.5 opacity-40 block mx-auto" />
-                      No has agregado ningún producto todavía. Selecciona arriba un producto y agrega sus tallas.
-                    </td>
+            <div className="p-5 space-y-4">
+              {/* Fila: Seleccionar Producto y Color Disponible */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                {/* Dropdown de Producto */}
+                <div className="lg:col-span-7">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-app-muted mb-1.5 block">
+                    SELECCIONAR PRODUCTO
+                  </label>
+                  <SelectBySearch<ProductWithRelations>
+                    placeholder="Seleccionar calzado..."
+                    searchPlaceholder="Escribe para buscar calzado..."
+                    options={productOptions}
+                    value={selectedProduct?.id}
+                    onChange={(_, opt) => handleSelectProduct(opt)}
+                    onSearchChange={handleProductSearch}
+                    isLoading={isSearchingProducts}
+                    iconLeft={faShoePrints}
+                    size="md"
+                  />
+                </div>
+
+                {/* Pills de Color Disponible */}
+                <div className="lg:col-span-5">
+                  <label className="text-[11px] font-bold tracking-wider text-app-muted mb-1.5 block">
+                    Color Disponible *
+                  </label>
+
+                  {!selectedProduct ? (
+                    <div className="text-xs text-app-muted italic py-2.5">
+                      Selecciona un producto para ver colores
+                    </div>
+                  ) : availableColors.length === 0 ? (
+                    <div className="text-xs text-app-muted italic py-2.5">
+                      Sin colores registrados para este producto
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2 pt-0.5">
+                      {availableColors.map((colorObj) => {
+                        const isColorActive = selectedColor?.id === colorObj.id;
+                        const colorName = colorObj.color?.name || `Color #${colorObj.colorId}`;
+                        const hex = colorObj.color?.hex;
+
+                        return (
+                          <button
+                            key={colorObj.id}
+                            type="button"
+                            onClick={() => handleSelectColor(colorObj)}
+                            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer ${isColorActive
+                              ? "bg-brand-royal text-white shadow-xs dark:bg-brand-royal ring-2 ring-brand-royal/30"
+                              : "border border-app-border bg-app-surface text-app-text hover:border-brand-royal/40 hover:bg-app-surface-alt"
+                              }`}
+                          >
+                            {hex && (
+                              <span
+                                className="size-2.5 rounded-full border border-white/30 inline-block shrink-0 shadow-2xs"
+                                style={{ backgroundColor: hex }}
+                              />
+                            )}
+                            <span>{colorName}</span>
+                            {isColorActive && <FontAwesomeIcon icon={faCheck} className="text-[10px] ml-0.5" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Sub-Panel: Tallas Disponibles + Cantidades por Talla */}
+              {selectedProduct && selectedColor && (
+                <div className="rounded-xl border border-app-border/80 bg-app-surface-alt/40 p-4 space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-xs font-bold text-app-text">
+                      Tallas disponibles para{" "}
+                      <span className="text-brand-royal dark:text-brand-sky">
+                        {selectedColor.color?.name || "el color seleccionado"}
+                      </span>
+                      :
+                    </span>
+                    <span className="text-[11px] text-app-muted">
+                      Selecciona una o varias tallas para configurar cantidades
+                    </span>
+                  </div>
+
+                  {availableVariants.length === 0 ? (
+                    <p className="text-xs text-app-muted italic">
+                      No hay tallas registradas para esta combinación de color.
+                    </p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2.5">
+                      {availableVariants.map((variantObj) => {
+                        const isVariantActive = Boolean(selectedVariants[variantObj.id]);
+                        const sizeNumber = variantObj.size?.sizeNumber || variantObj.sizeId;
+                        const stock = variantObj.currentStock;
+
+                        return (
+                          <button
+                            key={variantObj.id}
+                            type="button"
+                            onClick={() => handleToggleVariant(variantObj)}
+                            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer ${isVariantActive
+                              ? "bg-brand-royal text-white shadow-xs dark:bg-brand-royal ring-2 ring-brand-royal/30 font-bold"
+                              : "border border-app-border bg-app-surface text-app-text hover:border-brand-royal/40 hover:bg-app-surface"
+                              }`}
+                          >
+                            <span>Talla {sizeNumber}</span>
+                            <span
+                              className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono ${isVariantActive ? "bg-white/20 text-white font-bold" : "bg-app-surface-alt text-app-muted"
+                                }`}
+                            >
+                              {stock} disp.
+                            </span>
+                            {isVariantActive && <FontAwesomeIcon icon={faCheck} className="text-[10px]" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Sub-tabla flotante para configurar cantidad y precio de las tallas marcadas */}
+                  {selectedCount > 0 && (
+                    <div className="rounded-xl border border-app-border bg-app-surface overflow-hidden shadow-2xs mt-3">
+                      <div className="flex items-center justify-between px-4 py-2.5 bg-app-surface-alt/75 border-b border-app-border text-xs">
+                        <span className="font-bold text-app-text">
+                          Cantidades y Precios por Talla ({selectedProduct.name} -{" "}
+                          {selectedColor.color?.name || "Color seleccionado"})
+                        </span>
+                        <span className="text-app-muted text-[11px]">
+                          {selectedCount} {selectedCount === 1 ? "talla seleccionada" : "tallas seleccionadas"}
+                        </span>
+                      </div>
+
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead>
+                            <tr className="border-b border-app-border/70 text-app-muted uppercase font-bold text-[10px] tracking-wider bg-app-surface-alt/30">
+                              <th className="py-2.5 px-3 w-16">Talla</th>
+                              <th className="py-2.5 px-3 w-36 text-center">Cantidad a Comprar</th>
+                              <th className="py-2.5 px-3 w-36 text-right">Precio Unitario</th>
+                              <th className="py-2.5 px-3 w-32 text-right">Subtotal</th>
+                              <th className="py-2.5 px-3 w-28 text-center">Existencias</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-app-border/60">
+                            {selectedVariantKeys.map((vId) => {
+                              const variantObj = selectedColor.productVariants?.find((v) => v.id === vId);
+                              const cfg = selectedVariants[vId];
+                              const lineSubtotal = (cfg.quantity || 0) * (cfg.unitPrice || 0);
+
+                              return (
+                                <tr key={vId} className="hover:bg-app-surface-alt/40 transition-colors">
+                                  <td className="py-2.5 px-3">
+                                    <span className="inline-block rounded-md border border-app-border bg-app-surface-alt px-2.5 py-1 text-xs font-bold text-app-text">
+                                      {variantObj?.size?.sizeNumber || variantObj?.sizeId || "N/A"}
+                                    </span>
+                                  </td>
+                                  <td className="py-2.5 px-3 text-center">
+                                    <input
+                                      type="number"
+                                      min="1"
+                                      value={cfg.quantity}
+                                      onChange={(e) =>
+                                        handleVariantParamChange(vId, "quantity", Math.max(1, Number(e.target.value)))
+                                      }
+                                      className="w-20 rounded-lg border border-app-border bg-app-surface py-1 px-2 text-center text-xs font-bold text-app-text outline-none focus:border-brand-royal"
+                                    />
+                                  </td>
+                                  <td className="py-2.5 px-3 text-right">
+                                    <div className="relative inline-block w-28">
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        value={cfg.unitPrice}
+                                        onChange={(e) =>
+                                          handleVariantParamChange(vId, "unitPrice", Number(e.target.value))
+                                        }
+                                        className="w-full rounded-lg border border-app-border bg-app-surface py-1 pr-2 pl-5 text-right text-xs font-medium text-app-text outline-none focus:border-brand-royal"
+                                      />
+                                      <span className="absolute left-2 top-1 text-[11px] text-app-muted">$</span>
+                                    </div>
+                                  </td>
+                                  <td className="py-2.5 px-3 text-right font-bold text-brand-royal dark:text-brand-sky font-mono">
+                                    {formatCurrency(lineSubtotal)}
+                                  </td>
+                                  <td className="py-2.5 px-3 text-center text-emerald-600 dark:text-emerald-400 font-semibold text-[11px]">
+                                    {variantObj?.currentStock || 0} unidades disp.
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <div className="p-3 bg-app-surface-alt/30 border-t border-app-border flex justify-end">
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          icon={faPlus}
+                          onClick={handleAddSelectedToCart}
+                          type="button"
+                          className="shadow-sm"
+                          isLoading={isEditLoading}
+                          loadingText="Guardando cambios..."
+                        >
+                          + Agregar tallas seleccionadas ({selectedCount}) a la compra
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Sección 3: Tabla Definitiva de Detalles Agregados (Como la imagen inferior) */}
+          <div className="space-y-3 pt-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="flex size-6 items-center justify-center rounded-lg bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky text-xs">
+                  <FontAwesomeIcon icon={faCartShopping} />
+                </span>
+                <h4 className="text-sm font-bold text-app-text">
+                  Detalle de Productos en la Compra
+                </h4>
+              </div>
+              <span className="text-xs text-app-muted font-medium">
+                {addedDetails.length} {addedDetails.length === 1 ? "ítem agregado" : "ítems agregados"}
+              </span>
+            </div>
+
+            {errors.purchaseDetails && (
+              <p className="text-xs text-rose-500 font-semibold">{errors.purchaseDetails}</p>
+            )}
+
+            {/* Tabla Limpia y Compacta */}
+            <div className="overflow-x-auto rounded-2xl border border-app-border bg-app-surface shadow-2xs">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-app-border bg-app-surface-alt/75 text-app-muted uppercase font-bold text-[10px] tracking-wider">
+                    <th className="py-3 px-4">PRODUCTO / VARIANTE</th>
+                    <th className="py-3 px-4 text-center w-24">TALLA</th>
+                    <th className="py-3 px-4 text-center w-28">CANTIDAD</th>
+                    <th className="py-3 px-4 text-right w-36">PRECIO UNITARIO</th>
+                    <th className="py-3 px-4 text-right w-36">SUBTOTAL</th>
+                    <th className="py-3 px-4 text-center w-20">ACCIÓN</th>
                   </tr>
-                ) : (
-                  addedDetails.map((row) => {
-                    const rowSubtotal = row.quantity * row.unitPrice;
+                </thead>
+                <tbody className="divide-y divide-app-border/70">
+                  {addedDetails.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-8 text-center text-app-muted italic">
+                        <FontAwesomeIcon icon={faBoxesStacked} className="text-xl mb-1.5 opacity-40 block mx-auto" />
+                        No has agregado ningún producto todavía. Selecciona arriba un producto y agrega sus tallas.
+                      </td>
+                    </tr>
+                  ) : (
+                    addedDetails.map((row) => {
+                      const rowSubtotal = row.quantity * row.unitPrice;
 
-                    return (
-                      <tr key={row.variantId} className="hover:bg-app-surface-alt/40 transition-colors">
-                        {/* Producto y Color */}
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-3">
-                            <div className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-app-border bg-app-surface-alt shadow-2xs">
-                              {row.image ? (
-                                <img
-                                  src={row.image}
-                                  alt={row.productName}
-                                  className="size-full object-cover object-center"
-                                />
-                              ) : (
-                                <FontAwesomeIcon icon={faImage} className="text-app-muted/50 text-sm" />
-                              )}
-                            </div>
+                      return (
+                        <tr key={row.variantId} className="hover:bg-app-surface-alt/40 transition-colors">
+                          {/* Producto y Color */}
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-3">
+                              <div className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-app-border bg-app-surface-alt shadow-2xs">
+                                {row.image ? (
+                                  <img
+                                    src={row.image}
+                                    alt={row.productName}
+                                    className="size-full object-cover object-center"
+                                  />
+                                ) : (
+                                  <FontAwesomeIcon icon={faImage} className="text-app-muted/50 text-sm" />
+                                )}
+                              </div>
 
-                            <div className="flex flex-col min-w-0">
-                              <span className="font-bold text-xs text-app-text truncate max-w-56" title={row.productName}>
-                                {row.productName}
-                              </span>
-                              <div className="flex items-center gap-1.5 text-[10px] text-app-muted mt-0.5">
-                                <span>Color: {row.colorName}</span>
-                                <span>|</span>
-                                <span className="font-mono font-semibold text-brand-royal dark:text-brand-sky">
-                                  SKU: {row.sku}
+                              <div className="flex flex-col min-w-0">
+                                <span className="font-bold text-xs text-app-text truncate max-w-56" title={row.productName}>
+                                  {row.productName}
                                 </span>
+                                <div className="flex items-center gap-1.5 text-[10px] text-app-muted mt-0.5">
+                                  <span>Color: {row.colorName}</span>
+                                  <span>|</span>
+                                  <span className="font-mono font-semibold text-brand-royal dark:text-brand-sky">
+                                    SKU: {row.sku}
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </td>
+                          </td>
 
-                        {/* Talla */}
-                        <td className="py-3 px-4 text-center">
-                          <span className="inline-block rounded-md border border-app-border bg-app-surface-alt px-2.5 py-1 text-xs font-bold text-app-text">
-                            {row.sizeNumber}
-                          </span>
-                        </td>
+                          {/* Talla */}
+                          <td className="py-3 px-4 text-center">
+                            <span className="inline-block rounded-md border border-app-border bg-app-surface-alt px-2.5 py-1 text-xs font-bold text-app-text">
+                              {row.sizeNumber}
+                            </span>
+                          </td>
 
-                        {/* Cantidad editable */}
-                        <td className="py-3 px-4 text-center">
-                          <input
-                            type="number"
-                            min="1"
-                            value={row.quantity}
-                            onChange={(e) =>
-                              handleUpdateAddedRow(row.variantId, "quantity", Math.max(1, Number(e.target.value)))
-                            }
-                            className="w-16 rounded-lg border border-app-border bg-app-surface py-1 text-center text-xs font-bold text-app-text outline-none focus:border-brand-royal"
-                          />
-                        </td>
+                          {/* Cantidad editable */}
+                          <td className="py-3 px-4 text-center">
+                            <input
+                              type="number"
+                              min="1"
+                              value={row.quantity}
+                              onChange={(e) =>
+                                handleUpdateAddedRow(row.variantId, "quantity", Math.max(1, Number(e.target.value)))
+                              }
+                              className="w-16 rounded-lg border border-app-border bg-app-surface py-1 text-center text-xs font-bold text-app-text outline-none focus:border-brand-royal"
+                            />
+                          </td>
 
-                        {/* Precio editable */}
-                        <td className="py-3 px-4 text-right">
-                          <input
-                            type="number"
-                            min="0"
-                            value={row.unitPrice}
-                            onChange={(e) =>
-                              handleUpdateAddedRow(row.variantId, "unitPrice", Number(e.target.value))
-                            }
-                            className="w-24 rounded-lg border border-app-border bg-app-surface py-1 px-2 text-right text-xs font-semibold text-app-text outline-none focus:border-brand-royal"
-                          />
-                        </td>
+                          {/* Precio editable */}
+                          <td className="py-3 px-4 text-right">
+                            <input
+                              type="number"
+                              min="0"
+                              value={row.unitPrice}
+                              onChange={(e) =>
+                                handleUpdateAddedRow(row.variantId, "unitPrice", Number(e.target.value))
+                              }
+                              className="w-24 rounded-lg border border-app-border bg-app-surface py-1 px-2 text-right text-xs font-semibold text-app-text outline-none focus:border-brand-royal"
+                            />
+                          </td>
 
-                        {/* Subtotal */}
-                        <td className="py-3 px-4 text-right font-black text-brand-royal dark:text-brand-sky font-mono text-xs">
-                          {formatCurrency(rowSubtotal)}
-                        </td>
+                          {/* Subtotal */}
+                          <td className="py-3 px-4 text-right font-black text-brand-royal dark:text-brand-sky font-mono text-xs">
+                            {formatCurrency(rowSubtotal)}
+                          </td>
 
-                        {/* Acción eliminar */}
-                        <td className="py-3 px-4 text-center">
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveAddedRow(row.variantId)}
-                            className="text-app-muted hover:text-rose-500 transition-colors p-1 cursor-pointer"
-                            title="Eliminar de la compra"
-                          >
-                            <FontAwesomeIcon icon={faTrash} className="text-xs" />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+                          {/* Acción eliminar */}
+                          <td className="py-3 px-4 text-center">
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveAddedRow(row.variantId)}
+                              className="text-app-muted hover:text-rose-500 transition-colors p-1 cursor-pointer"
+                              title="Eliminar de la compra"
+                            >
+                              <FontAwesomeIcon icon={faTrash} className="text-xs" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
 
-          {/* Resumen Financiero Dinámico */}
-          <div className="flex justify-end pt-2">
-            <div className="w-full sm:w-80 rounded-2xl border border-app-border bg-app-surface-alt/80 p-4 space-y-2">
-              <div className="flex justify-between text-xs text-app-muted">
-                <span>Subtotal ítems:</span>
-                <span className="font-semibold text-app-text">{formatCurrency(subtotal)}</span>
-              </div>
-              <div className="flex justify-between text-xs text-app-muted">
-                <span>IVA ({vatPercent}%):</span>
-                <span className="font-semibold text-app-text">{formatCurrency(vatAmount)}</span>
-              </div>
-              <div className="border-t border-app-border pt-2 flex justify-between text-sm font-extrabold text-app-text">
-                <span>Total Compra:</span>
-                <span className="text-brand-royal dark:text-brand-sky font-black">
-                  {formatCurrency(total)}
-                </span>
+            {/* Resumen Financiero Dinámico */}
+            <div className="flex justify-end pt-2">
+              <div className="w-full sm:w-80 rounded-2xl border border-app-border bg-app-surface-alt/80 p-4 space-y-2">
+                <div className="flex justify-between text-xs text-app-muted">
+                  <span>Subtotal ítems:</span>
+                  <span className="font-semibold text-app-text">{formatCurrency(subtotal)}</span>
+                </div>
+                <div className="flex justify-between text-xs text-app-muted">
+                  <span>IVA ({vatPercent}%):</span>
+                  <span className="font-semibold text-app-text">{formatCurrency(vatAmount)}</span>
+                </div>
+                <div className="border-t border-app-border pt-2 flex justify-between text-sm font-extrabold text-app-text">
+                  <span>Total Compra:</span>
+                  <span className="text-brand-royal dark:text-brand-sky font-black">
+                    {formatCurrency(total)}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </form>
+        </form>
+      )
+      }
     </Modal>
   );
 }
