@@ -5,7 +5,7 @@ import DashboardPage from "../../features/dashboard/pages/DashboardPage";
 import ProductsDashboardPage from "../../features/dashboard/pages/products/ProductsPage";
 import OrdersPage from "../../features/dashboard/pages/orders/OrdersPage";
 import GastosPage from "../../features/dashboard/pages/bills";
-import ProveedoresPage from "../../features/dashboard/pages/Proveedores";
+import ProveedoresPage from "../../features/dashboard/pages/Proveedores/ProveedoresPage";
 import VentasPage from "../../features/dashboard/pages/Ventas";
 import ClientesPage from "../../features/dashboard/pages/clients/ClientsPage";
 import DevolucionesPage from "../../features/dashboard/pages/Devoluciones";
