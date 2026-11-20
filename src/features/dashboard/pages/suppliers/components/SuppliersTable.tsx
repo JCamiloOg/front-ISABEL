@@ -15,22 +15,23 @@ import { Table, type TableColumn } from "../../../../../shared/components/Table"
 import { Button } from "../../../../../shared/components/Button";
 import { Input } from "../../../../../shared/components/Inputs/Input";
 import { Select } from "../../../../../shared/components/Inputs/Select";
-import type { CategoriaProveedor, Proveedor } from "../types";
 
-interface TablaProveedoresProps {
-  proveedores: Proveedor[];
-  categorias: CategoriaProveedor[];
-  onVerDetalle: (proveedor: Proveedor) => void;
-  onEditar: (proveedor: Proveedor) => void;
-  onToggleEstado?: (proveedor: Proveedor) => void;
+import type { SupplierCategory, Supplier } from "../types";
+
+interface SuppliersTableProps {
+  suppliers: Supplier[];
+  categories: SupplierCategory[];
+  onViewDetails: (supplier: Supplier) => void;
+  onEdit: (supplier: Supplier) => void;
+  onToggleStatus?: (supplier: Supplier) => void;
 }
 
-export function TablaProveedores({
-  proveedores,
-  categorias,
-  onVerDetalle,
-  onEditar,
-}: TablaProveedoresProps) {
+export function SuppliersTable({
+  suppliers: proveedores,
+  categories: categorias,
+  onViewDetails: onVerDetalle,
+  onEdit: onEditar,
+}: SuppliersTableProps) {
   const [busqueda, setBusqueda] = useState("");
   const [filtroCategoria, setFiltroCategoria] = useState<string>("all");
   const [filtroTipo, setFiltroTipo] = useState<string>("all");
@@ -39,7 +40,7 @@ export function TablaProveedores({
   const [pagina, setPagina] = useState(1);
   const [filasPorPagina, setFilasPorPagina] = useState(8);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" }>({
-    key: "razonSocial",
+    key: "businessName",
     direction: "asc",
   });
 
@@ -54,29 +55,30 @@ export function TablaProveedores({
   const proveedoresFiltrados = useMemo(() => {
     return proveedores.filter((p) => {
       // Filtro tipo
-      if (filtroTipo !== "all" && p.tipoProveedor !== filtroTipo) return false;
+      if (filtroTipo !== "all" && p.supplierType !== filtroTipo) return false;
 
       // Filtro origen (nacional vs importado)
-      if (filtroOrigen === "nacional" && p.esImportado) return false;
-      if (filtroOrigen === "importado" && !p.esImportado) return false;
+      if (filtroOrigen === "nacional" && p.isImported) return false;
+      if (filtroOrigen === "importado" && !p.isImported) return false;
 
       // Filtro estado
-      if (filtroEstado !== "all" && p.estado !== filtroEstado) return false;
+      if (filtroEstado !== "all" && p.status !== filtroEstado) return false;
 
       // Filtro categoría
       if (filtroCategoria !== "all") {
         const idCat = Number(filtroCategoria);
-        if (!p.categorias.some((c) => c.idCategoria === idCat)) return false;
+
+        if (!p.categories.some((c) => c.id === idCat)) return false;
       }
 
       // Búsqueda por Razón Social o Número de Documento
       if (!busqueda.trim()) return true;
       const q = busqueda.toLowerCase().trim();
       return (
-        p.razonSocial.toLowerCase().includes(q) ||
-        p.numeroDocumento.toLowerCase().includes(q) ||
+        p.businessName.toLowerCase().includes(q) ||
+        p.documentNumber.toLowerCase().includes(q) ||
         (p.email && p.email.toLowerCase().includes(q)) ||
-        (p.ciudad && p.ciudad.toLowerCase().includes(q))
+        (p.city && p.city.toLowerCase().includes(q))
       );
     });
   }, [proveedores, busqueda, filtroCategoria, filtroTipo, filtroOrigen, filtroEstado]);
@@ -87,14 +89,14 @@ export function TablaProveedores({
       const { key, direction } = sortConfig;
       let cmp = 0;
 
-      if (key === "razonSocial") {
-        cmp = a.razonSocial.localeCompare(b.razonSocial);
-      } else if (key === "numeroDocumento") {
-        cmp = a.numeroDocumento.localeCompare(b.numeroDocumento);
-      } else if (key === "tipoProveedor") {
-        cmp = a.tipoProveedor.localeCompare(b.tipoProveedor);
-      } else if (key === "estado") {
-        cmp = a.estado.localeCompare(b.estado);
+      if (key === "businessName") {
+        cmp = a.businessName.localeCompare(b.businessName);
+      } else if (key === "documentNumber") {
+        cmp = a.documentNumber.localeCompare(b.documentNumber);
+      } else if (key === "supplierType") {
+        cmp = a.supplierType.localeCompare(b.supplierType);
+      } else if (key === "status") {
+        cmp = a.status.localeCompare(b.status);
       }
 
       return direction === "asc" ? cmp : -cmp;
@@ -126,44 +128,44 @@ export function TablaProveedores({
     setPagina(1);
   };
 
-  const columns: TableColumn<Proveedor>[] = [
+  const columns: TableColumn<Supplier>[] = [
     {
-      key: "numeroDocumento",
+      key: "documentNumber",
       header: "Documento",
       sortable: true,
       render: (p) => (
         <div className="flex flex-col">
           <span className="font-mono text-xs font-bold text-brand-royal dark:text-brand-sky">
-            {p.numeroDocumento}
+            {p.documentNumber}
           </span>
           <span className="text-[10px] font-semibold text-app-muted uppercase">
-            {p.tipoDocumento}
+            {p.documentType}
           </span>
         </div>
       ),
     },
     {
-      key: "razonSocial",
+      key: "businessName",
       header: "Razón Social",
       sortable: true,
       render: (p) => (
-        <span className="font-bold text-xs text-app-text">{p.razonSocial}</span>
+        <span className="font-bold text-xs text-app-text">{p.businessName}</span>
       ),
     },
     {
-      key: "tipoProveedor",
+      key: "supplierType",
       header: "Tipo",
       sortable: true,
       render: (p) => (
         <span
           className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[11px] font-bold ${
-            p.tipoProveedor === "Jurídico"
+            p.supplierType === "Jurídico"
               ? "border-blue-200 bg-blue-50 text-blue-700 dark:border-brand-sky/30 dark:bg-brand-sky/15 dark:text-brand-sky"
               : "border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-500/30 dark:bg-purple-500/15 dark:text-purple-300"
           }`}
         >
-          <FontAwesomeIcon icon={p.tipoProveedor === "Jurídico" ? faBuilding : faUserTie} className="text-[10px]" />
-          {p.tipoProveedor}
+          <FontAwesomeIcon icon={p.supplierType === "Jurídico" ? faBuilding : faUserTie} className="text-[10px]" />
+          {p.supplierType}
         </span>
       ),
     },
@@ -173,12 +175,12 @@ export function TablaProveedores({
       render: (p) => (
         <span
           className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[11px] font-bold ${
-            p.esImportado
+            p.isImported
               ? "border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-500/30 dark:bg-indigo-500/15 dark:text-indigo-300"
               : "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300"
           }`}
         >
-          {p.esImportado ? (
+          {p.isImported ? (
             <>
               <FontAwesomeIcon icon={faGlobe} className="text-[10px]" />
               <span>Importado</span>
@@ -190,16 +192,16 @@ export function TablaProveedores({
       ),
     },
     {
-      key: "categorias",
+      key: "categories",
       header: "Categorías",
       render: (p) => (
         <div className="flex flex-wrap gap-1 max-w-xs">
-          {p.categorias.map((cat) => (
+          {p.categories.map((cat) => (
             <span
-              key={cat.idCategoria}
+              key={cat.id}
               className="inline-block rounded-md border border-brand-sky/30 bg-brand-sky/10 px-1.5 py-0.5 text-[10px] font-semibold text-brand-royal dark:text-brand-sky"
             >
-              {cat.nombre}
+              {cat.name}
             </span>
           ))}
         </div>
@@ -210,20 +212,21 @@ export function TablaProveedores({
       header: "Contacto",
       render: (p) => (
         <div className="flex flex-col text-[11px]">
-          <span className="font-semibold text-app-text">{p.telefono || "Sin teléfono"}</span>
-          <span className="text-app-muted truncate max-w-[140px]" title={p.email}>
+
+          <span className="font-semibold text-app-text">{p.phone || "Sin teléfono"}</span>
+          <span className="text-app-muted truncate max-w-35" title={p.email}>
             {p.email || "Sin email"}
           </span>
         </div>
       ),
     },
     {
-      key: "estado",
+      key: "status",
       header: "Estado",
       sortable: true,
       align: "center",
       render: (p) => {
-        const esActivo = p.estado === "Activo";
+        const esActivo = p.status === "Activo";
         return (
           <span
             className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${
@@ -233,7 +236,7 @@ export function TablaProveedores({
             }`}
           >
             <span className={`size-1.5 rounded-full ${esActivo ? "bg-emerald-500" : "bg-slate-400"}`} />
-            {p.estado}
+            {p.status}
           </span>
         );
       },
@@ -298,8 +301,8 @@ export function TablaProveedores({
               options={[
                 { value: "all", label: "Todas las Categorías" },
                 ...categorias.map((c) => ({
-                  value: String(c.idCategoria),
-                  label: c.nombre,
+                  value: String(c.id),
+                  label: c.name,
                 })),
               ]}
             />
@@ -371,10 +374,10 @@ export function TablaProveedores({
       </div>
 
       {/* ── Tabla Principal ── */}
-      <Table<Proveedor>
+      <Table<Supplier>
         columns={columns}
         data={proveedoresPaginados}
-        rowKey="idProveedor"
+        rowKey="id"
         sortConfig={sortConfig}
         onSort={handleSort}
         onRowClick={(p) => onVerDetalle(p)}
@@ -408,5 +411,5 @@ export function TablaProveedores({
   );
 }
 
-export default TablaProveedores;
+export default SuppliersTable;
 

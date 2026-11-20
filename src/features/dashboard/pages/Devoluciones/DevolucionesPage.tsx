@@ -1,4 +1,3 @@
-import { useState, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlus,
@@ -9,302 +8,101 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 import { Button } from "../../../../shared/components/Button";
-import { Toast } from "../../../../shared/utils/alerts";
-import { MOCK_VENTAS } from "../Ventas/constants";
-import type { Venta } from "../Ventas/types";
-import type { Devolucion, FormDevolucion } from "./types";
-import { MOCK_DEVOLUCIONES } from "./constants";
-import { generarCodigoDevolucion, generarId } from "./utils";
-
-import { TablaDevoluciones } from "./components/TablaDevoluciones";
-import { ModalFormDevolucion } from "./components/ModalFormDevolucion";
-import { ModalDetalleDevolucion } from "./components/ModalDetalleDevolucion";
-import { ModalCambiarEstado, type AccionEstado } from "./components/ModalCambiarEstado";
-
-const USUARIO_ACTUAL = "Administrador Isabel";
 
 export function DevolucionesPage() {
-  // TODO(backend): reemplazar por la consulta de ventas y devoluciones del API.
-  const [ventas] = useState<Venta[]>(MOCK_VENTAS);
-  const [devoluciones, setDevoluciones] = useState<Devolucion[]>(MOCK_DEVOLUCIONES);
-
-  // Modales
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [idAEditar, setIdAEditar] = useState<string | null>(null);
-
-  const [isDetalleOpen, setIsDetalleOpen] = useState(false);
-  const [idDetalle, setIdDetalle] = useState<string | null>(null);
-
-  const [isEstadoOpen, setIsEstadoOpen] = useState(false);
-  const [idEstado, setIdEstado] = useState<string | null>(null);
-  const [accionEstado, setAccionEstado] = useState<AccionEstado | null>(null);
-
-  // Las referencias se derivan de la lista para que siempre estén actualizadas
-  const devolucionAEditar = useMemo(
-    () => devoluciones.find((d) => d.idDevolucion === idAEditar) ?? null,
-    [devoluciones, idAEditar],
-  );
-  const devolucionDetalle = useMemo(
-    () => devoluciones.find((d) => d.idDevolucion === idDetalle) ?? null,
-    [devoluciones, idDetalle],
-  );
-  const devolucionEstado = useMemo(
-    () => devoluciones.find((d) => d.idDevolucion === idEstado) ?? null,
-    [devoluciones, idEstado],
-  );
-
-  const codigoSiguiente = useMemo(() => generarCodigoDevolucion(devoluciones), [devoluciones]);
-
-  // Métricas ejecutivas
-  const metricas = useMemo(() => {
-    const pendientes = devoluciones.filter((d) => d.estado === "Pendiente");
-    const aprobadas = devoluciones.filter((d) => d.estado === "Aprobada");
-    const rechazadas = devoluciones.filter((d) => d.estado === "Rechazada");
-    return {
-      total: devoluciones.length,
-      pendientes: pendientes.length,
-      aprobadas: aprobadas.length,
-      unidadesAprobadas: aprobadas.reduce((acc, d) => acc + d.cantidad, 0),
-      rechazadas: rechazadas.length,
-    };
-  }, [devoluciones]);
-
-  // ── Registrar / Actualizar ──
-  const handleGuardar = (datos: FormDevolucion, idDevolucion?: string) => {
-    if (idDevolucion) {
-      setDevoluciones((prev) =>
-        prev.map((d) =>
-          d.idDevolucion === idDevolucion
-            ? { ...d, cantidad: datos.cantidad, motivo: datos.motivo }
-            : d,
-        ),
-      );
-
-      Toast.fire({
-        icon: "success",
-        title: "Devolución actualizada",
-        text: "Se guardaron los cambios de la solicitud.",
-      });
-    } else {
-      const venta = ventas.find((v) => v.idVenta === datos.idVenta);
-      const detalle = venta?.detalles.find((d) => d.idDetalle === datos.idDetalle);
-      if (!venta || !detalle) return;
-
-      const nueva: Devolucion = {
-        idDevolucion: generarId("dev"),
-        codigoDevolucion: codigoSiguiente,
-        idVenta: venta.idVenta,
-        codigoVenta: venta.codigoVenta,
-        fechaVenta: venta.fecha,
-        cliente: venta.cliente,
-        idDetalle: detalle.idDetalle,
-        idVariante: detalle.idVariante,
-        nombreProducto: detalle.nombreProducto,
-        sku: detalle.sku,
-        colorNombre: detalle.colorNombre,
-        numeroTalla: detalle.numeroTalla,
-        imagen: detalle.imagen,
-        precioUnitario: detalle.precioUnitario,
-        cantidadVendida: detalle.cantidad,
-        cantidad: datos.cantidad,
-        motivo: datos.motivo,
-        estado: "Pendiente",
-        fechaSolicitud: new Date().toISOString(),
-        usuarioResponsable: USUARIO_ACTUAL,
-      };
-
-      setDevoluciones((prev) => [nueva, ...prev]);
-
-      Toast.fire({
-        icon: "success",
-        title: "Devolución registrada",
-        text: `Se creó la solicitud ${nueva.codigoDevolucion} en estado Pendiente.`,
-      });
-    }
-
-    setIsFormOpen(false);
-    setIdAEditar(null);
-  };
-
-  // ── Cambiar estado (aprobar / rechazar) ──
-  const handleConfirmarEstado = (
-    devolucion: Devolucion,
-    accion: AccionEstado,
-    motivoRechazo?: string,
-  ) => {
-    setDevoluciones((prev) =>
-      prev.map((d) =>
-        d.idDevolucion === devolucion.idDevolucion
-          ? {
-              ...d,
-              estado: accion,
-              motivoRechazo: accion === "Rechazada" ? motivoRechazo : undefined,
-              fechaResolucion: new Date().toISOString(),
-            }
-          : d,
-      ),
-    );
-
-    Toast.fire({
-      icon: accion === "Aprobada" ? "success" : "info",
-      title: accion === "Aprobada" ? "Devolución aprobada" : "Devolución rechazada",
-      text: `${devolucion.codigoDevolucion} ahora se encuentra ${accion.toLowerCase()}.`,
-    });
-
-    setIsEstadoOpen(false);
-    setIdEstado(null);
-  };
-
-  // ── Apertura de modales ──
-  const handleAbrirRegistrar = () => {
-    setIdAEditar(null);
-    setIsFormOpen(true);
-  };
-
-  const handleAbrirEditar = (d: Devolucion) => {
-    setIdAEditar(d.idDevolucion);
-    setIsFormOpen(true);
-  };
-
-  const handleAbrirDetalle = (d: Devolucion) => {
-    setIdDetalle(d.idDevolucion);
-    setIsDetalleOpen(true);
-  };
-
-  const handleAbrirEstado = (d: Devolucion, accion?: AccionEstado) => {
-    setIdEstado(d.idDevolucion);
-    setAccionEstado(accion ?? null);
-    setIsEstadoOpen(true);
-  };
-
   return (
-    <div className="min-h-full bg-app-bg pb-6 text-app-text">
-      <div className="mx-auto flex max-w-7xl flex-col gap-6">
-        {/* Encabezado Principal */}
-        <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-app-border pb-6">
+    <div className="space-y-8 animate-fadeIn">
+      {/* ─── Encabezado ─── */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-app-border pb-6">
+        <div>
           <div className="flex items-center gap-2.5">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky">
               <FontAwesomeIcon icon={faRotateLeft} className="text-lg" />
             </span>
             <div>
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-app-text">
-                Catálogo de Devoluciones
+                Gestión de Devoluciones
               </h1>
               <p className="text-sm text-app-muted">
-                Registra y da seguimiento a las solicitudes de devolución de tus clientes.
+                Registro, revisión y resolución de garantías y cambios de producto
               </p>
             </div>
           </div>
+        </div>
 
-          <div className="flex items-center gap-3">
-            <Button variant="primary" size="md" icon={faPlus} onClick={handleAbrirRegistrar}>
-              Registrar Devolución
-            </Button>
-          </div>
-        </header>
-
-        {/* ── Tarjetas de Métricas ── */}
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-2xl border border-brand-sky/20 bg-app-surface p-4.5 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-app-muted">Total Devoluciones</p>
-              <p className="mt-1 text-2xl font-extrabold text-app-text">{metricas.total}</p>
-              <span className="text-[11px] text-app-muted">Solicitudes registradas</span>
-            </div>
-            <div className="size-11 rounded-xl bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky flex items-center justify-center text-lg">
-              <FontAwesomeIcon icon={faRotateLeft} />
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-brand-sky/20 bg-app-surface p-4.5 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-app-muted">Pendientes</p>
-              <p className="mt-1 text-2xl font-extrabold text-amber-600 dark:text-amber-400">
-                {metricas.pendientes}
-              </p>
-              <span className="text-[11px] text-app-muted">Por aprobar o rechazar</span>
-            </div>
-            <div className="size-11 rounded-xl bg-amber-500/10 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400 flex items-center justify-center text-lg">
-              <FontAwesomeIcon icon={faClock} />
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-brand-sky/20 bg-app-surface p-4.5 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-app-muted">Aprobadas</p>
-              <p className="mt-1 text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">
-                {metricas.aprobadas}
-              </p>
-              <span className="text-[11px] text-app-muted">
-                {metricas.unidadesAprobadas} pares devueltos
-              </span>
-            </div>
-            <div className="size-11 rounded-xl bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400 flex items-center justify-center text-lg">
-              <FontAwesomeIcon icon={faCircleCheck} />
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-brand-sky/20 bg-app-surface p-4.5 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-app-muted">Rechazadas</p>
-              <p className="mt-1 text-2xl font-extrabold text-rose-600 dark:text-rose-400">
-                {metricas.rechazadas}
-              </p>
-              <span className="text-[11px] text-rose-500">No cumplen condiciones</span>
-            </div>
-            <div className="size-11 rounded-xl bg-rose-500/10 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400 flex items-center justify-center text-lg">
-              <FontAwesomeIcon icon={faCircleXmark} />
-            </div>
-          </div>
-        </section>
-
-        {/* ── Tabla principal ── */}
-        <TablaDevoluciones
-          devoluciones={devoluciones}
-          onVerDetalle={handleAbrirDetalle}
-          onEditar={handleAbrirEditar}
-          onCambiarEstado={(d) => handleAbrirEstado(d)}
-        />
+        <div className="flex items-center gap-3">
+          <Button
+            variant="primary"
+            icon={faPlus}
+          >
+            Nueva Devolución
+          </Button>
+        </div>
       </div>
 
-      {/* ── Modal Registrar / Editar ── */}
-      <ModalFormDevolucion
-        isOpen={isFormOpen}
-        onClose={() => {
-          setIsFormOpen(false);
-          setIdAEditar(null);
-        }}
-        ventas={ventas}
-        devoluciones={devoluciones}
-        devolucionAEditar={devolucionAEditar}
-        codigoSiguiente={codigoSiguiente}
-        onGuardar={handleGuardar}
-      />
+      {/* ─── Tarjetas de Métricas ─── */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="isabel-card p-5">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-app-muted">Total Solicitudes</p>
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-brand-royal dark:bg-brand-royal/20 dark:text-brand-sky">
+              <FontAwesomeIcon icon={faRotateLeft} className="text-xs" />
+            </span>
+          </div>
+          <div className="mt-2.5 flex items-baseline gap-2">
+            <span className="text-3xl font-black tracking-tight text-app-text">0</span>
+            <span className="text-xs text-app-muted">casos</span>
+          </div>
+          <p className="mt-1 text-xs text-app-muted">Historial completo</p>
+        </div>
 
-      {/* ── Modal Detalle ── */}
-      <ModalDetalleDevolucion
-        isOpen={isDetalleOpen}
-        onClose={() => {
-          setIsDetalleOpen(false);
-          setIdDetalle(null);
-        }}
-        devolucion={devolucionDetalle}
-        onEditar={handleAbrirEditar}
-        onAprobar={(d) => handleAbrirEstado(d, "Aprobada")}
-        onRechazar={(d) => handleAbrirEstado(d, "Rechazada")}
-      />
+        <div className="isabel-card p-5">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-app-muted">En Revisión</p>
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
+              <FontAwesomeIcon icon={faClock} className="text-xs" />
+            </span>
+          </div>
+          <div className="mt-2.5 flex items-baseline gap-2">
+            <span className="text-3xl font-black tracking-tight text-amber-600 dark:text-amber-400">0</span>
+            <span className="text-xs text-app-muted">pendientes</span>
+          </div>
+          <p className="mt-1 text-xs text-app-muted">Requieren respuesta</p>
+        </div>
 
-      {/* ── Modal Aprobar / Rechazar ── */}
-      <ModalCambiarEstado
-        isOpen={isEstadoOpen}
-        onClose={() => {
-          setIsEstadoOpen(false);
-          setIdEstado(null);
-        }}
-        devolucion={devolucionEstado}
-        accion={accionEstado}
-        onConfirmar={handleConfirmarEstado}
-      />
+        <div className="isabel-card p-5">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-app-muted">Aprobadas</p>
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
+              <FontAwesomeIcon icon={faCircleCheck} className="text-xs" />
+            </span>
+          </div>
+          <div className="mt-2.5 flex items-baseline gap-2">
+            <span className="text-3xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">0</span>
+            <span className="text-xs text-app-muted">reingresadas</span>
+          </div>
+          <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">0 pares devueltos</p>
+        </div>
+
+        <div className="isabel-card p-5">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-app-muted">Rechazadas</p>
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400">
+              <FontAwesomeIcon icon={faCircleXmark} className="text-xs" />
+            </span>
+          </div>
+          <div className="mt-2.5 flex items-baseline gap-2">
+            <span className="text-3xl font-black tracking-tight text-rose-600 dark:text-rose-400">0</span>
+            <span className="text-xs text-app-muted">desestimadas</span>
+          </div>
+          <p className="mt-1 text-xs text-app-muted">Con motivo registrado</p>
+        </div>
+      </div>
+
+      {/* ─── Tabla Principal ─── */}
+      <div className="rounded-2xl border border-app-border bg-app-surface p-8 text-center text-app-muted">
+        No hay registros de devoluciones en el sistema.
+      </div>
     </div>
   );
 }

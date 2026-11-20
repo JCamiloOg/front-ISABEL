@@ -18,99 +18,102 @@ import Modal from "../../../../../shared/components/Modal";
 import { Button } from "../../../../../shared/components/Button";
 import { Input } from "../../../../../shared/components/Inputs/Input";
 import type {
-  CategoriaProveedor,
-  FormProveedor,
-  Proveedor,
-  TipoDocumentoProveedor,
-  TipoProveedor,
-} from "../types";
-import { validarFormProveedor } from "../utils";
+  SupplierCategory,
 
-interface ModalFormProveedorProps {
+  SupplierForm,
+  Supplier,
+  SupplierDocumentType,
+  SupplierType,
+} from "../types";
+import { validateSupplierForm } from "../utils";
+
+interface SupplierFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  proveedorAEditar: Proveedor | null;
-  proveedoresExistentes: Proveedor[];
-  categoriasDisponibles?: CategoriaProveedor[];
-  onGuardarProveedor: (datos: FormProveedor, idProveedor?: string) => void;
+
+  supplierToEdit: Supplier | null;
+  existingSuppliers: Supplier[];
+  availableCategories?: SupplierCategory[];
+  onSaveSupplier: (data: SupplierForm, supplierId?: string) => void;
 }
 
-const FORM_INICIAL: FormProveedor = {
-  tipoDocumento: "NIT",
-  numeroDocumento: "",
-  razonSocial: "",
-  tipoProveedor: "Jurídico",
-  esImportado: false,
-  categoriaIds: [],
-  telefono: "",
+const INITIAL_FORM: SupplierForm = {
+  documentType: "NIT",
+  documentNumber: "",
+  businessName: "",
+  supplierType: "Jurídico",
+  isImported: false,
+  categoryIds: [],
+  phone: "",
   email: "",
-  direccion: "",
+  address: "",
 };
 
-export function ModalFormProveedor({
+export function SupplierFormModal({
   isOpen,
   onClose,
-  proveedorAEditar,
-  proveedoresExistentes,
-  onGuardarProveedor,
-}: ModalFormProveedorProps) {
-  const [form, setForm] = useState<FormProveedor>(FORM_INICIAL);
+  supplierToEdit,
+  existingSuppliers,
+  onSaveSupplier,
+}: SupplierFormModalProps) {
+  const [form, setForm] = useState<SupplierForm>(INITIAL_FORM);
   const [intentoEnvio, setIntentoEnvio] = useState(false);
 
   // Inicializar formulario al abrir o cambiar modo edición/creación
   useEffect(() => {
-    if (proveedorAEditar) {
+    if (supplierToEdit) {
       setForm({
-        tipoDocumento: proveedorAEditar.tipoDocumento,
-        numeroDocumento: proveedorAEditar.numeroDocumento,
-        razonSocial: proveedorAEditar.razonSocial,
-        tipoProveedor: proveedorAEditar.tipoProveedor,
-        esImportado: proveedorAEditar.esImportado,
-        categoriaIds: proveedorAEditar.categorias.map((c) => c.idCategoria),
-        telefono: proveedorAEditar.telefono,
-        email: proveedorAEditar.email,
-        direccion: proveedorAEditar.direccion,
-        ciudad: proveedorAEditar.ciudad,
-        pais: proveedorAEditar.pais,
+
+        documentType: supplierToEdit.documentType,
+        documentNumber: supplierToEdit.documentNumber,
+        businessName: supplierToEdit.businessName,
+        supplierType: supplierToEdit.supplierType,
+        isImported: supplierToEdit.isImported,
+        categoryIds: supplierToEdit.categories.map((category) => category.id),
+        phone: supplierToEdit.phone,
+        email: supplierToEdit.email,
+        address: supplierToEdit.address,
+        city: supplierToEdit.city,
+        country: supplierToEdit.country,
       });
     } else {
-      setForm(FORM_INICIAL);
+      setForm(INITIAL_FORM);
     }
     setIntentoEnvio(false);
-  }, [proveedorAEditar, isOpen]);
+  }, [supplierToEdit, isOpen]);
 
   const errores = intentoEnvio
-    ? validarFormProveedor(form, proveedoresExistentes, proveedorAEditar?.idProveedor)
+    ? validateSupplierForm(form, existingSuppliers, supplierToEdit?.id)
     : {};
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     setIntentoEnvio(true);
 
-    const erroresActuales = validarFormProveedor(
+    const erroresActuales = validateSupplierForm(
       form,
-      proveedoresExistentes,
-      proveedorAEditar?.idProveedor,
+      existingSuppliers,
+      supplierToEdit?.id,
     );
 
     if (Object.keys(erroresActuales).length > 0) return;
 
-    onGuardarProveedor(
+    onSaveSupplier(
       {
         ...form,
-        razonSocial: form.razonSocial.trim(),
-        numeroDocumento: form.numeroDocumento.trim(),
-        telefono: form.telefono.trim(),
+        businessName: form.businessName.trim(),
+        documentNumber: form.documentNumber.trim(),
+        phone: form.phone.trim(),
         email: form.email.trim(),
-        direccion: form.direccion.trim(),
+        address: form.address.trim(),
       },
-      proveedorAEditar?.idProveedor,
+      supplierToEdit?.id,
     );
 
     onClose();
   };
 
-  const esEdicion = Boolean(proveedorAEditar);
+  const esEdicion = Boolean(supplierToEdit);
 
   return (
     <Modal
@@ -119,7 +122,7 @@ export function ModalFormProveedor({
       title={esEdicion ? "Editar Proveedor" : "Registrar Nuevo Proveedor"}
       description={
         esEdicion
-          ? `Modifica los datos de identificación y contacto de ${proveedorAEditar?.razonSocial}`
+          ? `Modifica los datos de identificación y contacto de ${supplierToEdit?.businessName}`
           : "Ingresa los datos del proveedor, su condición de origen y sus canales de contacto."
       }
       icon={faBuilding}
@@ -170,15 +173,15 @@ export function ModalFormProveedor({
                 Tipo de Documento <span className="text-[#DC2626]">*</span>
               </label>
               <div className="grid grid-cols-2 gap-2" role="radiogroup">
-                {(["NIT", "Cédula"] as TipoDocumentoProveedor[]).map((tipoDoc) => {
-                  const activo = form.tipoDocumento === tipoDoc;
+                {(["NIT", "Cédula"] as SupplierDocumentType[]).map((tipoDoc) => {
+                  const activo = form.documentType === tipoDoc;
                   return (
                     <button
                       key={tipoDoc}
                       type="button"
                       role="radio"
                       aria-checked={activo}
-                      onClick={() => setForm((p) => ({ ...p, tipoDocumento: tipoDoc }))}
+                      onClick={() => setForm((p) => ({ ...p, documentType: tipoDoc }))}
                       className={`flex items-center justify-center rounded-xl border py-2.5 text-xs font-bold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-royal/40 ${
                         activo
                           ? "border-brand-royal bg-brand-royal text-white shadow-sm dark:border-brand-sky dark:bg-brand-sky dark:text-brand-navy"
@@ -196,10 +199,10 @@ export function ModalFormProveedor({
             <div className="sm:col-span-8">
               <Input
                 label="Número de Documento *"
-                placeholder={form.tipoDocumento === "NIT" ? "Ej: 900.842.105-3" : "Ej: 1.098.742.331"}
-                value={form.numeroDocumento}
-                onChange={(e) => setForm((p) => ({ ...p, numeroDocumento: e.target.value }))}
-                error={errores.numeroDocumento}
+                placeholder={form.documentType === "NIT" ? "Ej: 900.842.105-3" : "Ej: 1.098.742.331"}
+                value={form.documentNumber}
+                onChange={(e) => setForm((p) => ({ ...p, documentNumber: e.target.value }))}
+                error={errores.documentNumber}
                 iconLeft={faIdCard}
               />
             </div>
@@ -209,9 +212,9 @@ export function ModalFormProveedor({
               <Input
                 label="Razón Social / Nombre del Proveedor *"
                 placeholder="Ej: Curtidos La Sabana S.A.S. o Juan Pérez"
-                value={form.razonSocial}
-                onChange={(e) => setForm((p) => ({ ...p, razonSocial: e.target.value }))}
-                error={errores.razonSocial}
+                value={form.businessName}
+                onChange={(e) => setForm((p) => ({ ...p, businessName: e.target.value }))}
+                error={errores.businessName}
                 iconLeft={faBuilding}
               />
             </div>
@@ -222,15 +225,15 @@ export function ModalFormProveedor({
                 Tipo de Proveedor <span className="text-[#DC2626]">*</span>
               </label>
               <div className="grid grid-cols-2 gap-2" role="radiogroup">
-                {(["Natural", "Jurídico"] as TipoProveedor[]).map((tipo) => {
-                  const activo = form.tipoProveedor === tipo;
+                {(["Natural", "Jurídico"] as SupplierType[]).map((tipo) => {
+                  const activo = form.supplierType === tipo;
                   return (
                     <button
                       key={tipo}
                       type="button"
                       role="radio"
                       aria-checked={activo}
-                      onClick={() => setForm((p) => ({ ...p, tipoProveedor: tipo }))}
+                      onClick={() => setForm((p) => ({ ...p, supplierType: tipo }))}
                       className={`flex items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-bold transition ${
                         activo
                           ? "border-brand-royal bg-brand-royal text-white shadow-sm dark:border-brand-sky dark:bg-brand-sky dark:text-brand-navy"
@@ -256,11 +259,11 @@ export function ModalFormProveedor({
                   onClick={() =>
                     setForm((p) => ({
                       ...p,
-                      esImportado: false,
+                      isImported: false,
                     }))
                   }
                   className={`flex items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-bold transition ${
-                    !form.esImportado
+                    !form.isImported
                       ? "border-emerald-500 bg-emerald-600 text-white shadow-sm dark:bg-emerald-500 dark:text-brand-navy"
                       : "border-brand-sky/30 bg-app-surface text-app-muted hover:border-emerald-500"
                   }`}
@@ -273,11 +276,11 @@ export function ModalFormProveedor({
                   onClick={() =>
                     setForm((p) => ({
                       ...p,
-                      esImportado: true,
+                      isImported: true,
                     }))
                   }
                   className={`flex items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-bold transition ${
-                    form.esImportado
+                    form.isImported
                       ? "border-indigo-500 bg-indigo-600 text-white shadow-sm dark:bg-indigo-500 dark:text-white"
                       : "border-brand-sky/30 bg-app-surface text-app-muted hover:border-indigo-500"
                   }`}
@@ -301,9 +304,9 @@ export function ModalFormProveedor({
             <Input
               label="Teléfono de Contacto"
               placeholder="Ej: +57 (601) 789 4520 o 314 258 7963"
-              value={form.telefono}
-              onChange={(e) => setForm((p) => ({ ...p, telefono: e.target.value }))}
-              error={errores.telefono}
+              value={form.phone}
+              onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
+              error={errores.phone}
               iconLeft={faPhone}
             />
 
@@ -321,9 +324,9 @@ export function ModalFormProveedor({
               <Input
                 label="Dirección Física"
                 placeholder="Ej: Carrera 22 # 11-14 Zona Industrial"
-                value={form.direccion}
-                onChange={(e) => setForm((p) => ({ ...p, direccion: e.target.value }))}
-                error={errores.direccion}
+                value={form.address}
+                onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))}
+                error={errores.address}
                 iconLeft={faLocationDot}
               />
             </div>
@@ -334,4 +337,4 @@ export function ModalFormProveedor({
   );
 }
 
-export default ModalFormProveedor;
+export default SupplierFormModal;

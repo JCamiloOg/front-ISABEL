@@ -83,6 +83,7 @@ export default function Sidebar() {
                         { id: "products-types", label: "Tipos de zapato", to: "/dashboard/products/types" },
                     ]
                 },
+                // El enlace del sidebar lleva a la ruta del dashboard declarada abajo.
                 { id: "category-supplier", label: "Categoría proveedor", icon: faTruckRampBox, to: "/dashboard/category-supplier" },
                 { id: "supplier", label: "Proveedores", icon: faIndustry, to: "/dashboard/supplier" },
                 { id: "shopping-purchases", label: "Compras", icon: faCartShopping, to: "/dashboard/shopping" }

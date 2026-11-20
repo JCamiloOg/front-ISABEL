@@ -1,0 +1,666 @@
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faCartShopping,
+  faPlus,
+  faArrowRotateRight,
+  faChartPie,
+  faCircleCheck,
+  faClock,
+  faBan,
+  faEye,
+  faPenToSquare,
+  faBuilding,
+  faCashRegister,
+  faCalendarDay,
+} from "@fortawesome/free-solid-svg-icons";
+
+import { Button } from "../../../../shared/components/Button";
+import { Select } from "../../../../shared/components/Inputs/Select";
+import Table, { type SortDirection } from "../../../../shared/components/Table";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { PurchaseWithRelations } from "../../../../@types";
+import { getAllPurchases, getPurchaseByID } from "./services/shoppingsServices";
+import { Toast } from "../../../../shared/utils/alerts";
+import { isAxiosError } from "axios";
+import { PurchaseDetailModal } from "./components/PurchaseDetailModal";
+import { PurchaseFormModal, type PurchaseFormData } from "./components/PurchaseFormModal";
+
+export default function Purchases() {
+  const [purchases, setPurchases] = useState<Omit<PurchaseWithRelations, "purchaseDetails">[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Estado para el modal de detalle por ID
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
+  const [selectedPurchase, setSelectedPurchase] = useState<PurchaseWithRelations | null>(null);
+  const [isLoadingDetail, setIsLoadingDetail] = useState<boolean>(false);
+
+  // Estado para el modal de creación y edición
+  const [isFormModalOpen, setIsFormModalOpen] = useState<boolean>(false);
+  const [formMode, setFormMode] = useState<"create" | "edit">("create");
+
+  // Filtros y búsqueda
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  // Paginación y ordenación
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(8);
+  const [sortKey, setSortKey] = useState<string | null>("orderDate");
+  const [sortDir, setSortDir] = useState<SortDirection>("desc");
+
+  const findPurchases = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await getAllPurchases();
+
+      if (response.status === 200) {
+        setPurchases(response.data.shoppings || []);
+      }
+    } catch (error) {
+      if (isAxiosError(error)) {
+        Toast.fire({
+          icon: "error",
+          title: error.response?.data?.message || "Error al obtener las compras.",
+          text: "Por favor, intenta nuevamente",
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const findPurchaseByID = useCallback(async (id: string) => {
+    try {
+      setIsLoadingDetail(true);
+      setIsDetailModalOpen(true);
+      const response = await getPurchaseByID(id);
+
+      if (response.status === 200) {
+        setSelectedPurchase(response.data.shoppings || null);
+      }
+    } catch (error) {
+      if (isAxiosError(error)) {
+        Toast.fire({
+          icon: "error",
+          title: error.response?.data?.message || "Error al obtener los detalles de la compra.",
+          text: "Por favor, intenta nuevamente",
+        });
+      }
+    } finally {
+      setIsLoadingDetail(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line
+    findPurchases();
+  }, [findPurchases]);
+
+  const handleSort = (key: string) => {
+    if (sortKey === key) {
+      if (sortDir === "asc") setSortDir("desc");
+      else if (sortDir === "desc") {
+        setSortKey(null);
+        setSortDir(null);
+      } else {
+        setSortDir("asc");
+      }
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  };
+
+  const handleResetFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("all");
+    setCurrentPage(1);
+  };
+
+  // Normalizador de estado para soportar variantes de mayúsculas/acentos
+  const normalizeStatus = (status?: string | null): "Completada" | "Pendiente" | "Cancelada" => {
+    if (!status) return "Pendiente";
+    const s = status.trim().toLowerCase();
+    if (s.includes("completad") || s.includes("recibid") || s.includes("entregad") || s === "completed") {
+      return "Completada";
+    }
+    if (s.includes("cancelad") || s.includes("anulad") || s === "cancelled") {
+      return "Cancelada";
+    }
+    return "Pendiente";
+  };
+
+  // Métricas calculadas en base a las compras registradas
+  const metrics = useMemo(() => {
+    let completadas = 0;
+    let pendientes = 0;
+    let canceladas = 0;
+
+    purchases.forEach((p) => {
+      const norm = normalizeStatus(p.status);
+      if (norm === "Completada") completadas++;
+      else if (norm === "Pendiente") pendientes++;
+      else if (norm === "Cancelada") canceladas++;
+    });
+
+    return {
+      total: purchases.length,
+      completadas,
+      pendientes,
+      canceladas,
+    };
+  }, [purchases]);
+
+  // Filtrado
+  const filteredPurchases = useMemo(() => {
+    return purchases.filter((item) => {
+      const normStatus = normalizeStatus(item.status);
+
+      // Filtro de estado
+      if (statusFilter !== "all" && normStatus !== statusFilter) {
+        return false;
+      }
+
+      // Búsqueda por ID, proveedor o caja
+      if (searchTerm.trim() !== "") {
+        const q = searchTerm.toLowerCase().trim();
+        const idMatch = (item.id || "").toLowerCase().includes(q);
+        const supplierMatch = (item.supplier?.businessName || "").toLowerCase().includes(q);
+        const supplierDocMatch = (item.supplier?.document || "").toLowerCase().includes(q);
+        const cashRegisterMatch = (item.cashRegister?.name || "").toLowerCase().includes(q);
+        const dateMatch = item.orderDate ? new Date(item.orderDate).toLocaleDateString().includes(q) : false;
+
+        return idMatch || supplierMatch || supplierDocMatch || cashRegisterMatch || dateMatch;
+      }
+
+      return true;
+    });
+  }, [purchases, statusFilter, searchTerm]);
+
+  // Ordenación
+  const sortedPurchases = useMemo(() => {
+    if (!sortKey || !sortDir) return filteredPurchases;
+
+    return [...filteredPurchases].sort((a, b) => {
+      let cmp = 0;
+
+      if (sortKey === "id") {
+        cmp = (a.id || "").localeCompare(b.id || "");
+      } else if (sortKey === "supplier") {
+        const nameA = a.supplier?.businessName || "";
+        const nameB = b.supplier?.businessName || "";
+        cmp = nameA.localeCompare(nameB);
+      } else if (sortKey === "orderDate") {
+        const dateA = a.orderDate ? new Date(a.orderDate).getTime() : 0;
+        const dateB = b.orderDate ? new Date(b.orderDate).getTime() : 0;
+        cmp = dateA - dateB;
+      } else if (sortKey === "status") {
+        cmp = normalizeStatus(a.status).localeCompare(normalizeStatus(b.status));
+      }
+
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+  }, [filteredPurchases, sortKey, sortDir]);
+
+  // Paginación
+  const totalPages = Math.max(1, Math.ceil(sortedPurchases.length / itemsPerPage));
+  const activePage = Math.min(currentPage, totalPages);
+  const startIndex = (activePage - 1) * itemsPerPage;
+  const paginatedPurchases = useMemo(
+    () => sortedPurchases.slice(startIndex, startIndex + itemsPerPage),
+    [sortedPurchases, startIndex, itemsPerPage]
+  );
+
+  const hasActiveFilters = searchTerm.trim() !== "" || statusFilter !== "all";
+
+  // Manejadores de acciones
+  const handleViewDetail = (purchase: Omit<PurchaseWithRelations, "purchaseDetails">) => {
+    findPurchaseByID(purchase.id);
+  };
+
+  const handleCloseDetailModal = () => {
+    setIsDetailModalOpen(false);
+    setSelectedPurchase(null);
+  };
+
+  const handleOpenCreateModal = () => {
+    setSelectedPurchase(null);
+    setFormMode("create");
+    setIsFormModalOpen(true);
+  };
+
+  const handleEdit = async (purchase: Omit<PurchaseWithRelations, "purchaseDetails">) => {
+    try {
+      setIsLoading(true);
+      const response = await getPurchaseByID(purchase.id);
+      if (response.status === 200 && response.data.shoppings) {
+        setSelectedPurchase(response.data.shoppings);
+      } else {
+        setSelectedPurchase(purchase as PurchaseWithRelations);
+      }
+    } catch {
+      setSelectedPurchase(purchase as PurchaseWithRelations);
+    } finally {
+      setIsLoading(false);
+      setFormMode("edit");
+      setIsFormModalOpen(true);
+    }
+  };
+
+  const handleCloseFormModal = () => {
+    setIsFormModalOpen(false);
+    setSelectedPurchase(null);
+  };
+
+  const handleFormSubmit = (data: PurchaseFormData) => {
+    console.log(`[Purchases] Guardar datos (${formMode}):`, data);
+    Toast.fire({
+      icon: "success",
+      title: formMode === "create" ? "Compra registrada" : "Compra actualizada",
+      text: "Datos procesados en consola (console.log).",
+    });
+  };
+
+
+  return (
+    <div className="space-y-8 animate-fadeIn">
+      {/* Encabezado Principal y Acciones */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-app-border pb-6">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky">
+              <FontAwesomeIcon icon={faCartShopping} className="text-lg" />
+            </span>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-app-text">
+                Gestión de Compras
+              </h1>
+              <p className="text-sm text-app-muted">
+                Registro, consulta y seguimiento de compras vinculadas a caja y proveedor
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="md"
+            icon={faChartPie}
+            className="hover:border-brand-royal dark:hover:border-brand-sky opacity-80"
+          >
+            Generar Reporte
+          </Button>
+
+          <Button
+            variant="outline"
+            size="md"
+            icon={faArrowRotateRight}
+            onClick={findPurchases}
+            disabled={isLoading}
+            className="hover:border-brand-royal dark:hover:border-brand-sky"
+          >
+            Actualizar
+          </Button>
+
+          <Button
+            variant="primary"
+            size="md"
+            icon={faPlus}
+            onClick={handleOpenCreateModal}
+            className="shadow-sm hover:shadow-md transition-all active:scale-95"
+          >
+            Nueva Compra
+          </Button>
+        </div>
+      </div>
+
+      {/* Tarjetas de Métricas */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-app-muted">Total Compras</p>
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-brand-royal dark:bg-brand-royal/20 dark:text-brand-sky">
+              <FontAwesomeIcon icon={faCartShopping} className="text-xs" />
+            </span>
+          </div>
+          <div className="mt-2.5 flex items-baseline gap-2">
+            <span className="text-3xl font-black tracking-tight text-app-text">
+              {metrics.total}
+            </span>
+            <span className="text-xs text-app-muted">órdenes</span>
+          </div>
+          <p className="mt-1 text-xs text-app-muted">
+            Registros totales de abastecimiento
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-app-muted">Compras Completadas</p>
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
+              <FontAwesomeIcon icon={faCircleCheck} className="text-xs" />
+            </span>
+          </div>
+          <div className="mt-2.5 flex items-baseline gap-2">
+            <span className="text-3xl font-black tracking-tight text-app-text">
+              {metrics.completadas}
+            </span>
+            <span className="text-xs text-app-muted">recibidas</span>
+          </div>
+          <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+            Mercancía verificada e ingresada
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-app-muted">Compras Pendientes</p>
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
+              <FontAwesomeIcon icon={faClock} className="text-xs" />
+            </span>
+          </div>
+          <div className="mt-2.5 flex items-baseline gap-2">
+            <span className="text-3xl font-black tracking-tight text-app-text">
+              {metrics.pendientes}
+            </span>
+            <span className="text-xs text-app-muted">en curso</span>
+          </div>
+          <p className="mt-1 text-xs text-app-muted">Pendientes de entrega o confirmación</p>
+        </div>
+
+        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-app-muted">Compras Canceladas</p>
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400">
+              <FontAwesomeIcon icon={faBan} className="text-xs" />
+            </span>
+          </div>
+          <div className="mt-2.5 flex items-baseline gap-2">
+            <span className="text-3xl font-black tracking-tight text-app-text">
+              {metrics.canceladas}
+            </span>
+            <span className="text-xs text-app-muted">anuladas</span>
+          </div>
+          <p className="mt-1 text-xs text-app-muted">Sin impacto en almacén</p>
+        </div>
+      </div>
+
+      {/* Tabla Principal con formato compuesto Table */}
+      <Table>
+        <Table.Header
+          title="Órdenes de Compra Registradas"
+          description="Listado cronológico de compras a proveedores con trazabilidad a caja y control de estados"
+          action={
+            <div className="flex items-center gap-2">
+              <Select
+                id="filter-compra-estado-header"
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                options={[
+                  { value: "all", label: "Todos los Estados" },
+                  { value: "Completada", label: "Completadas" },
+                  { value: "Pendiente", label: "Pendientes" },
+                  { value: "Cancelada", label: "Canceladas" },
+                ]}
+                size="sm"
+              />
+            </div>
+          }
+        />
+
+        <div className="mb-4">
+          <Table.Search
+            value={searchTerm}
+            onChange={(val) => {
+              setSearchTerm(val);
+              setCurrentPage(1);
+            }}
+            placeholder="Buscar por ID, proveedor, NIT o fecha..."
+          />
+        </div>
+
+        {hasActiveFilters && (
+          <div className="mb-3 flex items-center justify-between text-xs text-app-muted">
+            <span>
+              Mostrando {filteredPurchases.length} de {purchases.length} compras encontradas
+            </span>
+            <Button
+              size="sm"
+              variant="ghost"
+              icon={faArrowRotateRight}
+              onClick={handleResetFilters}
+            >
+              Restablecer filtros
+            </Button>
+          </div>
+        )}
+
+        <Table.Table>
+          <Table.Thead>
+            <Table.Row head>
+              <Table.SortableCell
+                sortKey="id"
+                activeSortKey={sortKey}
+                sortDir={sortDir}
+                onSort={handleSort}
+                className="w-36"
+              >
+                Código / ID
+              </Table.SortableCell>
+              <Table.SortableCell
+                sortKey="supplier"
+                activeSortKey={sortKey}
+                sortDir={sortDir}
+                onSort={handleSort}
+              >
+                Proveedor
+              </Table.SortableCell>
+              <th className="px-4 py-3 font-bold select-none text-app-muted text-xs uppercase tracking-wider">
+                Caja / Cuenta
+              </th>
+              <Table.SortableCell
+                sortKey="orderDate"
+                activeSortKey={sortKey}
+                sortDir={sortDir}
+                onSort={handleSort}
+              >
+                Fecha de Orden
+              </Table.SortableCell>
+              <Table.SortableCell
+                sortKey="status"
+                activeSortKey={sortKey}
+                sortDir={sortDir}
+                onSort={handleSort}
+                className="text-center w-36"
+              >
+                Estado
+              </Table.SortableCell>
+              <th className="px-4 py-3 font-bold select-none text-center text-app-muted text-xs uppercase tracking-wider w-28">
+                Acciones
+              </th>
+            </Table.Row>
+          </Table.Thead>
+
+          <Table.Tbody>
+            {isLoading ? (
+              Array.from({ length: itemsPerPage }).map((_, rIdx) => (
+                <Table.Row key={`loading-${rIdx}`}>
+                  <Table.Cell rounded="left" colSpan={6} className="py-4">
+                    <div className="h-4 w-full rounded-md bg-app-border/70 animate-pulse" />
+                  </Table.Cell>
+                </Table.Row>
+              ))
+            ) : paginatedPurchases.length === 0 ? (
+              <Table.Empty
+                colSpan={6}
+                message={
+                  hasActiveFilters
+                    ? "No se encontraron compras con los filtros seleccionados."
+                    : "No hay compras registradas en el sistema actualmente."
+                }
+              />
+            ) : (
+              paginatedPurchases.map((row) => {
+                const normStatus = normalizeStatus(row.status);
+                const date = row.orderDate ? new Date(row.orderDate) : null;
+
+                return (
+                  <Table.Row
+                    key={row.id}
+                    onClick={() => handleViewDetail(row)}
+                  >
+                    {/* Código / ID */}
+                    <Table.Cell rounded="left">
+                      <div className="flex flex-col">
+                        <span
+                          className="font-mono text-xs font-bold text-brand-royal dark:text-brand-sky hover:underline"
+                          title={row.id}
+                        >
+                          #{row.id.slice(0, 8)}
+                        </span>
+                        <span className="text-[10px] text-app-muted truncate max-w-28" title={row.id}>
+                          {row.id}
+                        </span>
+                      </div>
+                    </Table.Cell>
+
+                    {/* Proveedor */}
+                    <Table.Cell>
+                      <div className="flex items-center gap-2.5 min-w-40">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky">
+                          <FontAwesomeIcon icon={faBuilding} className="text-xs" />
+                        </span>
+                        <div className="flex flex-col min-w-0">
+                          <span
+                            className="font-bold text-xs text-app-text truncate"
+                            title={row.supplier?.businessName || "Sin proveedor"}
+                          >
+                            {row.supplier?.businessName || "Proveedor no asignado"}
+                          </span>
+                          <span className="text-[10px] font-mono text-app-muted">
+                            {row.supplier?.document ? `NIT: ${row.supplier.document}` : "Sin documento"}
+                          </span>
+                        </div>
+                      </div>
+                    </Table.Cell>
+
+                    {/* Caja */}
+                    <Table.Cell>
+                      <div className="flex items-center gap-1.5 text-xs">
+                        <FontAwesomeIcon icon={faCashRegister} className="text-app-muted text-[11px]" />
+                        <span className="font-medium text-app-text">
+                          {row.cashRegister?.name || "Caja Principal"}
+                        </span>
+                      </div>
+                    </Table.Cell>
+
+                    {/* Fecha de Orden */}
+                    <Table.Cell>
+                      <div className="flex items-center gap-1.5 text-xs text-app-text">
+                        <FontAwesomeIcon icon={faCalendarDay} className="text-app-muted text-[10px]" />
+                        <span>
+                          {date && !isNaN(date.getTime())
+                            ? date.toLocaleDateString("es-CO", {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            })
+                            : "Sin fecha"}
+                        </span>
+                      </div>
+                    </Table.Cell>
+
+                    {/* Estado */}
+                    <Table.Cell className="text-center">
+                      {normStatus === "Completada" && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
+                          <span className="size-1.5 rounded-full bg-emerald-500" />
+                          Completada
+                        </span>
+                      )}
+                      {normStatus === "Cancelada" && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-500/15 px-2.5 py-1 text-[11px] font-bold text-rose-700 dark:text-rose-400">
+                          <span className="size-1.5 rounded-full bg-rose-500" />
+                          Cancelada
+                        </span>
+                      )}
+                      {normStatus === "Pendiente" && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/15 px-2.5 py-1 text-[11px] font-bold text-amber-700 dark:text-amber-400">
+                          <span className="size-1.5 rounded-full bg-amber-500" />
+                          Pendiente
+                        </span>
+                      )}
+                    </Table.Cell>
+
+                    {/* Acciones */}
+                    <Table.Cell rounded="right" className="text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          icon={faEye}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewDetail(row);
+                          }}
+                          title="Ver Detalle"
+                          className="hover:text-brand-royal dark:hover:text-brand-sky hover:bg-brand-royal/10 dark:hover:bg-brand-sky/15"
+                        />
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          icon={faPenToSquare}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(row);
+                          }}
+                          title="Editar Compra"
+                          className="hover:text-brand-royal dark:hover:text-brand-sky hover:bg-brand-royal/10 dark:hover:bg-brand-sky/15"
+                        />
+                      </div>
+                    </Table.Cell>
+                  </Table.Row>
+                );
+              })
+            )}
+          </Table.Tbody>
+        </Table.Table>
+
+        <Table.Pagination
+          currentPage={activePage}
+          totalPages={totalPages}
+          totalItems={filteredPurchases.length}
+          pageSize={itemsPerPage}
+          pageSizeOptions={[5, 8, 12, 20]}
+          onPageSizeChange={(size) => {
+            setItemsPerPage(size);
+            setCurrentPage(1);
+          }}
+          onPageChange={(page) => setCurrentPage(page)}
+        />
+      </Table>
+
+      {/* Modal de Detalle Completo de la Compra */}
+      <PurchaseDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={handleCloseDetailModal}
+        purchase={selectedPurchase}
+        isLoading={isLoadingDetail}
+      />
+
+      {/* Modal Unificado de Creación y Edición */}
+      <PurchaseFormModal
+        isOpen={isFormModalOpen}
+        onClose={handleCloseFormModal}
+        mode={formMode}
+        purchase={selectedPurchase}
+        onSubmit={handleFormSubmit}
+      />
+    </div>
+  );
+}
+

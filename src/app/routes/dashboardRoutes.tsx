@@ -5,7 +5,7 @@ import DashboardPage from "../../features/dashboard/pages/DashboardPage";
 import ProductsDashboardPage from "../../features/dashboard/pages/products/ProductsPage";
 import OrdersPage from "../../features/dashboard/pages/orders/OrdersPage";
 import GastosPage from "../../features/dashboard/pages/bills";
-import ProveedoresPage from "../../features/dashboard/pages/Proveedores";
+import SuppliersPage from "../../features/dashboard/pages/suppliers";
 import VentasPage from "../../features/dashboard/pages/Ventas";
 import ClientesPage from "../../features/dashboard/pages/clients/ClientsPage";
 import DevolucionesPage from "../../features/dashboard/pages/Devoluciones";
@@ -16,10 +16,11 @@ import TallaProducts from "../../features/dashboard/pages/products/TallaProducts
 import CategoriaProduct from "../../features/dashboard/pages/products/CategoriaProduct";
 import MarcaProducts from "../../features/dashboard/pages/products/MarcaProducts";
 import TipoProducts from "../../features/dashboard/pages/products/TipoProducts";
-import CategoriaProveedor from "../../features/dashboard/pages/Proveedores/CategoriaProveedor";
-import Compras from "../../features/dashboard/pages/Compras/Compras";
+import SupplierCategoryPage from "../../features/dashboard/pages/suppliers/SupplierCategoryPage";
+
 import RolesPage from "../../features/dashboard/pages/Roles/RolesPage";
 import PermissionsPage from "../../features/dashboard/pages/Permissions/PermissionsPage";
+import Purchases from "../../features/dashboard/pages/Compras/Purchases";
 
 export const dashboardLayout = createRoute({
   getParentRoute: () => rootRoute,
@@ -84,22 +85,25 @@ export const productTypesRoute = createRoute({
   component: () => <TipoProducts />,
 });
 
+// Esta ruta se conecta a SupplierCategoryPage dentro del layout principal.
+// /category-supplier coincide con el enlace del sidebar y con el prefijo
+// expuesto por el backend para el módulo de categorías de proveedores.
 export const categorySupplierRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/category-supplier",
-  component: () => <CategoriaProveedor />,
+  component: () => <SupplierCategoryPage />,
 });
 
 export const supplierRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/supplier",
-  component: () => <ProveedoresPage />,
+  component: () => <SuppliersPage />,
 });
 
 export const shoppingRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/shopping",
-  component: () => <Compras />,
+  component: () => <Purchases />,
 });
 
 // ── Gestión de ventas ──
@@ -137,13 +141,13 @@ export const usersRoute = createRoute({
 export const rolesRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/roles",
-  component: () => <RolesPage/>,
+  component: () => <RolesPage />,
 });
 
 export const permissionsRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/permissions",
-  component: () => <PermissionsPage/>,
+  component: () => <PermissionsPage />,
 });
 
 export const dashboardRoutes = dashboardLayout.addChildren([
