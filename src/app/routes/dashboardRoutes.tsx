@@ -5,7 +5,7 @@ import DashboardPage from "../../features/dashboard/pages/DashboardPage";
 import ProductsDashboardPage from "../../features/dashboard/pages/products/ProductsPage";
 import OrdersPage from "../../features/dashboard/pages/orders/OrdersPage";
 import GastosPage from "../../features/dashboard/pages/bills";
-import ProveedoresPage from "../../features/dashboard/pages/Proveedores";
+import ProveedoresPage from "../../features/dashboard/pages/suppliers/ProveedoresPage";
 import VentasPage from "../../features/dashboard/pages/Ventas";
 import ClientesPage from "../../features/dashboard/pages/clients/ClientsPage";
 import DevolucionesPage from "../../features/dashboard/pages/Devoluciones";
@@ -16,8 +16,8 @@ import TallaProducts from "../../features/dashboard/pages/products/TallaProducts
 import CategoriaProduct from "../../features/dashboard/pages/products/CategoriaProduct";
 import MarcaProducts from "../../features/dashboard/pages/products/MarcaProducts";
 import TipoProducts from "../../features/dashboard/pages/products/TipoProducts";
-import CategoriaProveedor from "../../features/dashboard/pages/Proveedores/CategoriaProveedor";
-import Compras from "../../features/dashboard/pages/Compras/Compras";
+import CategoriaProveedor from "../../features/dashboard/pages/suppliers/suppliersCategory";
+import Purchases from "../../features/dashboard/pages/Compras/Purchases";
 import RolesPage from "../../features/dashboard/pages/Roles/RolesPage";
 import PermissionsPage from "../../features/dashboard/pages/Permissions/PermissionsPage";
 
@@ -99,7 +99,7 @@ export const supplierRoute = createRoute({
 export const shoppingRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/shopping",
-  component: () => <Compras />,
+  component: () => <Purchases />,
 });
 
 // ── Gestión de ventas ──
@@ -137,13 +137,13 @@ export const usersRoute = createRoute({
 export const rolesRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/roles",
-  component: () => <RolesPage/>,
+  component: () => <RolesPage />,
 });
 
 export const permissionsRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/permissions",
-  component: () => <PermissionsPage/>,
+  component: () => <PermissionsPage />,
 });
 
 export const dashboardRoutes = dashboardLayout.addChildren([

@@ -1,52 +1,91 @@
-export type TipoDocumentoId = 1 | 2 | 3 | 4 | 5; // 1: CC, 2: CE, 3: TI, 4: Pasaporte, 5: NIT
-export type RolId = 1 | 2; // 1: Administrador, 2: Bodeguero (clientes excluidos de este módulo)
+// ============================================================================
+// 1. MÓDULO DE SEGURIDAD Y USUARIOS
+// ============================================================================
 
-export interface TipoDocumento {
-  id_tipo_documento: TipoDocumentoId;
-  codigo: string;
-  nombre: string;
-}
+import type { Sale } from './sales';
+import type { Payment } from './sales';
+import type { SaleReturn } from './sales';
+import type { Expense } from './cash-registers';
+import type { Supplier } from './suppliers';
 
-export interface Rol {
-  id_rol: RolId;
-  nombre: "Administrador" | "Bodeguero";
-  descripcion: string;
-}
-
-export interface Usuario {
-  id_usuario?: number;
-  documento_identidad: string;
-  id_tipo_documento: TipoDocumentoId;
-  nombre: string;
-  apellido: string;
-  correo: string;
-  telefono: string;
-  direccion: string;
-  contrasena?: string;
-  id_rol: RolId;
-  estado: boolean;
-  fecha_creacion: string;
-  // Campos populados / helpers para UI
-  tipo_documento?: TipoDocumento;
-  rol?: Rol;
-}
-
-export interface UsuarioFormData {
-  documento_identidad: string;
-  id_tipo_documento: TipoDocumentoId;
-  nombre: string;
-  apellido: string;
-  correo: string;
-  telefono: string;
-  direccion: string;
-  contrasena: string;
-  id_rol: RolId;
-  estado: boolean;
-}
-
-export interface LoggedUser {
-  email: string;
+/** Roles del sistema (ej. Administrador, Vendedor, Bodeguero, Cliente) */
+export interface Role {
+  id: number;
   name: string;
+  description: string;
+}
+
+export interface RoleWithRelations extends Role {
+  users?: User[];
+  rolePrivileges?: RolePrivilege[];
+}
+
+/** Módulos funcionales del sistema (ej. 'Users', 'Sales', 'Products', 'CashRegisters') */
+export interface Permission {
+  id: number;
+  name: string;
+}
+
+export interface PermissionWithRelations extends Permission {
+  privileges?: Privilege[];
+}
+
+/** Acciones permitidas dentro de cada módulo (ej. 'Create', 'Read', 'Update', 'Delete', 'Approve') */
+export interface Privilege {
+  id: number;
+  permissionId: number;
+  name: string;
+}
+
+export interface PrivilegeWithRelations extends Privilege {
+  permission?: Permission;
+  rolePrivileges?: RolePrivilege[];
+}
+
+/** Tabla pivote que asigna privilegios específicos a cada rol */
+export interface RolePrivilege {
+  id: number;
+  roleId: number;
+  privilegeId: number;
+}
+
+export interface RolePrivilegeWithRelations extends RolePrivilege {
+  role?: Role;
+  privilege?: Privilege;
+}
+
+/** Catálogo de tipos de documento de identidad (ej. CC, NIT, CE, Pasaporte) */
+export interface DocumentType {
+  id: number;
+  documentType: string;
+}
+
+export interface DocumentTypeWithRelations extends DocumentType {
+  users?: User[];
+  suppliers?: Supplier[];
+}
+
+/** Usuarios del sistema: empleados internos y clientes registrados */
+export interface User {
+  identityDocument: string;
+  documentTypeId: number;
+  firstName: string;
   lastName: string;
-  role: string;
+  email: string;
+  phone: string;
+  address?: string | null;
+  password?: string | null;
+  roleId?: number | null;
+  status: string;
+  createdAt: string | Date;
+}
+
+export interface UserWithRelations extends User {
+  documentType?: DocumentType;
+  role?: Role | null;
+  salesAsCustomer?: Sale[];
+  salesAsSeller?: Sale[];
+  payments?: Payment[];
+  saleReturns?: SaleReturn[];
+  expenses?: Expense[];
 }
