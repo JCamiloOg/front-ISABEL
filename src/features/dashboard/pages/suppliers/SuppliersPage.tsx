@@ -9,7 +9,7 @@ import {
 
 import { Button } from "../../../../shared/components/Button";
 
-export function ProveedoresPage() {
+export function SuppliersPage() {
   return (
     <div className="space-y-8 animate-fadeIn">
       {/* ─── Encabezado Principal ─── */}
@@ -107,4 +107,4 @@ export function ProveedoresPage() {
   );
 }
 
-export default ProveedoresPage;
+export default SuppliersPage;
