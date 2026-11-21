@@ -8,7 +8,7 @@ import GastosPage from "../../features/dashboard/pages/bills";
 import ProveedoresPage from "../../features/dashboard/pages/suppliers/ProveedoresPage";
 import VentasPage from "../../features/dashboard/pages/Ventas";
 import ClientesPage from "../../features/dashboard/pages/clients/ClientsPage";
-import DevolucionesPage from "../../features/dashboard/pages/Devoluciones";
+import ReturnsPage from "../../features/dashboard/pages/Returns/ReturnsPage";
 import BoxesPage from "../../features/dashboard/pages/Boxes/BoxesPage";
 import UsersPage from "../../features/dashboard/pages/users/UsersPage";
 import ColoresProducts from "../../features/dashboard/pages/products/ColoresProducts";
@@ -17,7 +17,7 @@ import CategoriaProduct from "../../features/dashboard/pages/products/CategoriaP
 import MarcaProducts from "../../features/dashboard/pages/products/MarcaProducts";
 import TipoProducts from "../../features/dashboard/pages/products/TipoProducts";
 import CategoriaProveedor from "../../features/dashboard/pages/suppliers/suppliersCategory";
-import Purchases from "../../features/dashboard/pages/Compras/Purchases";
+import Purchases from "../../features/dashboard/pages/Purchases/Purchases";
 import RolesPage from "../../features/dashboard/pages/Roles/RolesPage";
 import PermissionsPage from "../../features/dashboard/pages/Permissions/PermissionsPage";
 
@@ -96,9 +96,9 @@ export const supplierRoute = createRoute({
   component: () => <ProveedoresPage />,
 });
 
-export const shoppingRoute = createRoute({
+export const purchaseRoute = createRoute({
   getParentRoute: () => dashboardLayout,
-  path: "/shopping",
+  path: "/purchase",
   component: () => <Purchases />,
 });
 
@@ -124,7 +124,7 @@ export const salesRoute = createRoute({
 export const returnsRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/returns",
-  component: () => <DevolucionesPage />,
+  component: () => <ReturnsPage />,
 });
 
 // ── Configuración ──
@@ -158,7 +158,7 @@ export const dashboardRoutes = dashboardLayout.addChildren([
   boxesRoute,
   categorySupplierRoute,
   supplierRoute,
-  shoppingRoute,
+  purchaseRoute,
   clientsRoute,
   ordersRoute,
   salesRoute,

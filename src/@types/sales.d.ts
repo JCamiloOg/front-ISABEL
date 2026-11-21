@@ -2,7 +2,7 @@
 // 5. MÓDULO DE VENTAS Y PEDIDOS
 // ============================================================================
 
-import type { User } from './users';
+import type { User, UserWithRelations } from './users';
 import type { ProductVariant } from './products';
 import type { CashRegister } from './cash-registers';
 
@@ -86,7 +86,7 @@ export interface SaleReturn {
 }
 
 export interface SaleReturnWithRelations extends SaleReturn {
-  sale?: Sale;
-  variant?: ProductVariant;
-  user?: User;
+  sale?: SaleWithRelations;
+  variant?: ProductVariantWithRelations;
+  user?: UserWithRelations;
 }

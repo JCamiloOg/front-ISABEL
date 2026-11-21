@@ -85,7 +85,7 @@ export default function Sidebar() {
                 },
                 { id: "category-supplier", label: "Categoría proveedor", icon: faTruckRampBox, to: "/dashboard/category-supplier" },
                 { id: "supplier", label: "Proveedores", icon: faIndustry, to: "/dashboard/supplier" },
-                { id: "shopping-purchases", label: "Compras", icon: faCartShopping, to: "/dashboard/shopping" }
+                { id: "shopping-purchases", label: "Compras", icon: faCartShopping, to: "/dashboard/purchase" }
             ],
         },
         {
@@ -131,6 +131,7 @@ export default function Sidebar() {
 
     // Cerrar offcanvas al navegar en móvil
     useEffect(() => {
+        // eslint-disable-next-line
         setMobileOpen(false);
     }, [currentPath]);
 
