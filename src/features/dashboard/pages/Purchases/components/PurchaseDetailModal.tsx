@@ -33,8 +33,6 @@ export function PurchaseDetailModal({
   purchase,
   isLoading,
 }: PurchaseDetailModalProps) {
-  if (!isOpen) return null;
-
   // Normalizador de estados
   const normalizeStatus = (status?: string | null): "Completada" | "Pendiente" | "Cancelada" => {
     if (!status) return "Pendiente";

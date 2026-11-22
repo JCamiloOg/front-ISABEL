@@ -42,6 +42,7 @@ export default function Navbar() {
 
     // Cerrar el drawer móvil y el dropdown al navegar
     useEffect(() => {
+        // eslint-disable-next-line
         setIsMobileNavOpen(false);
         setIsMenuOpen(false);
     }, [currentPath]);

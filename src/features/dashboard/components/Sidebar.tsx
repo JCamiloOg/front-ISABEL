@@ -526,7 +526,7 @@ export default function Sidebar() {
                 DESKTOP: Sidebar estático/sticky a la izquierda
             ═══════════════════════════════════════════ */}
             <aside
-                className={`hidden lg:flex flex-col sticky top-0 h-screen bg-brand-white dark:bg-brand-navy text-app-text border-r border-brand-royal/20 transition-all duration-300 ease-in-out select-none z-30 ${isCollapsed ? "w-20" : "w-72"
+                className={`hidden lg:flex flex-col sticky top-0 h-screen bg-app-surface-alt text-app-text border-r border-brand-royal/20 transition-all duration-300 ease-in-out select-none z-30 ${isCollapsed ? "w-20" : "w-72"
                     }`}
             >
                 {/* Botón Flotante para Colapsar/Expandir */}

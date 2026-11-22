@@ -30,8 +30,6 @@ export function ReturnDetailModal({
   saleReturn,
   isLoading,
 }: ReturnDetailModalProps) {
-  if (!isOpen) return null;
-
   // Normalizador de estados
   const normalizeStatus = (status?: string | null): "Aprobada" | "Pendiente" | "Rechazada" => {
     if (!status) return "Pendiente";

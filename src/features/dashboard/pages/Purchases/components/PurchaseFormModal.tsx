@@ -601,7 +601,7 @@ export function PurchaseFormModal({
     if (mode === "create") {
       payload = {
         purchaseInfo: {
-          id: purchase?.id,
+          id: invoiceNumber.trim(),
           supplierId,
           cashRegisterId: Number(cashRegisterId),
           orderDate,

@@ -17,12 +17,12 @@
 }
 
 html.dark {
-  --app-bg: #071326; /* Azul noche profundo */
+  --app-bg: #0b1222; /* Azul noche profundo */
   --app-text: #f8fafc; /* Texto principal claro */
-  --app-surface: #0e2347; /* Navy oficial Isabel para tarjetas y paneles */
-  --app-surface-alt: #132a54; /* Navy alternativo más suave */
+  --app-surface: #0b1222; /* Navy oficial Isabel para tarjetas y paneles */
+  --app-surface-alt: #0c1936; /* Navy alternativo más suave */
   --app-muted: #94a3b8; /* Texto secundario */
-  --app-border: #1e3a68; /* Bordes en dark */
+  --app-border: #11234b; /* Bordes en dark */
 }
 
 @theme {

@@ -4,14 +4,15 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 
-/** Debe coincidir con las clases `duration-*` de más abajo. */
-const EXIT_DURATION_MS = 200;
+/** Duración de la animación de salida en ms (debe sincronizarse con las clases Tailwind) */
+const EXIT_DURATION_MS = 220;
 
 const SIZES = {
     sm: "max-w-sm",
     md: "max-w-lg",
     lg: "max-w-2xl",
     xl: "max-w-4xl",
+    '2xl': "max-w-7xl"
 } as const;
 
 const FOCUSABLE_SELECTOR =
@@ -51,32 +52,40 @@ export default function Modal({
     const panelRef = useRef<HTMLDivElement>(null);
 
     // `mounted` mantiene el modal en el DOM mientras dura la animación de salida.
-    // `entered` se activa un frame después de montar para que el navegador
-    // registre el estado inicial y pueda animar hacia el estado visible.
+    // `entered` controla la interpolación visual entre estado oculto y visible.
     const [mounted, setMounted] = useState(isOpen);
     const [entered, setEntered] = useState(false);
 
-    if (isOpen && !mounted) {
-        setMounted(true);
-    }
-
     useEffect(() => {
+        let timer: ReturnType<typeof setTimeout> | undefined;
+
         if (isOpen) {
+            // eslint-disable-next-line
+            setMounted(true);
+            // Doble requestAnimationFrame garantiza que el DOM renderice primero
+            // el estado inicial (opacity-0, scale-[0.97]) antes de aplicar la transición a visible
             let secondFrame = 0;
             const firstFrame = requestAnimationFrame(() => {
-                secondFrame = requestAnimationFrame(() => setEntered(true));
+                secondFrame = requestAnimationFrame(() => {
+                    setEntered(true);
+                });
             });
             return () => {
                 cancelAnimationFrame(firstFrame);
                 cancelAnimationFrame(secondFrame);
             };
+        } else {
+            // Al cerrarse, quitamos la clase visible para iniciar la transición de salida
+            setEntered(false);
+            // Esperamos a que la animación CSS concluya antes de desmontar del DOM
+            timer = setTimeout(() => {
+                setMounted(false);
+            }, EXIT_DURATION_MS);
         }
 
-        const timeout = setTimeout(() => {
-            setMounted(false);
-            setEntered(false);
-        }, EXIT_DURATION_MS);
-        return () => clearTimeout(timeout);
+        return () => {
+            if (timer) clearTimeout(timer);
+        };
     }, [isOpen]);
 
     const visible = isOpen && entered;
@@ -150,16 +159,18 @@ export default function Modal({
     if (!mounted) return null;
 
     return createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Fondo */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+            {/* Fondo / Backdrop con suave difuminado gradual */}
             <div
                 aria-hidden="true"
                 onMouseDown={closeOnBackdrop ? onClose : undefined}
-                className={`absolute inset-0 bg-brand-navy/60 backdrop-blur-sm transition-opacity motion-reduce:transition-none ${visible ? "opacity-100 duration-300 ease-out" : "opacity-0 duration-200 ease-in"
+                className={`fixed inset-0 bg-brand-navy/60 backdrop-blur-md transition-all motion-reduce:transition-none ${visible
+                        ? "opacity-100 duration-300 ease-out pointer-events-auto"
+                        : "opacity-0 duration-200 ease-in pointer-events-none"
                     }`}
             />
 
-            {/* Panel */}
+            {/* Panel del Modal con interpolación suave tipo resorte (ease-out cubic al entrar, ease-in al salir) */}
             <div
                 ref={panelRef}
                 role="dialog"
@@ -167,13 +178,13 @@ export default function Modal({
                 aria-labelledby={titleId}
                 aria-describedby={description ? descriptionId : undefined}
                 tabIndex={-1}
-                className={`relative flex max-h-[calc(100dvh-2rem)] w-full ${SIZES[size]} flex-col overflow-hidden rounded-2xl border border-app-border bg-app-surface text-app-text shadow-2xl outline-none transition-[opacity,transform] motion-reduce:transition-none ${visible
-                    ? "translate-y-0 scale-100 opacity-100 duration-300 ease-out"
-                    : "translate-y-3 scale-95 opacity-0 duration-200 ease-in"
+                className={`relative flex max-h-[calc(100dvh-2.5rem)] w-full ${SIZES[size]} flex-col overflow-hidden rounded-2xl border border-app-border bg-app-surface text-app-text shadow-2xl outline-none transform-gpu will-change-[transform,opacity] transition-all motion-reduce:transition-none ${visible
+                        ? "translate-y-0 scale-100 opacity-100 duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-auto"
+                        : "translate-y-4 sm:translate-y-6 scale-[0.97] opacity-0 duration-200 ease-in pointer-events-none"
                     }`}
             >
                 {/* Encabezado */}
-                <header className="flex items-start gap-4 px-6 pt-6 pb-4">
+                <header className="flex items-start gap-4 px-6 pt-6 pb-4 border-b border-app-border/40 bg-app-surface">
                     {icon && (
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-brand-sky/30 bg-brand-sky/15 text-brand-royal dark:text-brand-sky">
                             <FontAwesomeIcon icon={icon} />
@@ -196,7 +207,7 @@ export default function Modal({
                             type="button"
                             onClick={onClose}
                             aria-label="Cerrar"
-                            className="-mt-1.5 -mr-2 flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl text-app-muted transition-colors hover:bg-brand-sky/15 hover:text-brand-royal focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-sky/50 dark:hover:text-brand-sky"
+                            className="-mt-1.5 -mr-2 flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl text-app-muted transition-all duration-150 hover:bg-brand-sky/15 hover:text-brand-royal hover:scale-105 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-sky/50 dark:hover:text-brand-sky"
                         >
                             <FontAwesomeIcon icon={faXmark} />
                         </button>
@@ -205,14 +216,14 @@ export default function Modal({
 
                 {/* Contenido */}
                 {children && (
-                    <div className={`flex-1 overflow-y-auto px-6 text-sm ${footer ? "pb-5" : "pb-6"}`}>
+                    <div className={`flex-1 overflow-y-auto px-6 text-sm ${footer ? "py-5" : "pt-4 pb-6"}`}>
                         {children}
                     </div>
                 )}
 
                 {/* Acciones */}
                 {footer && (
-                    <footer className="flex flex-col-reverse gap-3 border-t border-app-border bg-app-surface-alt px-6 py-4 sm:flex-row sm:justify-end">
+                    <footer className="flex flex-col-reverse gap-3 border-t border-app-border bg-app-surface-alt/80 px-6 py-4 sm:flex-row sm:justify-end">
                         {footer}
                     </footer>
                 )}
