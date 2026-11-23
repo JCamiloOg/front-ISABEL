@@ -4,7 +4,7 @@ import DashboardLayout from "../../features/dashboard/layout/DashboardLayout";
 import DashboardPage from "../../features/dashboard/pages/DashboardPage";
 import ProductsDashboardPage from "../../features/dashboard/pages/products/ProductsPage";
 import OrdersPage from "../../features/dashboard/pages/orders/OrdersPage";
-import GastosPage from "../../features/dashboard/pages/bills";
+import BillsPage from "../../features/dashboard/pages/bills/BillsPage";
 import ProveedoresPage from "../../features/dashboard/pages/suppliers/ProveedoresPage";
 import VentasPage from "../../features/dashboard/pages/Ventas/VentasPage";
 import ClientesPage from "../../features/dashboard/pages/clients/ClientsPage";
@@ -38,7 +38,7 @@ export const billsRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/bills",
 
-  component: () => <GastosPage />,
+  component: () => <BillsPage />,
 });
 
 export const boxesRoute = createRoute({
