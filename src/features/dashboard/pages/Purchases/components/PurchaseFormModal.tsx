@@ -18,13 +18,13 @@ import {
   faImage,
   faBan,
   faReceipt,
+  faTrashCan,
 } from "@fortawesome/free-solid-svg-icons";
 
 import Modal from "../../../../../shared/components/Modal";
 import { Button } from "../../../../../shared/components/Button";
 import { Input } from "../../../../../shared/components/Inputs/Input";
 import SelectBySearch, { type SelectBySearchOption } from "../../../../../shared/components/Inputs/SelectBySearch";
-import { CashRegisterSelector } from "../../../components/CashRegisterSelector";
 import type {
   ProductColorWithRelations,
   ProductVariantWithRelations,
@@ -33,7 +33,7 @@ import type {
   Supplier,
   CashRegister,
 } from "../../../../../@types";
-import { addVariantShopping, deleteVariantInShopping, getProducts, getSupplier, updateVariantInShopping } from "../services/shoppingsServices";
+import { addVariantShopping, changePaymentsInfo, deletePaymentInfo, deleteVariantInShopping, getProducts, getSupplier, updateVariantInShopping } from "../services/shoppingsServices";
 import { Toast } from "../../../../../shared/utils/alerts";
 import { isAxiosError } from "axios";
 
@@ -56,14 +56,17 @@ export interface PurchaseFormDataCreate {
   purchaseInfo: {
     id?: string;
     supplierId: string;
-    cashRegisterId: number;
     orderDate: string;
     vat: number;
-  }
+  };
   purchaseDetails: {
     variantId: number;
     quantity: number;
     unitPrice: number;
+  }[];
+  purchasePayments: {
+    cashRegisterId: number;
+    amount: number;
   }[];
 }
 
@@ -100,6 +103,7 @@ export function PurchaseFormModal({
   // Estado general de la compra
   const [supplierId, setSupplierId] = useState<string>("");
   const [cashRegisterId, setCashRegisterId] = useState<number | string>(1);
+  const [purchasePayments, setPurchasePayments] = useState<{ cashRegisterId: number; amount: number, id?: number }[]>([]);
   const [orderDate, setOrderDate] = useState<string>(new Date().toISOString().split("T")[0]);
   const [vat, setVat] = useState<number | string>(19);
   const [invoiceNumber, setInvoiceNumber] = useState<string>("");
@@ -191,12 +195,31 @@ export function PurchaseFormModal({
     }
   }, [isOpen, handleSupplierSearch, handleProductSearch]);
 
+  const [isUpdatingPayments, setIsUpdatingPayments] = useState(false);
+
   // Sincronizar datos al editar o crear
   useEffect(() => {
     if (mode === "edit" && purchase) {
       // eslint-disable-next-line
       setSupplierId(purchase.supplierId || purchase.supplier?.document || "");
       setCashRegisterId(purchase.cashRegister?.id || 1);
+      if (purchase.purchasePayments && purchase.purchasePayments.length > 0) {
+        setPurchasePayments(
+          purchase.purchasePayments.map((p) => ({
+            id: p.id,
+            cashRegisterId: p.cashRegisterId,
+            amount: Number(p.amount) || 0,
+          }))
+        );
+      } else {
+        setPurchasePayments([
+          {
+            id: undefined,
+            cashRegisterId: purchase.cashRegister?.id || cashRegisters[0]?.id || 1,
+            amount: purchase?.purchaseDetails?.reduce((acc, dt) => acc + Number(dt.unitPrice) * dt.quantity, 0) || 0,
+          },
+        ]);
+      }
       setInvoiceNumber(purchase.id || "");
       setOrderDate(
         purchase.orderDate
@@ -249,9 +272,10 @@ export function PurchaseFormModal({
     } else {
       // Modo Crear
       setSupplierId("");
-      setCashRegisterId(1);
       setInvoiceNumber("");
-      setCashRegisterId(cashRegisters.length > 0 ? cashRegisters[0].id : 1);
+      const defaultBoxId = cashRegisters.length > 0 ? cashRegisters[0].id : 1;
+      setCashRegisterId(defaultBoxId);
+      setPurchasePayments([{ cashRegisterId: defaultBoxId, amount: 0 }]);
       setOrderDate(new Date().toISOString().split("T")[0]);
       setVat(19);
       setAddedDetails([]);
@@ -587,8 +611,74 @@ export function PurchaseFormModal({
       errs.purchaseDetails = "Debes agregar al menos una variante de producto a la compra.";
     }
 
+    if (mode === "create") {
+      if (purchasePayments.length === 0) {
+        errs.purchasePayments = "Debes asignar al menos una caja para el pago.";
+      } else {
+        const totalAssigned = purchasePayments.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+        const hasInvalidAmount = purchasePayments.some((p) => !p.amount || Number(p.amount) <= 0);
+        if (hasInvalidAmount) {
+          errs.purchasePayments = "Cada monto asignado a una caja debe ser mayor a 0.";
+        } else if (Math.abs(totalAssigned - total) > 0.01) {
+          errs.purchasePayments = `El total asignado en cajas (${formatCurrency(totalAssigned)}) debe coincidir con el total de la compra (${formatCurrency(total)}).`;
+        }
+      }
+    }
+
     setErrors(errs);
     return Object.keys(errs).length === 0;
+  };
+
+  const handleUpdatePayments = async () => {
+    if (purchasePayments.length === 0) {
+      setErrors((prev) => ({ ...prev, purchasePayments: "Debes asignar al menos una caja para el pago." }));
+      return;
+    }
+    const totalAssigned = purchasePayments.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+    const hasInvalidAmount = purchasePayments.some((p) => !p.amount || Number(p.amount) <= 0);
+    if (hasInvalidAmount) {
+      setErrors((prev) => ({ ...prev, purchasePayments: "Cada monto asignado a una caja debe ser mayor a 0." }));
+      return;
+    }
+    if (Math.abs(totalAssigned - total) > 0.01) {
+      setErrors((prev) => ({
+        ...prev,
+        purchasePayments: `El total asignado en cajas (${formatCurrency(totalAssigned)}) debe coincidir con el total de la compra (${formatCurrency(total)}).`,
+      }));
+      return;
+    }
+
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next.purchasePayments;
+      return next;
+    });
+
+
+    setIsUpdatingPayments(true);
+    try {
+      const res = await changePaymentsInfo(purchasePayments, invoiceNumber);
+      Toast.fire({
+        icon: "success",
+        title: res.data.message || "Información de pago actualizada exitosamente",
+      });
+    } catch (error) {
+      if (isAxiosError(error)) {
+        Toast.fire({
+          icon: "error",
+          title: error.response?.data?.message || "Error al actualizar la información de pago",
+        });
+      }
+    } finally {
+      setIsUpdatingPayments(false);
+    }
+  };
+
+  const handleDeletePayment = async (idx: number, id?: number,) => {
+    if (id) {
+      await deletePaymentInfo(id);
+    }
+    setPurchasePayments((prev) => prev.filter((_, i) => i !== idx));
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -603,7 +693,6 @@ export function PurchaseFormModal({
         purchaseInfo: {
           id: invoiceNumber.trim(),
           supplierId,
-          cashRegisterId: Number(cashRegisterId),
           orderDate,
           vat: Number(vat),
         },
@@ -611,6 +700,10 @@ export function PurchaseFormModal({
           variantId: Number(row.variantId),
           quantity: Number(row.quantity),
           unitPrice: Number(row.unitPrice),
+        })),
+        purchasePayments: purchasePayments.map((p) => ({
+          cashRegisterId: Number(p.cashRegisterId),
+          amount: Number(p.amount),
         })),
       };
     } else {
@@ -755,15 +848,6 @@ export function PurchaseFormModal({
                 </div>
               </div>
 
-              {/* Selector de Cajas y Cuentas en Tarjetas Horizontales */}
-              <div className="pt-2 border-t border-app-border/70">
-                <CashRegisterSelector
-                  cashRegisters={cashRegisters}
-                  value={cashRegisterId}
-                  onChange={(val) => setCashRegisterId(val)}
-                  label="Caja o Cuenta Bancaria Afectada *"
-                />
-              </div>
               {
                 mode === "edit" && (
                   <div>
@@ -1169,6 +1253,130 @@ export function PurchaseFormModal({
                   </span>
                 </div>
               </div>
+            </div>
+
+            {/* Selector de Cajas: al final para dividir el total ya calculado (crear y editar) */}
+            <div className="pt-4 border-t border-app-border/70 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <span className="text-xs font-bold text-app-text block">
+                    Distribución de Pago en Cajas *
+                  </span>
+                  <span className="text-[11px] text-app-muted">
+                    Divide el total ({formatCurrency(total)}) entre una o varias cajas activas
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  icon={faPlus}
+                  disabled={purchasePayments.length >= cashRegisters.length}
+                  onClick={() => {
+                    const assigned = purchasePayments.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+                    const remaining = Math.max(0, total - assigned);
+                    const usedIds = new Set(purchasePayments.map((p) => p.cashRegisterId));
+                    const nextBox = cashRegisters.find((b) => !usedIds.has(b.id))?.id || cashRegisters[0]?.id || 1;
+                    setPurchasePayments((prev) => [
+                      ...prev,
+                      { cashRegisterId: nextBox, amount: remaining },
+                    ]);
+                  }}
+                >
+                  Dividir en otra caja
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                {purchasePayments.map((pay, idx) => {
+                  const usedIds = purchasePayments
+                    .filter((_, i) => i !== idx)
+                    .map((p) => p.cashRegisterId);
+                  const availableBoxes = cashRegisters.filter((b) => !usedIds.includes(b.id));
+
+                  return (
+                    <div
+                      key={idx}
+                      className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-end p-2.5 rounded-xl border border-app-border bg-app-surface-alt/40"
+                    >
+                      <div className="sm:col-span-7">
+                        <label className="block text-[11px] font-semibold text-app-muted mb-1">
+                          Caja o Cuenta
+                        </label>
+                        <select
+                          value={pay.cashRegisterId}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            setPurchasePayments((prev) =>
+                              prev.map((p, i) => (i === idx ? { ...p, cashRegisterId: val } : p))
+                            );
+                          }}
+                          className="w-full rounded-lg border border-app-border bg-app-surface px-3 py-1.5 text-xs text-app-text focus:border-brand-royal focus:outline-none"
+                        >
+                          {availableBoxes.map((box) => (
+                            <option key={box.id} value={box.id}>
+                              {box.name} (Saldo: {formatCurrency(Number(box.currentBalance) || 0)})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="sm:col-span-4">
+                        <Input
+                          label="Monto ($)"
+                          type="number"
+                          min={1}
+                          value={pay.amount}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            setPurchasePayments((prev) =>
+                              prev.map((p, i) => (i === idx ? { ...p, amount: val } : p))
+                            );
+                          }}
+                          size="sm"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-1 flex justify-end">
+                        {purchasePayments.length > 1 && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            icon={faTrashCan}
+                            onClick={() => {
+                              handleDeletePayment(idx, pay.id);
+                            }
+                            }
+                            className="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                          />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {errors.purchasePayments && (
+                <p className="text-xs text-rose-500 font-medium">{errors.purchasePayments}</p>
+              )}
+
+              {mode === "edit" && (
+                <div className="pt-1 flex justify-end">
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    onClick={handleUpdatePayments}
+                    isLoading={isUpdatingPayments}
+                    loadingText="Actualizando pagos..."
+                    className="shadow-sm hover:shadow-md transition-all active:scale-95"
+                  >
+                    <FontAwesomeIcon icon={faFloppyDisk} className="text-xs mr-1.5" />
+                    Actualizar información de pago
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </form>

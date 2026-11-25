@@ -208,11 +208,29 @@ export function PurchaseDetailModal({
                 </div>
 
                 <div className="space-y-2.5 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="text-app-muted">Caja / Cuenta Afectada:</span>
-                    <strong className="text-app-text font-bold">
-                      {purchase.cashRegister?.name || "Caja Principal"}
-                    </strong>
+                  <div className="space-y-1.5">
+                    <span className="text-app-muted block">Cajas / Cuentas Afectadas:</span>
+                    {(purchase).purchasePayments && (purchase).purchasePayments.length > 0 ? (
+                      <div className="space-y-1.5">
+                        {(purchase).purchasePayments.map((pay, idx: number) => (
+                          <div
+                            key={pay.id || idx}
+                            className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-app-surface-alt/70 border border-app-border/70 text-xs"
+                          >
+                            <span className="font-semibold text-app-text">
+                              {pay.cashRegister?.name || `Caja #${pay.cashRegisterId}`}
+                            </span>
+                            <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400">
+                              {formatCurrency(Number(pay.amount) || 0)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <strong className="text-app-text font-bold">
+                        {purchase.cashRegister?.name || "Caja Principal"}
+                      </strong>
+                    )}
                   </div>
 
                   <div className="flex items-center justify-between">

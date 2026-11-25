@@ -21,9 +21,16 @@ export async function getPurchaseByID(id: string) {
     >(`/shoppings/${id}`);
 }
 
+export interface PurchasePaymentInput {
+    id?: number
+    cashRegisterId: number;
+    amount: number;
+}
+
 export async function createPurchase(data: {
-    purchaseInfo: Omit<Purchase, 'status' | 'deliveryDate' | "id"> & { id?: string },
-    purchaseDetails: Omit<PurchaseDetail, 'id' | "purchaseId">[]
+    purchaseInfo: Omit<Purchase, 'status' | 'deliveryDate' | "id" | "cashRegisterId"> & { id?: string },
+    purchaseDetails: Omit<PurchaseDetail, 'id' | "purchaseId">[],
+    purchasePayments: PurchasePaymentInput[]
 }
 ) {
     return await api.post<{ message: string }>("/shoppings", data);
@@ -34,6 +41,17 @@ export async function updatePurchase(id: string, data: {
 }) {
     return await api.put<{ message: string }>(`/shoppings/${id}`, data);
 }
+
+export async function changePaymentsInfo(data: PurchasePaymentInput[], id: string) {
+    return api.put<{ message: string }>(`/shoppings/payment-info/${id}`, {
+        purchasePayments: data
+    });
+}
+
+export async function deletePaymentInfo(id: number) {
+    return api.delete<{ message: string }>(`/shoppings/delete-payment/${id}`);
+}
+
 
 export async function addVariantShopping(data: Omit<PurchaseDetail, "id" | "purchaseId">, purchaseId: string) {
     return await api.post<{ message: string }>(`/shoppings/add-variant/${purchaseId}`, {

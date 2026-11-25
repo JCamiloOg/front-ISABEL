@@ -9,6 +9,7 @@ import ProveedoresPage from "../../features/dashboard/pages/suppliers/Proveedore
 import VentasPage from "../../features/dashboard/pages/Ventas/VentasPage";
 import ClientesPage from "../../features/dashboard/pages/clients/ClientsPage";
 import ReturnsPage from "../../features/dashboard/pages/Returns/ReturnsPage";
+import SaleReturnDetailPage from "../../features/dashboard/pages/Returns/SaleReturnDetailPage";
 import BoxesPage from "../../features/dashboard/pages/Boxes/BoxesPage";
 import UsersPage from "../../features/dashboard/pages/users/UsersPage";
 import ColoresProducts from "../../features/dashboard/pages/products/ColoresProducts";
@@ -127,6 +128,12 @@ export const returnsRoute = createRoute({
   component: () => <ReturnsPage />,
 });
 
+export const returnDetailRoute = createRoute({
+  getParentRoute: () => dashboardLayout,
+  path: "/returns/$idSale",
+  component: () => <SaleReturnDetailPage />,
+});
+
 // ── Configuración ──
 export const usersRoute = createRoute({
   getParentRoute: () => dashboardLayout,
@@ -163,6 +170,7 @@ export const dashboardRoutes = dashboardLayout.addChildren([
   ordersRoute,
   salesRoute,
   returnsRoute,
+  returnDetailRoute,
   usersRoute,
   rolesRoute,
   permissionsRoute,

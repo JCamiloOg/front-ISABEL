@@ -2,10 +2,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBoxesStacked,
   faArrowRotateRight,
-  faClock,
-  faBoxOpen,
-  faTruck,
-  faCircleCheck,
   faEye,
   faUser,
 } from "@fortawesome/free-solid-svg-icons";
@@ -202,33 +198,6 @@ export default function OrdersPage() {
     return "Pendiente";
   };
 
-  // Métricas calculadas en vivo
-  const metrics = useMemo(() => {
-    let pendientes = 0;
-    let preparacion = 0;
-    let enviados = 0;
-    let entregados = 0;
-    let cancelados = 0;
-
-    orders.forEach((o) => {
-      const st = normalizeStatus(o.status);
-      if (st === "Pendiente") pendientes++;
-      else if (st === "En Preparación") preparacion++;
-      else if (st === "Enviado") enviados++;
-      else if (st === "Entregado") entregados++;
-      else if (st === "Cancelado") cancelados++;
-    });
-
-    return {
-      total: orders.length,
-      pendientes,
-      preparacion,
-      enviados,
-      entregados,
-      cancelados,
-    };
-  }, [orders]);
-
   // Filtrado y Búsqueda
   const filteredOrders = useMemo(() => {
     return orders.filter((item) => {
@@ -323,102 +292,6 @@ export default function OrdersPage() {
           >
             Actualizar
           </Button>
-        </div>
-      </div>
-
-      {/* ─── Métricas Superiores ─── */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {/* Total */}
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-royal/40">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-app-muted">Total Pedidos</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-brand-royal dark:bg-brand-royal/20 dark:text-brand-sky">
-              <FontAwesomeIcon icon={faBoxesStacked} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-brand-royal dark:text-brand-sky">
-              {metrics.total}
-            </span>
-            <span className="text-xs text-app-muted">registrados</span>
-          </div>
-          <p className="mt-1 text-xs text-app-muted">Historial completo</p>
-        </div>
-
-        {/* Pendientes */}
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-amber-400/50">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-app-muted">Pendientes</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
-              <FontAwesomeIcon icon={faClock} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-amber-600 dark:text-amber-400">
-              {metrics.pendientes}
-            </span>
-            <span className="text-xs text-app-muted">por atender</span>
-          </div>
-          <p className="mt-1 text-xs text-amber-600 dark:text-amber-400 font-medium">
-            Requieren revisión
-          </p>
-        </div>
-
-        {/* En Preparación */}
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-sky-400/50">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-app-muted">En Preparación</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400">
-              <FontAwesomeIcon icon={faBoxOpen} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-sky-600 dark:text-sky-400">
-              {metrics.preparacion}
-            </span>
-            <span className="text-xs text-app-muted">en alistamiento</span>
-          </div>
-          <p className="mt-1 text-xs text-sky-600 dark:text-sky-400 font-medium">
-            Empacando producto
-          </p>
-        </div>
-
-        {/* Enviados */}
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-indigo-400/50">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-app-muted">Enviados</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
-              <FontAwesomeIcon icon={faTruck} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-indigo-600 dark:text-indigo-400">
-              {metrics.enviados}
-            </span>
-            <span className="text-xs text-app-muted">en ruta</span>
-          </div>
-          <p className="mt-1 text-xs text-indigo-600 dark:text-indigo-400 font-medium">
-            Hacia destino
-          </p>
-        </div>
-
-        {/* Entregados */}
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-app-muted">Entregados</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
-              <FontAwesomeIcon icon={faCircleCheck} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">
-              {metrics.entregados}
-            </span>
-            <span className="text-xs text-app-muted">completados</span>
-          </div>
-          <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-            Entregas finalizadas
-          </p>
         </div>
       </div>
 

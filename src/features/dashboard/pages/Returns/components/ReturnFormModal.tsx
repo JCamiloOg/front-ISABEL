@@ -1,760 +1,1169 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-    faRotateLeft,
-    faReceipt,
-    faXmark,
-    faFloppyDisk,
-    faTag,
-    faInfoCircle,
-    faCheck,
-    faLayerGroup,
-    faShoePrints,
-    faShirt,
-    faTriangleExclamation,
-    faBoxesStacked,
+  faRotateLeft,
+  faReceipt,
+  faFloppyDisk,
+  faCheck,
+  faPlus,
+  faTrashCan,
+  faTriangleExclamation,
+  faBoxesStacked,
+  faListCheck,
+  faCommentDots,
+  faRightLeft,
+  faBoxOpen,
 } from "@fortawesome/free-solid-svg-icons";
 
 import Modal from "../../../../../shared/components/Modal";
 import { Button } from "../../../../../shared/components/Button";
 import { Input } from "../../../../../shared/components/Inputs/Input";
 import { Textarea } from "../../../../../shared/components/Inputs/Textarea";
-import SelectBySearch, { type SelectBySearchOption } from "../../../../../shared/components/Inputs/SelectBySearch";
-import type { SaleReturn } from "../../../../../@types";
+import { Select } from "../../../../../shared/components/Inputs/Select";
+import SelectBySearch, {
+  type SelectBySearchOption,
+} from "../../../../../shared/components/Inputs/SelectBySearch";
 import {
-    createSaleReturn,
-    getSales,
-    type SaleOptionItem,
+  createSaleReturn,
+  getSales,
+  TYPE_RESOLUTION_OPTIONS,
+  REASONS_RETURN_OPTIONS,
+  REASONS_RETURN_LABELS,
+  TYPE_RESOLUTION_LABELS,
+  type TypeResolution,
+  type ReasonsReturn,
+  type CreateSaleReturnItem,
+  type ExchangeItemInput,
+  type SaleOptionItem,
 } from "../services/salesReturnsServices";
+import { getProducts } from "../../Purchases/services/shoppingsServices";
+import type { ProductWithRelations } from "../../../../../@types";
 import { Toast } from "../../../../../shared/utils/alerts";
 import { isAxiosError } from "axios";
 
 interface ReturnFormModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    onSuccess?: () => void;
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
+}
+
+interface ExchangeDraftItem extends ExchangeItemInput {
+  id: string;
+  productName: string;
+  colorName: string;
+  sizeName: string;
+  salePrice: number;
+}
+
+// Estructura de cada línea en el borrador de devolución
+export interface ReturnDraftItem {
+  id: string;
+  variantId: number;
+  productName: string;
+  sku: string | null;
+  colorName: string;
+  colorHex?: string;
+  sizeName: string;
+  purchasedQty: number;
+  quantity: number;
+  reason: ReasonsReturn;
+  details?: string;
+  typeResolution: TypeResolution;
+  returnToStock: boolean;
+  exchangeItems: ExchangeDraftItem[];
+  image?: string | null;
 }
 
 // Estructuras agrupadas para los productos de la venta seleccionada
 interface SaleProductColor {
-    id: number;
-    name: string;
-    hex?: string;
-    image?: string | null;
-    variants: {
-        variantId: number;
-        sizeName: string;
-        purchasedQty: number;
-    }[];
+  id: number;
+  name: string;
+  hex?: string;
+  image?: string | null;
+  variants: {
+    variantId: number;
+    sizeName: string;
+    purchasedQty: number;
+  }[];
 }
 
 interface SaleProductGroup {
-    name: string;
-    sku: string | null;
-    colors: Record<number, SaleProductColor>;
+  name: string;
+  sku: string | null;
+  colors: Record<number, SaleProductColor>;
 }
 
 export function ReturnFormModal({
-    isOpen,
-    onClose,
-    onSuccess,
+  isOpen,
+  onClose,
+  onSuccess,
 }: ReturnFormModalProps) {
-    // ── 1. Estado de Selección de Venta ──
-    const [selectedSaleId, setSelectedSaleId] = useState<string>("");
-    const [selectedSaleRaw, setSelectedSaleRaw] = useState<SaleOptionItem | null>(null);
-    const [saleOptions, setSaleOptions] = useState<SelectBySearchOption<SaleOptionItem>[]>([]);
-    const [isSearchingSales, setIsSearchingSales] = useState(false);
-    const salesDebounceTimer = useRef<number | null>(null);
+  // ── 1. Estado de Selección de Venta ──
+  const [selectedSaleId, setSelectedSaleId] = useState<string>("");
+  const [selectedSaleRaw, setSelectedSaleRaw] = useState<SaleOptionItem | null>(null);
+  const [saleOptions, setSaleOptions] = useState<SelectBySearchOption<SaleOptionItem>[]>([]);
+  const [isSearchingSales, setIsSearchingSales] = useState(false);
+  const salesDebounceTimer = useRef<number | null>(null);
 
+  // ── 2. Lista de ítems a devolver en esta venta ──
+  const [returnItems, setReturnItems] = useState<ReturnDraftItem[]>([]);
 
-    // ── 3. Estados de Selección de Producto, Color y Talla (Extraídos de la Venta) ──
-    const [selectedProductName, setSelectedProductName] = useState<string>("");
-    const [selectedColorId, setSelectedColorId] = useState<number | null>(null);
-    const [selectedVariantId, setSelectedVariantId] = useState<number | null>(null);
+  // ── 3. Estados del formulario para agregar un nuevo ítem ──
+  const [selectedProductName, setSelectedProductName] = useState<string>("");
+  const [selectedColorId, setSelectedColorId] = useState<number | null>(null);
+  const [selectedVariantId, setSelectedVariantId] = useState<number | null>(null);
+  const [quantity, setQuantity] = useState<number | string>(1);
 
-    // ── 4. Cantidad y Motivo ──
-    const [quantity, setQuantity] = useState<number | string>(1);
-    const [reason, setReason] = useState<string>("");
+  const [reason, setReason] = useState<ReasonsReturn>("Talla_equivocada");
+  const [typeResolution, setTypeResolution] = useState<TypeResolution>("Cambiar_mismo_producto");
+  const [returnToStock, setReturnToStock] = useState<boolean>(true);
+  const [details, setDetails] = useState<string>("");
 
-    const [errors, setErrors] = useState<Record<string, string>>({});
-    const [isSubmitting, setIsSubmitting] = useState(false);
+  // ── 4. Estados para seleccionar productos de cambio (exchangeItems) ──
+  const [exchangeItems, setExchangeItems] = useState<ExchangeDraftItem[]>([]);
+  const [catalogOptions, setCatalogOptions] = useState<SelectBySearchOption<ProductWithRelations>[]>([]);
+  const [isSearchingCatalog, setIsSearchingCatalog] = useState(false);
+  const catalogDebounceTimer = useRef<number | null>(null);
+  const [exProduct, setExProduct] = useState<ProductWithRelations | null>(null);
+  const [exColorId, setExColorId] = useState<number | null>(null);
+  const [exVariantId, setExVariantId] = useState<number | null>(null);
+  const [exQty, setExQty] = useState<number | string>(1);
 
-    // ── Búsqueda de Ventas ──
-    const handleSalesSearch = useCallback((search: string) => {
-        if (salesDebounceTimer.current) clearTimeout(salesDebounceTimer.current);
+  const [itemErrors, setItemErrors] = useState<Record<string, string>>({});
+  const [globalError, setGlobalError] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-        salesDebounceTimer.current = window.setTimeout(async () => {
-            try {
-                setIsSearchingSales(true);
-                const response = await getSales(search);
-                const salesList = response.data?.sales || [];
+  // ── Búsqueda de Ventas con Debounce ──
+  const handleSalesSearch = useCallback((search: string) => {
+    if (salesDebounceTimer.current) clearTimeout(salesDebounceTimer.current);
 
-                const opts: SelectBySearchOption<SaleOptionItem>[] = salesList.map((s) => {
-                    const clientName = s.customer
-                        ? `${s.customer.firstName} ${s.customer.lastName}`.trim()
-                        : "Cliente no registrado";
-                    const doc = s.customer?.identityDocument ? ` • Cédula: ${s.customer.identityDocument}` : "";
-                    const itemCount = s.saleDetails?.length || 0;
+    salesDebounceTimer.current = window.setTimeout(async () => {
+      try {
+        setIsSearchingSales(true);
+        const response = await getSales(search);
+        const salesList = response.data?.sales || [];
 
-                    return {
-                        value: s.id,
-                        label: `Venta #${s.id.slice(0, 8)}`,
-                        sublabel: `Cliente: ${clientName}${doc}`,
-                        description: `${itemCount} artículo${itemCount === 1 ? "" : "s"} en la venta`,
-                        raw: s,
-                    };
-                });
+        const opts: SelectBySearchOption<SaleOptionItem>[] = salesList.map((s) => {
+          const clientName = s.customer
+            ? `${s.customer.firstName} ${s.customer.lastName}`.trim()
+            : "Cliente no registrado";
+          const doc = s.customer?.identityDocument
+            ? ` • Cédula: ${s.customer.identityDocument}`
+            : "";
+          const itemCount = s.saleDetails?.length || 0;
 
-                setSaleOptions(opts);
-            } catch (err) {
-                console.error("Error al buscar ventas:", err);
-            } finally {
-                setIsSearchingSales(false);
-            }
-        }, 300);
-    }, []);
-
-    // Carga inicial al abrir el modal
-    useEffect(() => {
-        if (isOpen) {
-            // eslint-disable-next-line
-            setSelectedSaleId("");
-            setSelectedSaleRaw(null);
-            setSelectedProductName("");
-            setSelectedColorId(null);
-            setSelectedVariantId(null);
-            setQuantity(1);
-            setReason("");
-            setErrors({});
-            setIsSubmitting(false);
-
-            handleSalesSearch("");
-        }
-    }, [isOpen, handleSalesSearch]);
-
-    // Manejador selección de venta
-    const handleSelectSale = (opt?: SelectBySearchOption<SaleOptionItem>) => {
-        if (!opt) {
-            setSelectedSaleId("");
-            setSelectedSaleRaw(null);
-            setSelectedProductName("");
-            setSelectedColorId(null);
-            setSelectedVariantId(null);
-            setQuantity(1);
-            return;
-        }
-
-        const sale = opt.raw || null;
-        setSelectedSaleId(String(opt.value));
-        setSelectedSaleRaw(sale);
-
-        // Reiniciar selecciones de producto/variante dependientes de la venta anterior
-        setSelectedProductName("");
-        setSelectedColorId(null);
-        setSelectedVariantId(null);
-        setQuantity(1);
-
-        if (errors.selectedSaleId) {
-            setErrors((prev) => {
-                const next = { ...prev };
-                delete next.selectedSaleId;
-                return next;
-            });
-        }
-    };
-
-    // ── Agrupación de Productos, Colores y Tallas presentes en la Venta Seleccionada ──
-    const saleProductsGrouped = useMemo(() => {
-        const groups: Record<string, SaleProductGroup> = {};
-        if (!selectedSaleRaw?.saleDetails) return groups;
-
-        selectedSaleRaw.saleDetails.forEach((detail) => {
-            const v = detail.variant;
-            if (!v) return;
-
-            const pColor = v.productColor;
-            const prod = pColor?.product;
-            const col = pColor?.color;
-
-            const pName = prod?.name || `Producto sin nombre (#${v.id})`;
-            const pSku = prod?.sku || null;
-            const colorId = col?.id || 1;
-            const colorName = col?.name || "Color Único";
-            const colorHex = col?.hex;
-            const image = pColor?.colorImages?.[0]?.image || pColor?.colorImages?.[0]?.imageUrl || null;
-
-            const sizeName =
-                v.size?.sizeNumber ||
-                v.size?.size ||
-                `Talla #${v.id}`;
-
-            const purchasedQty = Number(detail.quantity) || 1;
-
-            if (!groups[pName]) {
-                groups[pName] = {
-                    name: pName,
-                    sku: pSku,
-                    colors: {},
-                };
-            }
-
-            if (!groups[pName].colors[colorId]) {
-                groups[pName].colors[colorId] = {
-                    id: colorId,
-                    name: colorName,
-                    hex: colorHex,
-                    image,
-                    variants: [],
-                };
-            }
-
-            groups[pName].colors[colorId].variants.push({
-                variantId: v.id,
-                sizeName,
-                purchasedQty,
-            });
+          return {
+            value: s.id,
+            label: `Venta #${s.id.slice(0, 8)}`,
+            sublabel: `Cliente: ${clientName}${doc}`,
+            description: `${itemCount} artículo${itemCount === 1 ? "" : "s"} en la transacción`,
+            raw: s,
+          };
         });
 
-        return groups;
-    }, [selectedSaleRaw]);
+        setSaleOptions(opts);
+      } catch (err) {
+        console.error("Error al buscar ventas:", err);
+      } finally {
+        setIsSearchingSales(false);
+      }
+    }, 300);
+  }, []);
 
-    // Lista de opciones para el SelectBySearch de productos disponibles en la venta
-    const saleProductOptions = useMemo<SelectBySearchOption<{ name: string; sku: string | null }>[]>(() => {
-        return Object.keys(saleProductsGrouped).map((pName) => {
-            const group = saleProductsGrouped[pName];
-            const colorCount = Object.keys(group.colors).length;
-            return {
-                value: pName,
-                label: pName,
-                sublabel: group.sku ? `SKU: ${group.sku} • ${colorCount} color${colorCount === 1 ? "" : "es"} comprado${colorCount === 1 ? "" : "s"}` : `${colorCount} color${colorCount === 1 ? "" : "es"} comprado${colorCount === 1 ? "" : "s"}`,
-                raw: { name: pName, sku: group.sku },
-            };
-        });
-    }, [saleProductsGrouped]);
+  // ── Búsqueda de Productos del Catálogo para Cambio ──
+  const handleCatalogSearch = useCallback((search: string) => {
+    if (catalogDebounceTimer.current) clearTimeout(catalogDebounceTimer.current);
 
-    // Producto activo
-    const activeProductGroup = selectedProductName ? saleProductsGrouped[selectedProductName] : null;
+    catalogDebounceTimer.current = window.setTimeout(async () => {
+      try {
+        setIsSearchingCatalog(true);
+        const response = await getProducts(search);
+        const prods = response.data?.products || [];
+        const opts: SelectBySearchOption<ProductWithRelations>[] = prods.map((p) => ({
+          value: p.id,
+          label: p.name,
+          sublabel: p.sku ? `SKU: ${p.sku} • $${Number(p.salePrice).toLocaleString("es-CO")}` : `$${Number(p.salePrice).toLocaleString("es-CO")}`,
+          raw: p,
+        }));
+        setCatalogOptions(opts);
+      } catch (err) {
+        console.error("Error al buscar productos:", err);
+      } finally {
+        setIsSearchingCatalog(false);
+      }
+    }, 300);
+  }, []);
 
-    // Colores disponibles para el producto activo
-    const availableColorsForProduct = useMemo(() => {
-        if (!activeProductGroup) return [];
-        return Object.values(activeProductGroup.colors);
-    }, [activeProductGroup]);
+  // Reiniciar estado al abrir el modal
+  useEffect(() => {
+    if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedSaleId("");
+      setSelectedSaleRaw(null);
+      setReturnItems([]);
+      setSelectedProductName("");
+      setSelectedColorId(null);
+      setSelectedVariantId(null);
+      setQuantity(1);
+      setReason("Talla_equivocada");
+      setTypeResolution("Cambiar_mismo_producto");
+      setReturnToStock(true);
+      setDetails("");
+      setExchangeItems([]);
+      setExProduct(null);
+      setExColorId(null);
+      setExVariantId(null);
+      setExQty(1);
+      setItemErrors({});
+      setGlobalError("");
+      setIsSubmitting(false);
 
-    // Color activo
-    const activeColor = selectedColorId && activeProductGroup
-        ? activeProductGroup.colors[selectedColorId] || null
-        : null;
+      handleSalesSearch("");
+      handleCatalogSearch("");
+    }
+  }, [isOpen, handleSalesSearch, handleCatalogSearch]);
 
-    // Variantes/Tallas disponibles para el color activo
-    const availableVariantsForColor = useMemo(() => {
-        if (!activeColor) return [];
-        return activeColor.variants;
-    }, [activeColor]);
+  // Ajustar returnToStock automáticamente cuando cambia el motivo
+  const handleReasonChange = (newReason: ReasonsReturn) => {
+    setReason(newReason);
+    const isDamaged =
+      newReason === "Producto_dañado" || newReason === "Producto_defectuoso";
+    setReturnToStock(!isDamaged);
+  };
 
-    // Variante activa
-    const activeVariant = useMemo(() => {
-        if (!selectedVariantId || !availableVariantsForColor) return null;
-        return availableVariantsForColor.find((v) => v.variantId === selectedVariantId) || null;
-    }, [selectedVariantId, availableVariantsForColor]);
+  // Manejador selección de venta
+  const handleSelectSale = (
+    val: string | number,
+    option?: SelectBySearchOption<SaleOptionItem>
+  ) => {
+    if (!val || !option) {
+      setSelectedSaleId("");
+      setSelectedSaleRaw(null);
+      setReturnItems([]);
+      setSelectedProductName("");
+      setSelectedColorId(null);
+      setSelectedVariantId(null);
+      setQuantity(1);
+      return;
+    }
 
-    // Cantidad máxima vendida de la variante seleccionada
-    const maxAvailableQty = activeVariant?.purchasedQty || 1;
+    const sale = option.raw || null;
+    setSelectedSaleId(String(val));
+    setSelectedSaleRaw(sale);
+    setReturnItems([]);
+    setSelectedProductName("");
+    setSelectedColorId(null);
+    setSelectedVariantId(null);
+    setQuantity(1);
+    setGlobalError("");
+  };
 
-    // Manejador selección de producto
-    const handleSelectProduct = (pName: string) => {
-        setSelectedProductName(pName);
-        const grp = saleProductsGrouped[pName];
-        if (grp) {
-            const colorKeys = Object.keys(grp.colors).map(Number);
-            if (colorKeys.length > 0) {
-                setSelectedColorId(colorKeys[0]);
-            } else {
-                setSelectedColorId(null);
-            }
-        } else {
-            setSelectedColorId(null);
-        }
-        setSelectedVariantId(null);
-        setQuantity(1);
+  // ── Agrupación de Productos, Colores y Tallas de la Venta ──
+  const saleProductsGrouped = useMemo(() => {
+    const groups: Record<string, SaleProductGroup> = {};
+    if (!selectedSaleRaw?.saleDetails) return groups;
 
-        if (errors.selectedProduct) {
-            setErrors((prev) => {
-                const next = { ...prev };
-                delete next.selectedProduct;
-                return next;
-            });
-        }
-    };
+    selectedSaleRaw.saleDetails.forEach((detail) => {
+      const v = detail.variant;
+      if (!v) return;
 
-    // Manejador selección de color
-    const handleSelectColor = (cId: number) => {
-        setSelectedColorId(cId);
-        setSelectedVariantId(null);
-        setQuantity(1);
-    };
+      const pColor = v.productColor;
+      const prod = pColor?.product;
+      const col = pColor?.color;
 
-    // Manejador selección de talla
-    const handleSelectVariant = (vId: number, maxQty: number) => {
-        setSelectedVariantId(vId);
-        // Si la cantidad actual supera el máximo comprado, reajustarla
-        if (Number(quantity) > maxQty) {
-            setQuantity(maxQty);
-        } else if (Number(quantity) <= 0) {
-            setQuantity(1);
-        }
+      const pName = prod?.name || `Producto (#${v.id})`;
+      const pSku = prod?.sku || null;
+      const colorId = col?.id || 1;
+      const colorName = col?.name || "Color Base";
+      const colorHex = col?.hex;
+      const image =
+        pColor?.colorImages?.[0]?.image ||
+        pColor?.colorImages?.[0]?.imageUrl ||
+        null;
 
-        if (errors.selectedVariant) {
-            setErrors((prev) => {
-                const next = { ...prev };
-                delete next.selectedVariant;
-                return next;
-            });
-        }
-        if (errors.quantity) {
-            setErrors((prev) => {
-                const next = { ...prev };
-                delete next.quantity;
-                return next;
-            });
-        }
-    };
+      const sizeName = v.size?.sizeNumber || v.size?.size || `Talla #${v.id}`;
+      const purchasedQty = Number(detail.quantity) || 1;
 
-    // Manejador de cambio de cantidad con control de límite máximo
-    const handleQuantityChange = (valStr: string) => {
-        if (valStr === "") {
-            setQuantity("");
-            return;
-        }
+      if (!groups[pName]) {
+        groups[pName] = { name: pName, sku: pSku, colors: {} };
+      }
+      if (!groups[pName].colors[colorId]) {
+        groups[pName].colors[colorId] = {
+          id: colorId,
+          name: colorName,
+          hex: colorHex,
+          image,
+          variants: [],
+        };
+      }
+      groups[pName].colors[colorId].variants.push({
+        variantId: v.id,
+        sizeName,
+        purchasedQty,
+      });
+    });
 
-        const val = Number(valStr);
-        if (isNaN(val)) return;
+    return groups;
+  }, [selectedSaleRaw]);
 
-        if (val > maxAvailableQty) {
-            setQuantity(maxAvailableQty);
-            setErrors((prev) => ({
-                ...prev,
-                quantity: `La cantidad no puede superar los ${maxAvailableQty} pares comprados en esta venta.`,
-            }));
-            return;
-        }
+  const saleProductOptions = useMemo<
+    SelectBySearchOption<{ name: string; sku: string | null }>[]
+  >(() => {
+    return Object.keys(saleProductsGrouped).map((pName) => {
+      const group = saleProductsGrouped[pName];
+      const colorCount = Object.keys(group.colors).length;
+      return {
+        value: pName,
+        label: pName,
+        sublabel: group.sku
+          ? `SKU: ${group.sku} • ${colorCount} color${colorCount === 1 ? "" : "es"}`
+          : `${colorCount} color${colorCount === 1 ? "" : "es"}`,
+        raw: { name: pName, sku: group.sku },
+      };
+    });
+  }, [saleProductsGrouped]);
 
-        setQuantity(val);
-        if (errors.quantity) {
-            setErrors((prev) => {
-                const next = { ...prev };
-                delete next.quantity;
-                return next;
-            });
-        }
-    };
+  const activeProductGroup = selectedProductName
+    ? saleProductsGrouped[selectedProductName]
+    : null;
 
-    // Validación previa al envío
-    const validate = (): boolean => {
-        const errs: Record<string, string> = {};
+  const availableColorsForProduct = useMemo(() => {
+    if (!activeProductGroup) return [];
+    return Object.values(activeProductGroup.colors);
+  }, [activeProductGroup]);
 
-        if (!selectedSaleId) {
-            errs.selectedSaleId = "Debes seleccionar una venta.";
-        }
+  const activeColor =
+    selectedColorId && activeProductGroup
+      ? activeProductGroup.colors[selectedColorId] || null
+      : null;
 
-        if (!selectedProductName) {
-            errs.selectedProduct = "Debes seleccionar el producto comprado en la venta.";
-        }
+  const availableVariantsForColor = useMemo(() => {
+    if (!activeColor) return [];
+    return activeColor.variants;
+  }, [activeColor]);
 
-        if (!selectedVariantId) {
-            errs.selectedVariant = "Debes seleccionar la talla del calzado que se va a devolver.";
-        }
-
-        const qty = Number(quantity);
-        if (!quantity || isNaN(qty) || qty <= 0) {
-            errs.quantity = "La cantidad debe ser mayor a 0.";
-        } else if (qty > maxAvailableQty) {
-            errs.quantity = `No puedes devolver más de ${maxAvailableQty} unidades adquiridas en la venta.`;
-        }
-
-        if (!reason.trim()) {
-            errs.reason = "Debes ingresar el motivo de la devolución.";
-        } else if (reason.trim().length < 5) {
-            errs.reason = "El motivo debe contener al menos 5 caracteres.";
-        }
-
-        setErrors(errs);
-        return Object.keys(errs).length === 0;
-    };
-
-    // Envío del formulario a la API
-    const handleSubmit = async (e?: React.FormEvent) => {
-        if (e) e.preventDefault();
-        if (!validate()) return;
-
-        try {
-            setIsSubmitting(true);
-            const payload: Omit<SaleReturn, "id" | "rejectionReason" | "status" | "resolutionDate" | "userId"> = {
-                saleId: selectedSaleId,
-                variantId: Number(selectedVariantId),
-                quantity: Number(quantity),
-                reason: reason.trim(),
-                requestDate: new Date().toISOString(),
-            };
-
-            const response = await createSaleReturn(payload);
-
-            if (response.status === 200 || response.status === 201) {
-                Toast.fire({
-                    icon: "success",
-                    title: response.data?.message || "Devolución registrada exitosamente.",
-                });
-                if (onSuccess) onSuccess();
-                onClose();
-            }
-        } catch (error) {
-            if (isAxiosError(error)) {
-                Toast.fire({
-                    icon: "error",
-                    title: error.response?.data?.message || "Error al registrar la devolución.",
-                    text: "Verifica los datos de la venta y variante",
-                });
-            } else {
-                Toast.fire({
-                    icon: "error",
-                    title: "Ocurrió un error inesperado al registrar la devolución.",
-                });
-            }
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
+  const activeVariant = useMemo(() => {
+    if (!selectedVariantId || !availableVariantsForColor) return null;
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={onClose}
-            title="Registrar Nueva Devolución"
-            description="Selecciona la venta, el producto calzado facturado, su color y la talla específica con validación de cantidad comprada."
-            icon={faRotateLeft}
-            size="xl"
-            footer={
-                <div className="flex w-full items-center justify-between sm:justify-end gap-3">
-                    <Button variant="outline" size="sm" onClick={onClose} type="button" disabled={isSubmitting}>
-                        <FontAwesomeIcon icon={faXmark} className="text-xs mr-1.5" />
-                        Cancelar
-                    </Button>
-                    <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={handleSubmit}
-                        type="button"
-                        loadingText="Guardando..."
-                        isLoading={isSubmitting}
-                        className="shadow-sm hover:shadow-md transition-all active:scale-95"
-                    >
-                        <FontAwesomeIcon icon={faFloppyDisk} className="text-xs mr-1.5" />
-                        Guardar Devolución
-                    </Button>
-                </div>
-            }
-        >
-            <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Banner Informativo */}
-                <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-brand-royal/5 border border-brand-royal/15 dark:bg-brand-sky/10 dark:border-brand-sky/20">
-                    <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/20 dark:text-brand-sky text-xs">
-                        <FontAwesomeIcon icon={faInfoCircle} />
-                    </span>
-                    <div className="text-xs space-y-0.5">
-                        <p className="font-bold text-app-text">Trazabilidad de Garantías y Devoluciones</p>
-                        <p className="text-app-muted leading-relaxed">
-                            La solicitud quedará registrada en estado{" "}
-                            <strong className="text-amber-600 dark:text-amber-400 font-semibold">En Revisión</strong>. Los productos y
-                            tallas disponibles se filtran automáticamente a partir de los artículos facturados en la venta seleccionada.
-                        </p>
-                    </div>
-                </div>
-
-                {/* Sección 1: Selección de Venta y Documento de Usuario */}
-                <div className="p-4 rounded-2xl border border-app-border bg-app-surface-alt/50 space-y-4">
-                    <div className="flex items-center gap-2 pb-2 border-b border-app-border/70">
-                        <span className="flex size-6 items-center justify-center rounded-lg bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky text-xs">
-                            <FontAwesomeIcon icon={faReceipt} />
-                        </span>
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-app-muted">
-                            Venta y Responsable del Registro
-                        </h4>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-                        {/* Buscador de Venta vía SelectBySearch */}
-                        <div className="lg:col-span-12">
-                            <SelectBySearch<SaleOptionItem>
-                                label="Venta Asociada *"
-                                placeholder="Buscar por ID de venta o nombre de cliente..."
-                                searchPlaceholder="Escribe para buscar venta..."
-                                options={saleOptions}
-                                value={selectedSaleId}
-                                onChange={(_, opt) => handleSelectSale(opt)}
-                                onSearchChange={handleSalesSearch}
-                                isLoading={isSearchingSales}
-                                error={errors.selectedSaleId}
-                                iconLeft={faReceipt}
-                                size="md"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Tarjeta de Resumen de la Venta seleccionada */}
-                    {selectedSaleRaw && (
-                        <div className="p-3 rounded-xl bg-app-surface border border-app-border/80 flex flex-wrap items-center justify-between gap-3 text-xs">
-                            <div className="flex items-center gap-2">
-                                <span className="font-bold text-app-text">Cliente Facturado:</span>
-                                <span className="text-brand-royal dark:text-brand-sky font-semibold">
-                                    {selectedSaleRaw.customer
-                                        ? `${selectedSaleRaw.customer.firstName} ${selectedSaleRaw.customer.lastName}`
-                                        : "Cliente no registrado"}
-                                </span>
-                                {selectedSaleRaw.customer?.identityDocument && (
-                                    <span className="text-app-muted font-mono">
-                                        ({selectedSaleRaw.customer.identityDocument})
-                                    </span>
-                                )}
-                            </div>
-                            <div className="text-app-muted font-mono text-[11px]">
-                                UUID: <strong className="text-app-text">{selectedSaleRaw.id}</strong>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Sección 2: Selector Interactivo de Productos, Colores y Tallas (Asociados a la Venta) */}
-                <div className="rounded-2xl border border-app-border bg-app-surface shadow-xs transition-all">
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-app-border/70 bg-app-surface-alt/40 px-5 py-3 rounded-t-2xl">
-                        <div className="flex items-center gap-2.5">
-                            <span className="flex size-6 items-center justify-center rounded-lg bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky text-xs">
-                                <FontAwesomeIcon icon={faLayerGroup} />
-                            </span>
-                            <span className="text-xs font-bold tracking-tight text-app-text">
-                                Productos Comprados en la Venta
-                            </span>
-                        </div>
-                        <span className="text-[11px] text-app-muted">
-                            {selectedSaleRaw
-                                ? `${saleProductOptions.length} producto${saleProductOptions.length === 1 ? "" : "s"} disponible${saleProductOptions.length === 1 ? "" : "s"} para devolución`
-                                : "Primero selecciona una venta"}
-                        </span>
-                    </div>
-
-                    <div className="p-5 space-y-4">
-                        {!selectedSaleId ? (
-                            <div className="py-8 text-center text-app-muted text-xs flex flex-col items-center justify-center gap-2 border border-dashed border-app-border/80 rounded-xl bg-app-surface-alt/30">
-                                <FontAwesomeIcon icon={faReceipt} className="text-xl text-app-muted/60" />
-                                <p className="font-semibold">Selecciona una venta arriba para ver los productos comprados</p>
-                                <p className="text-[11px] text-app-muted/80">
-                                    Podrás elegir el calzado exacto, el color adquirido y la talla a devolver.
-                                </p>
-                            </div>
-                        ) : saleProductOptions.length === 0 ? (
-                            <div className="py-8 text-center text-app-muted text-xs flex flex-col items-center justify-center gap-2 border border-dashed border-rose-300 dark:border-rose-900/50 rounded-xl bg-rose-50/30 dark:bg-rose-950/20">
-                                <FontAwesomeIcon icon={faTriangleExclamation} className="text-xl text-rose-500" />
-                                <p className="font-bold text-rose-600 dark:text-rose-400">Esta venta no contiene artículos registrados</p>
-                            </div>
-                        ) : (
-                            <>
-                                {/* Fila: Seleccionar Producto y Color Disponible */}
-                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-                                    {/* Dropdown de Producto con SelectBySearch de los artículos de la venta */}
-                                    <div className="lg:col-span-7">
-                                        <label className="text-[11px] font-bold uppercase tracking-wider text-app-muted mb-1.5 block">
-                                            SELECCIONAR PRODUCTO COMPRADO *
-                                        </label>
-                                        <SelectBySearch<{ name: string; sku: string | null }>
-                                            placeholder="Seleccionar calzado de la venta..."
-                                            searchPlaceholder="Filtrar calzado..."
-                                            options={saleProductOptions}
-                                            value={selectedProductName}
-                                            onChange={(val) => handleSelectProduct(String(val))}
-                                            iconLeft={faShoePrints}
-                                            size="md"
-                                            error={errors.selectedProduct}
-                                        />
-                                    </div>
-
-                                    {/* Pills de Color Disponible */}
-                                    <div className="lg:col-span-5">
-                                        <label className="text-[11px] font-bold tracking-wider text-app-muted mb-1.5 block">
-                                            Color Disponible *
-                                        </label>
-
-                                        {!selectedProductName ? (
-                                            <div className="text-xs text-app-muted italic py-2.5">
-                                                Selecciona un calzado para ver los colores comprados
-                                            </div>
-                                        ) : availableColorsForProduct.length === 0 ? (
-                                            <div className="text-xs text-app-muted italic py-2.5">
-                                                Sin colores registrados para este producto
-                                            </div>
-                                        ) : (
-                                            <div className="flex flex-wrap gap-2 pt-0.5">
-                                                {availableColorsForProduct.map((col) => {
-                                                    const isColorActive = selectedColorId === col.id;
-
-                                                    return (
-                                                        <button
-                                                            key={col.id}
-                                                            type="button"
-                                                            onClick={() => handleSelectColor(col.id)}
-                                                            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer ${isColorActive
-                                                                ? "bg-brand-royal text-white shadow-xs dark:bg-brand-royal ring-2 ring-brand-royal/30"
-                                                                : "border border-app-border bg-app-surface text-app-text hover:border-brand-royal/40 hover:bg-app-surface-alt"
-                                                                }`}
-                                                        >
-                                                            {col.hex && (
-                                                                <span
-                                                                    className="size-2.5 rounded-full border border-white/30 inline-block shrink-0 shadow-2xs"
-                                                                    style={{ backgroundColor: col.hex }}
-                                                                />
-                                                            )}
-                                                            <span>{col.name}</span>
-                                                            {isColorActive && <FontAwesomeIcon icon={faCheck} className="text-[10px] ml-0.5" />}
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Sub-Panel: Tallas Disponibles de la Venta */}
-                                {activeProductGroup && activeColor && (
-                                    <div className="rounded-xl border border-app-border/80 bg-app-surface-alt/40 p-4 space-y-4">
-                                        <div className="flex flex-wrap items-center justify-between gap-2">
-                                            <span className="text-xs font-bold text-app-text">
-                                                Tallas compradas para{" "}
-                                                <span className="text-brand-royal dark:text-brand-sky">
-                                                    {activeColor.name}
-                                                </span>
-                                                :
-                                            </span>
-                                            <span className="text-[11px] text-app-muted">
-                                                Selecciona la talla exacta que el cliente va a devolver
-                                            </span>
-                                        </div>
-
-                                        <div className="flex flex-wrap gap-2.5">
-                                            {availableVariantsForColor.map((variantObj) => {
-                                                const isVariantActive = selectedVariantId === variantObj.variantId;
-
-                                                return (
-                                                    <button
-                                                        key={variantObj.variantId}
-                                                        type="button"
-                                                        onClick={() => handleSelectVariant(variantObj.variantId, variantObj.purchasedQty)}
-                                                        className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer ${isVariantActive
-                                                            ? "bg-brand-royal text-white shadow-xs dark:bg-brand-royal ring-2 ring-brand-royal/30 font-bold"
-                                                            : "border border-app-border bg-app-surface text-app-text hover:border-brand-royal/40 hover:bg-app-surface"
-                                                            }`}
-                                                    >
-                                                        <span>Talla {variantObj.sizeName}</span>
-                                                        <span
-                                                            className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono ${isVariantActive
-                                                                ? "bg-white/20 text-white font-bold"
-                                                                : "bg-app-surface-alt text-app-muted"
-                                                                }`}
-                                                        >
-                                                            {variantObj.purchasedQty} comprada{variantObj.purchasedQty === 1 ? "" : "s"}
-                                                        </span>
-                                                        {isVariantActive && <FontAwesomeIcon icon={faCheck} className="text-[10px]" />}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-
-                                        {/* Resumen de Variante Seleccionada con Límite de Cantidad */}
-                                        {activeVariant && (
-                                            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs">
-                                                <div className="flex items-center gap-3">
-                                                    <span className="flex size-7 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs">
-                                                        <FontAwesomeIcon icon={faShirt} />
-                                                    </span>
-                                                    <div>
-                                                        <p className="font-bold text-emerald-800 dark:text-emerald-300">
-                                                            {activeProductGroup.name}
-                                                        </p>
-                                                        <p className="text-emerald-700/80 dark:text-emerald-400/80 text-[11px]">
-                                                            Color: {activeColor.name} • Talla: {activeVariant.sizeName} • Variante ID #{activeVariant.variantId}
-                                                        </p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center gap-2">
-                                                    <span className="inline-flex items-center gap-1 rounded-md bg-emerald-600/15 border border-emerald-500/30 px-2.5 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-300 font-mono">
-                                                        <FontAwesomeIcon icon={faBoxesStacked} className="text-[10px]" />
-                                                        Máximo a devolver: {maxAvailableQty} {maxAvailableQty === 1 ? "par" : "pares"}
-                                                    </span>
-                                                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2.5 py-0.5 text-xs font-bold text-white shadow-2xs">
-                                                        <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
-                                                        Seleccionada
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                {errors.selectedVariant && (
-                                    <p className="text-xs text-rose-500 font-medium">{errors.selectedVariant}</p>
-                                )}
-                            </>
-                        )}
-                    </div>
-                </div>
-
-                {/* Sección 3: Cantidad con Límite Máximo y Motivo */}
-                <div className="p-4 rounded-2xl border border-app-border bg-app-surface space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-start">
-                        <div className="sm:col-span-1">
-                            <Input
-                                label={`Cantidad a Devolver (Máx: ${maxAvailableQty}) *`}
-                                id="quantity"
-                                placeholder="Ej. 1"
-                                type="number"
-                                min="1"
-                                max={maxAvailableQty}
-                                step="1"
-                                value={quantity}
-                                onChange={(e) => handleQuantityChange(e.target.value)}
-                                error={errors.quantity}
-                                iconLeft={faTag}
-                                size="md"
-                                disabled={!selectedVariantId}
-                            />
-                        </div>
-
-                        <div className="sm:col-span-3">
-                            <label className="text-xs font-bold text-app-muted uppercase tracking-wider block mb-1">
-                                Motivo o Causa de Devolución *
-                            </label>
-                            <Textarea
-                                id="reason"
-                                placeholder="Describe detalladamente el motivo de la devolución (ej. cambio de talla, garantía por defecto de fábrica, despegue de suela)..."
-                                value={reason}
-                                onChange={(e) => {
-                                    setReason(e.target.value);
-                                    if (errors.reason) {
-                                        setErrors((prev) => {
-                                            const next = { ...prev };
-                                            delete next.reason;
-                                            return next;
-                                        });
-                                    }
-                                }}
-                                error={errors.reason}
-                                rows={2}
-                                maxLength={100}
-                            />
-                        </div>
-                    </div>
-                </div>
-            </form>
-        </Modal>
+      availableVariantsForColor.find((v) => v.variantId === selectedVariantId) ||
+      null
     );
+  }, [selectedVariantId, availableVariantsForColor]);
+
+  const alreadyAddedQtyForActiveVariant = useMemo(() => {
+    if (!selectedVariantId) return 0;
+    return returnItems
+      .filter((item) => item.variantId === selectedVariantId)
+      .reduce((acc, curr) => acc + curr.quantity, 0);
+  }, [selectedVariantId, returnItems]);
+
+  const maxAvailableQty = Math.max(
+    0,
+    (activeVariant?.purchasedQty || 1) - alreadyAddedQtyForActiveVariant
+  );
+
+  const handleSelectProduct = (pName: string) => {
+    setSelectedProductName(pName);
+    const grp = saleProductsGrouped[pName];
+    if (grp) {
+      const colorKeys = Object.keys(grp.colors).map(Number);
+      setSelectedColorId(colorKeys.length > 0 ? colorKeys[0] : null);
+    } else {
+      setSelectedColorId(null);
+    }
+    setSelectedVariantId(null);
+    setQuantity(1);
+    setItemErrors({});
+  };
+
+  const handleSelectColor = (cId: number) => {
+    setSelectedColorId(cId);
+    setSelectedVariantId(null);
+    setQuantity(1);
+  };
+
+  const handleSelectVariant = (vId: number) => {
+    setSelectedVariantId(vId);
+    setQuantity(1);
+    setItemErrors({});
+  };
+
+  const handleQuantityChange = (valStr: string) => {
+    if (valStr === "") {
+      setQuantity("");
+      return;
+    }
+    const val = Number(valStr);
+    if (isNaN(val)) return;
+
+    if (val > maxAvailableQty) {
+      setQuantity(maxAvailableQty);
+      setItemErrors((prev) => ({
+        ...prev,
+        quantity: `Máximo disponible: ${maxAvailableQty} unidades restantes.`,
+      }));
+      return;
+    }
+
+    setQuantity(val);
+    if (itemErrors.quantity) {
+      setItemErrors((prev) => {
+        const next = { ...prev };
+        delete next.quantity;
+        return next;
+      });
+    }
+  };
+
+  // ── Agregar producto de cambio (exchangeItems) ──
+  const exColors = useMemo(() => exProduct?.productColors || [], [exProduct]);
+  const exActiveColor = useMemo(
+    () => exColors.find((c) => c.id === exColorId) || null,
+    [exColors, exColorId]
+  );
+  const exVariants = useMemo(
+    () => exActiveColor?.productVariants || [],
+    [exActiveColor]
+  );
+
+  const handleAddExchangeItem = () => {
+    if (!exProduct || !exActiveColor || !exVariantId) {
+      setItemErrors((prev) => ({
+        ...prev,
+        exchange: "Selecciona producto, color y talla de cambio.",
+      }));
+      return;
+    }
+    const variantObj = exVariants.find((v) => v.id === exVariantId);
+    if (!variantObj) return;
+
+    const qty = Number(exQty) || 1;
+    if (qty <= 0 || qty > variantObj.currentStock) {
+      setItemErrors((prev) => ({
+        ...prev,
+        exchange: `Stock disponible para cambio: ${variantObj.currentStock} unidades.`,
+      }));
+      return;
+    }
+
+    const newEx: ExchangeDraftItem = {
+      id: `${variantObj.id}-${Date.now()}`,
+      variantId: variantObj.id,
+      quantity: qty,
+      productName: exProduct.name,
+      colorName: exActiveColor.color?.name || "Color",
+      sizeName: variantObj.size?.sizeNumber || `Var #${variantObj.id}`,
+      salePrice: Number(exProduct.salePrice) || 0,
+    };
+
+    setExchangeItems((prev) => [...prev, newEx]);
+    setExVariantId(null);
+    setExQty(1);
+    setItemErrors((prev) => {
+      const next = { ...prev };
+      delete next.exchange;
+      return next;
+    });
+  };
+
+  // Validar y agregar el producto a la lista de devoluciones
+  const handleAddItem = () => {
+    const errs: Record<string, string> = {};
+
+    if (!selectedSaleId) errs.selectedSaleId = "Primero selecciona una venta.";
+    if (!selectedProductName) errs.selectedProduct = "Selecciona el producto adquirido.";
+    if (!selectedVariantId || !activeVariant) errs.selectedVariant = "Selecciona la talla a devolver.";
+
+    const qty = Number(quantity);
+    if (!quantity || isNaN(qty) || qty <= 0) {
+      errs.quantity = "La cantidad debe ser mayor a 0.";
+    } else if (qty > maxAvailableQty) {
+      errs.quantity = `No puedes devolver más de ${maxAvailableQty} unidades disponibles.`;
+    }
+
+    if (details.trim() && details.trim().length > 255) {
+      errs.details = "El detalle no puede superar los 255 caracteres.";
+    }
+
+    if (typeResolution === "Cambiar_otra_referencia" && exchangeItems.length === 0) {
+      errs.exchange = `Debes agregar al menos un producto de cambio para "${TYPE_RESOLUTION_LABELS[typeResolution]}".`;
+    }
+
+    if (Object.keys(errs).length > 0) {
+      setItemErrors(errs);
+      return;
+    }
+
+    const newItem: ReturnDraftItem = {
+      id: `${selectedVariantId}-${Date.now()}`,
+      variantId: Number(selectedVariantId),
+      productName: selectedProductName,
+      sku: activeProductGroup?.sku || null,
+      colorName: activeColor?.name || "Color Base",
+      colorHex: activeColor?.hex,
+      sizeName: activeVariant?.sizeName || "Talla única",
+      purchasedQty: activeVariant?.purchasedQty || 1,
+      quantity: qty,
+      reason,
+      details: details.trim() || undefined,
+      typeResolution,
+      returnToStock,
+      exchangeItems: typeResolution === "Cambiar_otra_referencia" ? exchangeItems : [],
+      image: activeColor?.image || null,
+    };
+
+    setReturnItems((prev) => [...prev, newItem]);
+
+    // Limpiar campos para permitir agregar otro artículo
+    setSelectedVariantId(null);
+    setQuantity(1);
+    setReason("Talla_equivocada");
+    setTypeResolution("Cambiar_mismo_producto");
+    setReturnToStock(true);
+    setDetails("");
+    setExchangeItems([]);
+    setExProduct(null);
+    setExColorId(null);
+    setExVariantId(null);
+    setItemErrors({});
+    setGlobalError("");
+
+    Toast.fire({
+      icon: "success",
+      title: "Artículo añadido a la lista de devolución.",
+    });
+  };
+
+  const handleRemoveItem = (idToRemove: string) => {
+    setReturnItems((prev) => prev.filter((item) => item.id !== idToRemove));
+  };
+
+  // Envío masivo de las devoluciones preparadas
+  const handleSubmitAll = async () => {
+    if (!selectedSaleId) {
+      setGlobalError("Debes seleccionar una venta.");
+      return;
+    }
+    if (returnItems.length === 0) {
+      setGlobalError("Debes añadir al menos un artículo a la lista de devolución.");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setGlobalError("");
+
+      const payload: CreateSaleReturnItem[] = returnItems.map((item) => ({
+        saleId: selectedSaleId,
+        variantId: item.variantId,
+        quantity: item.quantity,
+        reason: item.reason,
+        details: item.details,
+        typeResolution: item.typeResolution,
+        returnToStock: item.returnToStock,
+        exchangeItems:
+          item.typeResolution === "Cambiar_otra_referencia"
+            ? item.exchangeItems.map((ex) => ({
+              variantId: ex.variantId,
+              quantity: ex.quantity,
+              unitPrice: ex.salePrice,
+            }))
+            : undefined,
+      }));
+
+      const response = await createSaleReturn(payload);
+
+      if (response.status === 200 || response.status === 201) {
+        Toast.fire({
+          icon: "success",
+          title:
+            response.data?.message ||
+            `${returnItems.length} devoluciones registradas exitosamente.`,
+        });
+        if (onSuccess) onSuccess();
+        onClose();
+      }
+    } catch (error) {
+      if (isAxiosError(error)) {
+        Toast.fire({
+          icon: "error",
+          title: error.response?.data?.message || "Error al registrar las devoluciones.",
+          text: "Verifica los datos e intenta nuevamente.",
+        });
+      } else {
+        Toast.fire({
+          icon: "error",
+          title: "Ocurrió un error inesperado al registrar.",
+        });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const totalItemsCount = returnItems.reduce((acc, curr) => acc + curr.quantity, 0);
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Registrar Devoluciones de Venta"
+      description="Selecciona una venta, define los artículos a devolver, si reingresan a stock y los productos de cambio"
+      icon={faRotateLeft}
+      size="2xl"
+      footer={
+        <div className="flex w-full items-center justify-between sm:justify-end gap-3">
+          <Button variant="outline" size="sm" onClick={onClose} disabled={isSubmitting}>
+            Cancelar
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            icon={faFloppyDisk}
+            onClick={handleSubmitAll}
+            disabled={isSubmitting || returnItems.length === 0}
+          >
+            {isSubmitting
+              ? "Registrando..."
+              : `Registrar ${returnItems.length} Devolución${returnItems.length === 1 ? "" : "es"}`}
+          </Button>
+        </div>
+      }
+    >
+      <div className="space-y-6">
+        {globalError && (
+          <div className="flex items-center gap-2 p-3 text-xs rounded-xl bg-rose-50 border border-rose-200 text-rose-700 dark:bg-rose-950/30 dark:border-rose-800 dark:text-rose-400">
+            <FontAwesomeIcon icon={faTriangleExclamation} />
+            <span>{globalError}</span>
+          </div>
+        )}
+
+        {/* ── PASO 1: Selección de Venta ── */}
+        <div className="p-4 rounded-2xl border border-app-border bg-app-surface-alt/40 space-y-3">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-app-muted">
+            <span className="flex size-5 items-center justify-center rounded-full bg-brand-royal text-white text-[10px]">
+              1
+            </span>
+            <span>Seleccionar Venta Registrada</span>
+          </div>
+
+          <SelectBySearch<SaleOptionItem>
+            label="Buscar Venta por Código o Cliente *"
+            placeholder="Buscar por ID de venta, nombre del cliente o cédula..."
+            searchPlaceholder="Escribe para buscar venta..."
+            options={saleOptions}
+            value={selectedSaleId}
+            onChange={handleSelectSale}
+            onSearchChange={handleSalesSearch}
+            isLoading={isSearchingSales}
+            size="md"
+            helperText="Solo se pueden asociar productos que hayan sido facturados en la venta seleccionada"
+            iconLeft={faReceipt}
+          />
+
+          {selectedSaleRaw && (
+            <div className="mt-2 p-3 rounded-xl bg-app-surface border border-app-border/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2.5">
+                <span className="flex size-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
+                  <FontAwesomeIcon icon={faReceipt} className="text-xs" />
+                </span>
+                <div>
+                  <span className="font-bold text-app-text">
+                    Venta #{selectedSaleRaw.id.slice(0, 8)}
+                  </span>
+                  <span className="text-app-muted ml-2">
+                    Cliente:{" "}
+                    <strong className="text-app-text font-semibold">
+                      {selectedSaleRaw.customer
+                        ? `${selectedSaleRaw.customer.firstName} ${selectedSaleRaw.customer.lastName}`.trim()
+                        : "Cliente no registrado"}
+                    </strong>
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-[11px] text-app-muted bg-app-surface-alt px-2 py-0.5 rounded-md border border-app-border">
+                  Doc: {selectedSaleRaw.customer?.identityDocument || "Sin doc"}
+                </span>
+                <span className="text-[11px] font-bold text-brand-royal dark:text-brand-sky bg-brand-royal/10 dark:bg-brand-sky/20 px-2 py-0.5 rounded-md">
+                  {selectedSaleRaw.saleDetails?.length || 0} ítems facturados
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── PASO 2: Constructor para Agregar Artículos a la Devolución ── */}
+        {selectedSaleRaw ? (
+          <div className="p-4 rounded-2xl border border-app-border bg-app-surface space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-app-muted">
+                <span className="flex size-5 items-center justify-center rounded-full bg-brand-royal text-white text-[10px]">
+                  2
+                </span>
+                <span>Agregar Artículo a la Lista de Devolución</span>
+              </div>
+              <span className="text-[11px] text-app-muted">
+                Paso repetible para múltiples devoluciones
+              </span>
+            </div>
+
+            <SelectBySearch<{ name: string; sku: string | null }>
+              label="Producto Vendido *"
+              placeholder="Selecciona el producto facturado..."
+              searchPlaceholder="Filtrar productos de la venta..."
+              options={saleProductOptions}
+              value={selectedProductName}
+              onChange={(val) => handleSelectProduct(String(val))}
+              error={itemErrors.selectedProduct}
+              size="sm"
+            />
+
+            {activeProductGroup && availableColorsForProduct.length > 0 && (
+              <div>
+                <label className="block text-xs font-bold text-app-text mb-1.5">
+                  Color Facturado
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {availableColorsForProduct.map((col) => {
+                    const isSelected = selectedColorId === col.id;
+                    return (
+                      <button
+                        key={col.id}
+                        type="button"
+                        onClick={() => handleSelectColor(col.id)}
+                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${isSelected
+                            ? "border-brand-royal bg-brand-royal/10 text-brand-royal dark:border-brand-sky dark:text-brand-sky ring-1 ring-brand-royal/30"
+                            : "border-app-border bg-app-surface-alt hover:border-brand-royal/40 text-app-text"
+                          }`}
+                      >
+                        {col.hex && (
+                          <span
+                            className="size-3.5 rounded-full border border-black/15 shadow-2xs shrink-0"
+                            style={{ backgroundColor: col.hex }}
+                          />
+                        )}
+                        <span>{col.name}</span>
+                        {isSelected && <FontAwesomeIcon icon={faCheck} className="text-[10px]" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {activeColor && availableVariantsForColor.length > 0 && (
+              <div>
+                <label className="block text-xs font-bold text-app-text mb-1.5">
+                  Talla del Calzado a Devolver <span className="text-rose-500">*</span>
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {availableVariantsForColor.map((v) => {
+                    const isSelected = selectedVariantId === v.variantId;
+                    const usedQty = returnItems
+                      .filter((item) => item.variantId === v.variantId)
+                      .reduce((acc, curr) => acc + curr.quantity, 0);
+                    const remaining = Math.max(0, v.purchasedQty - usedQty);
+
+                    return (
+                      <button
+                        key={v.variantId}
+                        type="button"
+                        disabled={remaining <= 0}
+                        onClick={() => handleSelectVariant(v.variantId)}
+                        className={`p-2.5 rounded-xl border text-left flex flex-col justify-between transition-all ${remaining <= 0
+                            ? "opacity-40 cursor-not-allowed bg-app-surface-alt border-app-border"
+                            : isSelected
+                              ? "border-brand-royal bg-brand-royal/10 text-brand-royal dark:border-brand-sky dark:text-brand-sky ring-2 ring-brand-royal/20"
+                              : "border-app-border bg-app-surface hover:border-brand-royal/40"
+                          }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xs text-app-text">
+                            Talla {v.sizeName}
+                          </span>
+                          {isSelected && (
+                            <FontAwesomeIcon icon={faCheck} className="text-xs text-brand-royal" />
+                          )}
+                        </div>
+                        <span className="text-[10px] text-app-muted mt-1">
+                          {remaining <= 0
+                            ? "Todo asignado"
+                            : `${remaining} disponible${remaining === 1 ? "" : "s"}`}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {itemErrors.selectedVariant && (
+                  <p className="mt-1 text-xs text-rose-500">{itemErrors.selectedVariant}</p>
+                )}
+              </div>
+            )}
+
+            {selectedVariantId && (
+              <div className="space-y-4 pt-3 border-t border-app-border/60">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <Input
+                      label={`Cantidad (Máx: ${maxAvailableQty}) *`}
+                      type="number"
+                      min={1}
+                      max={maxAvailableQty}
+                      value={quantity}
+                      onChange={(e) => handleQuantityChange(e.target.value)}
+                      error={itemErrors.quantity}
+                      size="sm"
+                    />
+                  </div>
+
+                  <div>
+                    <Select
+                      label="Motivo de Devolución *"
+                      id="select-reason"
+                      value={reason}
+                      onChange={(e) => handleReasonChange(e.target.value as ReasonsReturn)}
+                      options={REASONS_RETURN_OPTIONS}
+                      size="sm"
+                    />
+                  </div>
+
+                  <div>
+                    <Select
+                      label="Tipo de Resolución Solicitada *"
+                      id="select-type-resolution"
+                      value={typeResolution}
+                      onChange={(e) => {
+                        setTypeResolution(e.target.value as TypeResolution);
+                        setExchangeItems([]);
+                      }}
+                      options={TYPE_RESOLUTION_OPTIONS}
+                      size="sm"
+                    />
+                  </div>
+                </div>
+
+                {/* Toggle de Reingreso a Stock */}
+                {(() => {
+                  const isDamagedReason =
+                    reason === "Producto_dañado" || reason === "Producto_defectuoso";
+                  return (
+                    <label
+                      className={`flex items-center gap-3 p-3 rounded-xl border border-app-border bg-app-surface-alt/40 transition-colors ${isDamagedReason
+                          ? "opacity-70 cursor-not-allowed"
+                          : "cursor-pointer hover:border-brand-royal/40"
+                        }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={returnToStock}
+                        disabled={isDamagedReason}
+                        onChange={(e) => setReturnToStock(e.target.checked)}
+                        className="size-4 rounded border-app-border text-brand-royal focus:ring-brand-royal disabled:cursor-not-allowed"
+                      />
+                      <div className="flex-1 text-xs">
+                        <span className="font-bold text-app-text block">
+                          Reingresar producto al inventario vendible
+                        </span>
+                        <span className="text-app-muted text-[11px]">
+                          {isDamagedReason
+                            ? "Bloqueado automáticamente: por producto dañado o defectuoso no puede reingresar a stock."
+                            : returnToStock
+                              ? "Al aprobarse, las unidades volverán a sumar en el stock disponible."
+                              : "El producto se marcará como merma/no vendible y no sumará al stock."}
+                        </span>
+                      </div>
+                    </label>
+                  );
+                })()}
+
+                {/* Sub-sección de Productos de Cambio solo si es Cambiar por otra referencia */}
+                {typeResolution === "Cambiar_otra_referencia" && (
+                  <div className="p-3.5 rounded-xl border border-brand-royal/25 bg-brand-royal/5 dark:bg-brand-sky/5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-xs font-bold text-brand-royal dark:text-brand-sky">
+                        <FontAwesomeIcon icon={faRightLeft} />
+                        <span>Productos Entregados a Cambio *</span>
+                      </div>
+                      <span className="text-[11px] text-app-muted">
+                        {exchangeItems.length} agregado{exchangeItems.length === 1 ? "" : "s"}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-end">
+                      <div className="sm:col-span-5">
+                        <SelectBySearch<ProductWithRelations>
+                          label="Producto de Cambio"
+                          placeholder="Buscar zapato en catálogo..."
+                          options={catalogOptions}
+                          value={exProduct?.id || ""}
+                          onChange={(_, opt) => {
+                            const p = opt?.raw || null;
+                            setExProduct(p);
+                            setExColorId(p?.productColors?.[0]?.id || null);
+                            setExVariantId(null);
+                          }}
+                          onSearchChange={handleCatalogSearch}
+                          isLoading={isSearchingCatalog}
+                          size="sm"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-3">
+                        <Select
+                          label="Color"
+                          id="ex-color"
+                          value={exColorId ? String(exColorId) : ""}
+                          onChange={(e) => {
+                            setExColorId(Number(e.target.value));
+                            setExVariantId(null);
+                          }}
+                          disabled={!exProduct}
+                          options={[
+                            { value: "", label: "Color..." },
+                            ...exColors.map((c) => ({
+                              value: String(c.id),
+                              label: c.color?.name || `Color #${c.id}`,
+                            })),
+                          ]}
+                          size="sm"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <Select
+                          label="Talla"
+                          id="ex-variant"
+                          value={exVariantId ? String(exVariantId) : ""}
+                          onChange={(e) => setExVariantId(Number(e.target.value))}
+                          disabled={!exActiveColor}
+                          options={[
+                            { value: "", label: "Talla..." },
+                            ...exVariants.map((v) => ({
+                              value: String(v.id),
+                              label: `${v.size?.sizeNumber || v.id} (${v.currentStock})`,
+                            })),
+                          ]}
+                          size="sm"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2 flex gap-1.5">
+                        <Input
+                          label="Cant."
+                          type="number"
+                          min={1}
+                          value={exQty}
+                          onChange={(e) => setExQty(e.target.value)}
+                          size="sm"
+                        />
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          icon={faPlus}
+                          onClick={handleAddExchangeItem}
+                          title="Agregar producto de cambio"
+                          className="mb-0.5 shrink-0"
+                        />
+                      </div>
+                    </div>
+
+                    {itemErrors.exchange && (
+                      <p className="text-xs text-rose-500 font-medium">{itemErrors.exchange}</p>
+                    )}
+
+                    {exchangeItems.length > 0 && (
+                      <div className="space-y-1.5 pt-1">
+                        {exchangeItems.map((ex) => (
+                          <div
+                            key={ex.id}
+                            className="flex items-center justify-between px-3 py-2 rounded-lg bg-app-surface border border-app-border text-xs"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <FontAwesomeIcon icon={faBoxOpen} className="text-brand-royal dark:text-brand-sky text-[11px]" />
+                              <span className="font-bold text-app-text truncate">{ex.productName}</span>
+                              <span className="text-app-muted">({ex.colorName} • Talla {ex.sizeName})</span>
+                            </div>
+                            <div className="flex items-center gap-3 shrink-0">
+                              <span className="font-mono font-bold text-brand-royal dark:text-brand-sky">
+                                x{ex.quantity}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setExchangeItems((prev) => prev.filter((i) => i.id !== ex.id))
+                                }
+                                className="text-rose-500 hover:text-rose-600"
+                              >
+                                <FontAwesomeIcon icon={faTrashCan} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div>
+                  <Textarea
+                    label="Detalles Adicionales de la Devolución"
+                    placeholder="Describe especificaciones o notas adicionales para este producto..."
+                    value={details}
+                    onChange={(e) => setDetails(e.target.value)}
+                    error={itemErrors.details}
+                    rows={2}
+                    size="sm"
+                    iconLeft={faCommentDots}
+                    maxLength={255}
+                    showCount
+                    currentLength={details.length}
+                    helper="Campo opcional para brindar mayor claridad al evaluar la garantía"
+                  />
+                </div>
+              </div>
+            )}
+
+            {selectedVariantId && (
+              <div className="flex justify-end pt-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  icon={faPlus}
+                  onClick={handleAddItem}
+                  className="hover:border-brand-royal text-brand-royal dark:text-brand-sky hover:bg-brand-royal/10"
+                >
+                  Añadir a la Lista de Devolución
+                </Button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-app-border bg-app-surface-alt/30 p-8 text-center">
+            <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky mb-3">
+              <FontAwesomeIcon icon={faReceipt} className="text-lg" />
+            </div>
+            <h4 className="text-sm font-bold text-app-text">
+              Paso 2 bloqueado: Esperando selección de venta
+            </h4>
+            <p className="mt-1 text-xs text-app-muted max-w-sm mx-auto">
+              Utiliza el buscador del paso 1 para seleccionar la venta correspondiente. Se cargarán automáticamente los artículos facturados para tramitar la devolución.
+            </p>
+          </div>
+        )}
+
+        {/* ── PASO 3: Lista de Devoluciones Preparadas para Envío Masivo ── */}
+        {selectedSaleRaw && (
+          <div className="rounded-2xl border border-app-border bg-app-surface overflow-hidden shadow-xs">
+            <div className="p-4 border-b border-app-border/70 bg-app-surface-alt/30 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="flex size-7 items-center justify-center rounded-lg bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky text-xs">
+                  <FontAwesomeIcon icon={faListCheck} />
+                </span>
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-app-text">
+                    Artículos Listos para Devolución ({returnItems.length})
+                  </h4>
+                  <p className="text-[11px] text-app-muted">
+                    {totalItemsCount} unidad{totalItemsCount === 1 ? "" : "es"} en total a procesar
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {returnItems.length === 0 ? (
+              <div className="py-8 text-center px-4">
+                <FontAwesomeIcon icon={faBoxesStacked} className="text-2xl text-app-muted/60 mb-2" />
+                <p className="text-xs font-bold text-app-text">Aún no has agregado artículos</p>
+                <p className="text-[11px] text-app-muted mt-0.5">
+                  Selecciona producto, talla, motivo y tipo de resolución, y haz clic en "Añadir a la Lista".
+                </p>
+              </div>
+            ) : (
+              <div className="divide-y divide-app-border/60">
+                {returnItems.map((item, idx) => (
+                  <div
+                    key={item.id}
+                    className="p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:bg-app-surface-alt/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-app-surface-alt font-mono text-[11px] font-bold text-app-muted border border-app-border">
+                        #{idx + 1}
+                      </span>
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-bold text-xs text-app-text truncate">
+                          {item.productName}
+                        </span>
+                        <div className="flex items-center gap-2 mt-0.5 text-[11px] text-app-muted flex-wrap">
+                          {item.sku && <span className="font-mono">SKU: {item.sku}</span>}
+                          <span className="inline-flex items-center gap-1">
+                            {item.colorHex && (
+                              <span
+                                className="size-2 rounded-full border border-black/10 shrink-0"
+                                style={{ backgroundColor: item.colorHex }}
+                              />
+                            )}
+                            {item.colorName}
+                          </span>
+                          <span className="font-mono font-bold text-app-text">
+                            Talla: {item.sizeName}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2 mt-1.5 flex-wrap text-[11px]">
+                          <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/10 px-2 py-0.5 font-semibold text-amber-700 dark:text-amber-400">
+                            Motivo: {REASONS_RETURN_LABELS[item.reason] || item.reason}
+                          </span>
+                          <span className="inline-flex items-center gap-1 rounded-md bg-blue-500/10 px-2 py-0.5 font-semibold text-blue-700 dark:text-blue-400">
+                            Resolución: {TYPE_RESOLUTION_LABELS[item.typeResolution] || item.typeResolution}
+                          </span>
+                          <span className="inline-flex items-center gap-1 rounded-md bg-app-surface-alt px-2 py-0.5 font-medium text-app-muted border border-app-border">
+                            {item.returnToStock ? "Reingresa a stock" : "Merma / No vendible"}
+                          </span>
+                        </div>
+
+                        {item.exchangeItems.length > 0 && (
+                          <div className="mt-1.5 text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">
+                            Cambio por:{" "}
+                            {item.exchangeItems
+                              .map((ex) => `${ex.productName} (Talla ${ex.sizeName}) x${ex.quantity}`)
+                              .join(", ")}
+                          </div>
+                        )}
+
+                        {item.details && (
+                          <p className="text-[11px] text-app-muted mt-1 italic">
+                            Detalles: <span className="text-app-text font-medium">{item.details}</span>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 shrink-0 w-full sm:w-auto justify-between sm:justify-end">
+                      <div className="text-right">
+                        <span className="inline-flex items-center justify-center rounded-full bg-brand-royal/10 px-2.5 py-0.5 text-xs font-bold text-brand-royal dark:bg-brand-sky/20 dark:text-brand-sky">
+                          {item.quantity} {item.quantity === 1 ? "unidad" : "unidades"}
+                        </span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        icon={faTrashCan}
+                        onClick={() => handleRemoveItem(item.id)}
+                        title="Eliminar de la lista"
+                        className="text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 size-8 p-0"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
 }
 
 export default ReturnFormModal;

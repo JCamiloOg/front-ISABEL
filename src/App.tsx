@@ -1,5 +1,5 @@
 import { RouterProvider } from "@tanstack/react-router";
-import { router } from "./app/Routes";
+import { router } from "./app/routes/";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { useEffect } from "react";
 import AOS from 'aos';
@@ -16,7 +16,7 @@ function App() {
   return (
     <>
       <RouterProvider router={router} />
-      <TanStackRouterDevtools router={router} position="top-left" />
+      <TanStackRouterDevtools router={router} position="bottom-right" />
     </>
   );
 }

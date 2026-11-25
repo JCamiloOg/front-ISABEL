@@ -5,7 +5,6 @@ import {
   faArrowRotateRight,
   faCircleCheck,
   faClock,
-  faBan,
   faEye,
   faReceipt,
   faCalendarDay,
@@ -15,35 +14,22 @@ import { Button } from "../../../../shared/components/Button";
 import { Select } from "../../../../shared/components/Inputs/Select";
 import Table, { type SortDirection } from "../../../../shared/components/Table";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { SaleReturnWithRelations } from "../../../../@types";
-import { getAllReturns, getReturnByID, resolveReturn } from "./services/salesReturnsServices";
+import { useNavigate } from "@tanstack/react-router";
+import {
+  getAllReturns,
+  type SaleReturnSummaryItem,
+} from "./services/salesReturnsServices";
 import { Toast } from "../../../../shared/utils/alerts";
 import { isAxiosError } from "axios";
-import { ReturnDetailModal } from "./components/ReturnDetailModal";
 import ReturnFormModal from "./components/ReturnFormModal";
-import ReturnStatusModal, { type ReturnResolutionStatus } from "./components/ReturnStatusModal";
-
-type ReturnListItem = Omit<
-  SaleReturnWithRelations,
-  "user" | "rejectionReason" | "resolutionDate" | "saleId" | "userId" | "variantId"
->;
 
 export default function ReturnsPage() {
-  const [returns, setReturns] = useState<ReturnListItem[]>([]);
+  const navigate = useNavigate();
+  const [returns, setReturns] = useState<SaleReturnSummaryItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Estado para el modal de detalle por ID
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
-  const [selectedReturn, setSelectedReturn] = useState<SaleReturnWithRelations | null>(null);
-  const [isLoadingDetail, setIsLoadingDetail] = useState<boolean>(false);
-
-  // Estado para el modal de creación
+  // Estado para el modal de creación múltiple
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
-
-  // Estado para el modal de cambio de estado
-  const [isStatusModalOpen, setIsStatusModalOpen] = useState<boolean>(false);
-  const [statusTargetReturn, setStatusTargetReturn] = useState<ReturnListItem | null>(null);
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState<boolean>(false);
 
   // Filtros y búsqueda
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -52,7 +38,7 @@ export default function ReturnsPage() {
   // Paginación y ordenación
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(8);
-  const [sortKey, setSortKey] = useState<string | null>("requestDate");
+  const [sortKey, setSortKey] = useState<string | null>("lastRequestDate");
   const [sortDir, setSortDir] = useState<SortDirection>("desc");
 
   const fetchReturns = useCallback(async () => {
@@ -76,76 +62,8 @@ export default function ReturnsPage() {
     }
   }, []);
 
-  const fetchReturnByID = useCallback(async (id: string) => {
-    try {
-      setIsLoadingDetail(true);
-      setIsDetailModalOpen(true);
-      const response = await getReturnByID(id);
-
-      if (response.status === 200) {
-        setSelectedReturn(response.data.saleReturns || null);
-      }
-    } catch (error) {
-      if (isAxiosError(error)) {
-        Toast.fire({
-          icon: "error",
-          title: error.response?.data?.message || "Error al obtener los detalles de la devolución.",
-          text: "Por favor, intenta nuevamente",
-        });
-      }
-    } finally {
-      setIsLoadingDetail(false);
-    }
-  }, []);
-
-  const handleOpenStatusModal = (item: ReturnListItem) => {
-    setStatusTargetReturn(item);
-    setIsStatusModalOpen(true);
-  };
-
-  const handleUpdateStatus = async (
-    returnId: string,
-    newStatus: ReturnResolutionStatus,
-    rejectReason?: string
-  ) => {
-    try {
-      setIsUpdatingStatus(true);
-      const res = await resolveReturn(
-        {
-          status: newStatus,
-          rejectionReason: rejectReason,
-        },
-        returnId
-      );
-
-      if (res.status === 200) {
-        Toast.fire({
-          icon: "success",
-          title: `Devolución ${newStatus.toLowerCase()} exitosamente`,
-        });
-        setIsStatusModalOpen(false);
-        setStatusTargetReturn(null);
-        fetchReturns();
-      }
-    } catch (error) {
-      if (isAxiosError(error)) {
-        Toast.fire({
-          icon: "error",
-          title: error.response?.data?.message || "Error al actualizar el estado.",
-        });
-      } else {
-        Toast.fire({
-          icon: "error",
-          title: "Error inesperado al cambiar de estado.",
-        });
-      }
-    } finally {
-      setIsUpdatingStatus(false);
-    }
-  };
-
   useEffect(() => {
-    // eslint-disable-next-line
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchReturns();
   }, [fetchReturns]);
 
@@ -155,8 +73,6 @@ export default function ReturnsPage() {
       else if (sortDir === "desc") {
         setSortKey(null);
         setSortDir(null);
-      } else {
-        setSortDir("asc");
       }
     } else {
       setSortKey(key);
@@ -170,85 +86,54 @@ export default function ReturnsPage() {
     setCurrentPage(1);
   };
 
+  const formatDate = (date?: string | Date | null) => {
+    if (!date) return "No registrada";
+    try {
+      return new Intl.DateTimeFormat("es-CO", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(new Date(date));
+    } catch {
+      return String(date);
+    }
+  };
 
-  // Cálculo de Métricas en vivo (siguiendo estilo Purchases)
-  const metrics = useMemo(() => {
-    const total = returns.length;
-    let pending = 0;
-    let approved = 0;
-    let rejected = 0;
 
-    returns.forEach((r) => {
-      const st = r.status;
-      if (st === "Pendiente") pending++;
-      else if (st === "Aprobada") approved++;
-      else if (st === "Rechazada") rejected++;
-    });
-
-    return { total, pending, approved, rejected };
-  }, [returns]);
-
-  // Filtrado y Búsqueda
+  // Filtrado y búsqueda
   const filteredReturns = useMemo(() => {
     return returns.filter((item) => {
-      // Filtro de estado
-      const normStatus = item.status;
-      if (statusFilter !== "all" && normStatus !== statusFilter) {
-        return false;
-      }
+      // Filtro por estado de atención
+      if (statusFilter === "pending" && item.pendingReturns === 0) return false;
+      if (statusFilter === "completed" && item.pendingReturns > 0) return false;
 
-      // Filtro de búsqueda
+      // Filtro de texto por ID de venta
       if (!searchTerm.trim()) return true;
-
       const q = searchTerm.toLowerCase().trim();
-      const idMatch = item.id.toLowerCase().includes(q);
-      const reasonMatch = item.reason ? item.reason.toLowerCase().includes(q) : false;
-      const productNameMatch = item.variant?.productColor?.product?.name
-        ?.toLowerCase()
-        .includes(q);
-      const skuMatch = item.variant?.productColor?.product?.sku?.toLowerCase().includes(q);
-      const colorMatch = item.variant?.productColor?.color?.name?.toLowerCase().includes(q);
-      const sizeMatch = item.variant?.size?.size?.toString().toLowerCase().includes(q);
-      const saleIdMatch = item.sale?.id ? item.sale.id.toLowerCase().includes(q) : false;
-
-      return (
-        idMatch ||
-        reasonMatch ||
-        productNameMatch ||
-        skuMatch ||
-        colorMatch ||
-        sizeMatch ||
-        saleIdMatch
-      );
+      return item.id.toLowerCase().includes(q);
     });
   }, [returns, searchTerm, statusFilter]);
 
   const hasActiveFilters = Boolean(searchTerm.trim() || statusFilter !== "all");
 
+  // Ordenación
   const sortedReturns = useMemo(() => {
     if (!sortKey || !sortDir) return filteredReturns;
 
     return [...filteredReturns].sort((a, b) => {
       let cmp = 0;
-
       if (sortKey === "id") {
-        cmp = (a.id || "").localeCompare(b.id || "");
-      } else if (sortKey === "requestDate") {
-        const dateA = a.requestDate ? new Date(a.requestDate).getTime() : 0;
-        const dateB = b.requestDate ? new Date(b.requestDate).getTime() : 0;
+        cmp = a.id.localeCompare(b.id);
+      } else if (sortKey === "lastRequestDate") {
+        const dateA = new Date(a.lastRequestDate).getTime() || 0;
+        const dateB = new Date(b.lastRequestDate).getTime() || 0;
         cmp = dateA - dateB;
-      } else if (sortKey === "quantity") {
-        const qtyA = Number(a.quantity) || 0;
-        const qtyB = Number(b.quantity) || 0;
-        cmp = qtyA - qtyB;
-      } else if (sortKey === "status") {
-        const statusA = a.status || "";
-        const statusB = b.status || "";
-        cmp = statusA.localeCompare(statusB);
-      } else if (sortKey === "product") {
-        const productA = a.variant?.productColor?.product?.name || "";
-        const productB = b.variant?.productColor?.product?.name || "";
-        cmp = productA.localeCompare(productB);
+      } else if (sortKey === "totalReturns") {
+        cmp = (a.totalReturns || 0) - (b.totalReturns || 0);
+      } else if (sortKey === "pendingReturns") {
+        cmp = (a.pendingReturns || 0) - (b.pendingReturns || 0);
       }
 
       return sortDir === "asc" ? cmp : -cmp;
@@ -263,143 +148,73 @@ export default function ReturnsPage() {
     return sortedReturns.slice(start, start + itemsPerPage);
   }, [sortedReturns, activePage, itemsPerPage]);
 
+  const goToDetail = (idSale: string) => {
+    navigate({
+      to: "/dashboard/returns/$idSale",
+      params: { idSale },
+    });
+  };
+
   return (
     <div className="space-y-8 animate-fadeIn">
-      {/* ─── Encabezado ─── */}
+      {/* ─── Encabezado Principal ─── */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-app-border pb-6">
         <div>
           <div className="flex items-center gap-2.5">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky">
-              <FontAwesomeIcon icon={faRotateLeft} className="text-lg" />
+            <span className="flex size-9 items-center justify-center rounded-xl bg-brand-royal text-white shadow-sm">
+              <FontAwesomeIcon icon={faRotateLeft} className="text-sm" />
             </span>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-app-text">
-                Gestión de Devoluciones
-              </h1>
-              <p className="text-sm text-app-muted">
-                Registro, revisión y resolución de garantías y cambios de producto
-              </p>
-            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-app-text">
+              Gestión de Devoluciones
+            </h1>
           </div>
+          <p className="mt-1 text-xs sm:text-sm text-app-muted">
+            Monitorea solicitudes de cambio por venta facturada, revisa causas y resuelve cada garantía.
+          </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Button
+            size="sm"
             variant="outline"
             icon={faArrowRotateRight}
-            onClick={() => fetchReturns()}
+            onClick={fetchReturns}
             disabled={isLoading}
+            className="h-10 px-3 hover:border-brand-royal/40"
           >
-            Refrescar
+            Actualizar
           </Button>
           <Button
+            size="sm"
             variant="primary"
             icon={faPlus}
             onClick={() => setIsCreateModalOpen(true)}
+            className="h-10 shadow-xs"
           >
             Nueva Devolución
           </Button>
         </div>
       </div>
 
-      {/* ─── Tarjetas de Métricas (Estilo idéntico a Compras) ─── */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Total Devoluciones */}
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-app-muted">Total Solicitudes</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-brand-royal dark:bg-brand-royal/20 dark:text-brand-sky">
-              <FontAwesomeIcon icon={faRotateLeft} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-app-text">
-              {metrics.total}
-            </span>
-            <span className="text-xs text-app-muted">solicitudes</span>
-          </div>
-          <p className="mt-1 text-xs text-app-muted">
-            Registros totales de garantías y cambios
-          </p>
-        </div>
 
-        {/* Aprobadas */}
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-app-muted">Devoluciones Aprobadas</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
-              <FontAwesomeIcon icon={faCircleCheck} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-app-text">
-              {metrics.approved}
-            </span>
-            <span className="text-xs text-app-muted">aprobadas</span>
-          </div>
-          <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-            Garantías procesadas y validadas
-          </p>
-        </div>
-
-        {/* Pendientes / En Revisión */}
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-app-muted">En Revisión</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
-              <FontAwesomeIcon icon={faClock} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-app-text">
-              {metrics.pending}
-            </span>
-            <span className="text-xs text-app-muted">pendientes</span>
-          </div>
-          <p className="mt-1 text-xs text-app-muted">
-            Requieren revisión y respuesta
-          </p>
-        </div>
-
-        {/* Rechazadas */}
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-app-muted">Devoluciones Rechazadas</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400">
-              <FontAwesomeIcon icon={faBan} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-app-text">
-              {metrics.rejected}
-            </span>
-            <span className="text-xs text-app-muted">rechazadas</span>
-          </div>
-          <p className="mt-1 text-xs text-app-muted">
-            Desestimadas con motivo registrado
-          </p>
-        </div>
-      </div>
-
-      {/* ─── Tabla Principal con formato compuesto Table (idéntico a Purchases) ─── */}
+      {/* ─── Tabla Compuesta de Ventas con Devolución ─── */}
       <Table>
         <Table.Header
-          title="Solicitudes de Devolución Registradas"
-          description="Listado cronológico de devoluciones con trazabilidad a venta, producto y control de estados"
+          title="Ventas con Solicitudes de Devolución"
+          description="Listado agrupado por venta. Haz clic en cualquier registro para ingresar a la vista completa de detalles y resolver los casos."
           action={
             <div className="flex items-center gap-2">
               <Select
-                id="filter-devolucion-estado-header"
+                id="filter-status-header"
                 value={statusFilter}
                 onChange={(e) => {
                   setStatusFilter(e.target.value);
                   setCurrentPage(1);
                 }}
                 options={[
-                  { value: "all", label: "Todos los Estados" },
-                  { value: "Aprobada", label: "Aprobadas" },
-                  { value: "Pendiente", label: "En Revisión" },
-                  { value: "Rechazada", label: "Rechazadas" },
+                  { value: "all", label: "Todas las Ventas" },
+                  { value: "pending", label: "Con Pendientes" },
+                  { value: "completed", label: "Totalmente Resueltas" },
                 ]}
                 size="sm"
               />
@@ -414,14 +229,14 @@ export default function ReturnsPage() {
               setSearchTerm(val);
               setCurrentPage(1);
             }}
-            placeholder="Buscar por ID, venta, producto, motivo..."
+            placeholder="Buscar por ID o código de la venta..."
           />
         </div>
 
         {hasActiveFilters && (
           <div className="mb-3 flex items-center justify-between text-xs text-app-muted">
             <span>
-              Mostrando {filteredReturns.length} de {returns.length} devoluciones encontradas
+              Mostrando {filteredReturns.length} de {returns.length} ventas con devolución
             </span>
             <Button
               size="sm"
@@ -442,46 +257,44 @@ export default function ReturnsPage() {
                 activeSortKey={sortKey}
                 sortDir={sortDir}
                 onSort={handleSort}
-                className="w-36"
+                className="w-48"
               >
-                Código / ID
+                Venta / ID
               </Table.SortableCell>
 
-              <th className="px-4 py-3 font-bold select-none text-app-muted text-xs uppercase tracking-wider">
-                Venta Asociada
-              </th>
-
               <Table.SortableCell
-                sortKey="product"
+                sortKey="lastRequestDate"
                 activeSortKey={sortKey}
                 sortDir={sortDir}
                 onSort={handleSort}
+                className="min-w-44"
               >
-                Producto / Variante
-              </Table.SortableCell>
-
-              <th className="px-4 py-3 font-bold select-none text-app-muted text-xs uppercase tracking-wider">
-                Motivo
-              </th>
-
-              <Table.SortableCell
-                sortKey="requestDate"
-                activeSortKey={sortKey}
-                sortDir={sortDir}
-                onSort={handleSort}
-              >
-                Fecha Solicitud
+                Última Solicitud
               </Table.SortableCell>
 
               <Table.SortableCell
-                sortKey="status"
+                sortKey="totalReturns"
                 activeSortKey={sortKey}
                 sortDir={sortDir}
                 onSort={handleSort}
                 className="text-center w-36"
               >
-                Estado
+                Total Devoluciones
               </Table.SortableCell>
+
+              <Table.SortableCell
+                sortKey="pendingReturns"
+                activeSortKey={sortKey}
+                sortDir={sortDir}
+                onSort={handleSort}
+                className="text-center w-36"
+              >
+                Pendientes
+              </Table.SortableCell>
+
+              <th className="px-4 py-3 font-bold select-none text-center text-app-muted text-xs uppercase tracking-wider w-36">
+                Estado
+              </th>
 
               <th className="px-4 py-3 font-bold select-none text-center text-app-muted text-xs uppercase tracking-wider w-28">
                 Acciones
@@ -493,157 +306,93 @@ export default function ReturnsPage() {
             {isLoading ? (
               Array.from({ length: itemsPerPage }).map((_, rIdx) => (
                 <Table.Row key={`loading-${rIdx}`}>
-                  <Table.Cell rounded="left" colSpan={9} className="py-4">
+                  <Table.Cell rounded="left" colSpan={6} className="py-4">
                     <div className="h-4 w-full rounded-md bg-app-border/70 animate-pulse" />
                   </Table.Cell>
                 </Table.Row>
               ))
             ) : paginatedReturns.length === 0 ? (
               <Table.Empty
-                colSpan={9}
+                colSpan={6}
                 message={
                   hasActiveFilters
-                    ? "No se encontraron devoluciones con los filtros seleccionados."
-                    : "No hay devoluciones registradas en el sistema actualmente."
+                    ? "No se encontraron ventas con devolución para los filtros seleccionados."
+                    : "No hay registros de devoluciones en el sistema actualmente."
                 }
               />
             ) : (
               paginatedReturns.map((row) => {
-                const normStatus = row.status;
-                const reqDate = row.requestDate ? new Date(row.requestDate) : null;
-                const variant = row.variant;
-                const product = variant?.productColor?.product;
-                const productColor = variant?.productColor;
-                const imageUrl = productColor?.colorImages?.[0]?.image;
+                const hasPending = row.pendingReturns > 0;
 
                 return (
                   <Table.Row
                     key={row.id}
-                    onClick={() => fetchReturnByID(row.id)}
+                    onClick={() => goToDetail(row.id)}
+                    className="cursor-pointer"
                   >
-                    {/* Código / ID */}
+                    {/* ID Venta */}
                     <Table.Cell rounded="left">
-                      <div className="flex flex-col">
-                        <span
-                          className="font-mono text-xs font-bold text-brand-royal dark:text-brand-sky hover:underline"
-                          title={row.id}
-                        >
-                          #{row.id.slice(0, 8)}
-                        </span>
-                        <span className="text-[10px] text-app-muted truncate max-w-28" title={row.id}>
-                          {row.id}
-                        </span>
-                      </div>
-                    </Table.Cell>
-
-                    {/* Venta Asociada */}
-                    <Table.Cell>
-                      <div className="flex items-center gap-2 text-xs">
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky">
+                      <div className="flex items-center gap-2.5">
+                        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky">
                           <FontAwesomeIcon icon={faReceipt} className="text-xs" />
                         </span>
                         <div className="flex flex-col min-w-0">
-                          <span className="font-mono font-bold text-xs text-app-text truncate">
-                            {row.sale?.id ? `#${row.sale.id.slice(0, 8)}` : "Sin venta asociada"}
-                          </span>
-                          <span className="text-[10px] text-app-muted">
-                            {row.sale?.saleDate
-                              ? new Date(row.sale.saleDate).toLocaleDateString("es-CO", {
-                                month: "short",
-                                day: "numeric",
-                              })
-                              : "Venta directa"}
-                          </span>
-                        </div>
-                      </div>
-                    </Table.Cell>
-
-                    {/* Producto / Variante */}
-                    <Table.Cell>
-                      <div className="flex items-center gap-2.5 min-w-44">
-                        <div className="relative size-8 shrink-0 overflow-hidden rounded-lg border border-app-border bg-app-surface-alt flex items-center justify-center">
-                          {imageUrl ? (
-                            <img
-                              src={imageUrl}
-                              alt={product?.name || "Producto"}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <FontAwesomeIcon icon={faRotateLeft} className="text-xs text-app-muted" />
-                          )}
-                        </div>
-                        <div className="flex flex-col min-w-0">
                           <span
-                            className="font-bold text-xs text-app-text truncate max-w-50"
-                            title={product?.name || "Producto no asignado"}
+                            className="font-mono text-xs font-bold text-brand-royal dark:text-brand-sky hover:underline"
+                            title={row.id}
                           >
-                            {product?.name || "Producto no asignado"}
+                            Venta #{row.id.slice(0, 8)}
                           </span>
-                          <span className="text-[10px] text-app-muted truncate max-w-50">
-                            {productColor?.color?.name || "Color estándar"}
-                            {product?.sku ? ` • ${variant?.size?.sizeNumber}` : ""}
+                          <span className="text-[10px] text-app-muted truncate max-w-36" title={row.id}>
+                            {row.id}
                           </span>
                         </div>
                       </div>
                     </Table.Cell>
 
-                    {/* Motivo */}
+                    {/* Fecha de última solicitud */}
                     <Table.Cell>
-                      <span
-                        className="text-xs text-app-muted truncate block max-w-45"
-                        title={row.reason || "Sin motivo registrado"}
-                      >
-                        {row.reason || "Sin motivo"}
+                      <div className="flex items-center gap-2 text-xs text-app-text font-medium">
+                        <FontAwesomeIcon icon={faCalendarDay} className="text-app-muted text-[11px]" />
+                        <span>{formatDate(row.lastRequestDate)}</span>
+                      </div>
+                    </Table.Cell>
+
+                    {/* Total de devoluciones */}
+                    <Table.Cell className="text-center">
+                      <span className="inline-flex items-center justify-center rounded-full bg-brand-royal/10 px-2.5 py-0.5 text-xs font-bold text-brand-royal dark:bg-brand-sky/20 dark:text-brand-sky">
+                        {row.totalReturns} {row.totalReturns === 1 ? "caso" : "casos"}
                       </span>
                     </Table.Cell>
 
-                    {/* Fecha Solicitud */}
-                    <Table.Cell>
-                      <div className="flex items-center gap-1.5 text-xs text-app-text">
-                        <FontAwesomeIcon icon={faCalendarDay} className="text-app-muted text-[10px]" />
-                        <span>
-                          {reqDate && !isNaN(reqDate.getTime())
-                            ? reqDate.toLocaleDateString("es-CO", {
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                            })
-                            : "Sin fecha"}
+                    {/* Devoluciones pendientes */}
+                    <Table.Cell className="text-center">
+                      {hasPending ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-700 dark:text-amber-400">
+                          <span className="size-1.5 rounded-full bg-amber-500 shadow-xs" />
+                          {row.pendingReturns} pendiente{row.pendingReturns === 1 ? "" : "s"}
                         </span>
-                      </div>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                          <FontAwesomeIcon icon={faCircleCheck} className="text-[10px]" />
+                          Al día
+                        </span>
+                      )}
                     </Table.Cell>
 
-                    {/* Estado con botón interactivo idéntico a Compras para abrir el modal */}
+                    {/* Estado global de la venta */}
                     <Table.Cell className="text-center">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenStatusModal(row);
-                        }}
-                        disabled={normStatus !== "Pendiente"}
-                        title="Haz clic para cambiar el estado"
-                        className="group inline-flex items-center gap-1.5 rounded-full outline-none transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {normStatus === "Aprobada" && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 group-hover:bg-emerald-500/20 group-hover:border-emerald-500/40 transition-colors">
-                            <span className="size-1.5 rounded-full bg-emerald-500 shadow-xs" />
-                            Aprobada
-                          </span>
-                        )}
-                        {normStatus === "Rechazada" && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/25 bg-rose-500/10 px-3 py-1 text-xs font-bold text-rose-700 dark:text-rose-400 group-hover:bg-rose-500/20 group-hover:border-rose-500/40 transition-colors">
-                            <span className="size-1.5 rounded-full bg-rose-500 shadow-xs" />
-                            Rechazada
-                          </span>
-                        )}
-                        {normStatus === "Pendiente" && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-700 dark:text-amber-400 group-hover:bg-amber-500/20 group-hover:border-amber-500/40 transition-colors">
-                            <span className="size-1.5 rounded-full bg-amber-500 shadow-xs" />
-                            En Revisión
-                          </span>
-                        )}
-                      </button>
+                      {hasPending ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400">
+                          <FontAwesomeIcon icon={faClock} className="text-[11px]" />
+                          Requiere atención
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                          <FontAwesomeIcon icon={faCircleCheck} className="text-[11px]" />
+                          Completada
+                        </span>
+                      )}
                     </Table.Cell>
 
                     {/* Acciones */}
@@ -655,9 +404,9 @@ export default function ReturnsPage() {
                           icon={faEye}
                           onClick={(e) => {
                             e.stopPropagation();
-                            fetchReturnByID(row.id);
+                            goToDetail(row.id);
                           }}
-                          title="Ver Detalle"
+                          title="Ver detalle de devoluciones"
                           className="hover:text-brand-royal dark:hover:text-brand-sky hover:bg-brand-royal/10 dark:hover:bg-brand-sky/15"
                         />
                       </div>
@@ -683,34 +432,11 @@ export default function ReturnsPage() {
         />
       </Table>
 
-      {/* Modal de Detalle Completo de la Devolución */}
-      <ReturnDetailModal
-        isOpen={isDetailModalOpen}
-        onClose={() => {
-          setIsDetailModalOpen(false);
-          setSelectedReturn(null);
-        }}
-        saleReturn={selectedReturn}
-        isLoading={isLoadingDetail}
-      />
-
-      {/* Modal de Creación de Devolución */}
+      {/* Modal de Creación Múltiple de Devoluciones */}
       <ReturnFormModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onSuccess={() => fetchReturns()}
-      />
-
-      {/* Modal de Cambio de Estado / Resolución */}
-      <ReturnStatusModal
-        isOpen={isStatusModalOpen}
-        onClose={() => {
-          setIsStatusModalOpen(false);
-          setStatusTargetReturn(null);
-        }}
-        saleReturn={statusTargetReturn}
-        onUpdateStatus={handleUpdateStatus}
-        isLoading={isUpdatingStatus}
+        onSuccess={fetchReturns}
       />
     </div>
   );

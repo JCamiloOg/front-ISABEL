@@ -4,13 +4,9 @@ import {
   faPlus,
   faArrowRotateRight,
   faChartPie,
-  faCircleCheck,
-  faClock,
-  faBan,
   faEye,
   faPenToSquare,
   faBuilding,
-  faCashRegister,
   faCalendarDay,
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -124,28 +120,6 @@ export default function Purchases() {
     setCurrentPage(1);
   };
 
-  // Normalizador de estado para soportar variantes de mayúsculas/acentos
-
-  // Métricas calculadas en base a las compras registradas
-  const metrics = useMemo(() => {
-    let completadas = 0;
-    let pendientes = 0;
-    let canceladas = 0;
-
-    purchases.forEach((p) => {
-      const norm = p.status;
-      if (norm === "Recibida") completadas++;
-      else if (norm === "Pendiente") pendientes++;
-      else if (norm === "Cancelada") canceladas++;
-    });
-
-    return {
-      total: purchases.length,
-      completadas,
-      pendientes,
-      canceladas,
-    };
-  }, [purchases]);
 
   // Filtrado
   const filteredPurchases = useMemo(() => {
@@ -364,76 +338,6 @@ export default function Purchases() {
         </div>
       </div>
 
-      {/* Tarjetas de Métricas */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-app-muted">Total Compras</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-brand-royal dark:bg-brand-royal/20 dark:text-brand-sky">
-              <FontAwesomeIcon icon={faCartShopping} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-app-text">
-              {metrics.total}
-            </span>
-            <span className="text-xs text-app-muted">órdenes</span>
-          </div>
-          <p className="mt-1 text-xs text-app-muted">
-            Registros totales de abastecimiento
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-app-muted">Compras Completadas</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
-              <FontAwesomeIcon icon={faCircleCheck} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-app-text">
-              {metrics.completadas}
-            </span>
-            <span className="text-xs text-app-muted">recibidas</span>
-          </div>
-          <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-            Mercancía verificada e ingresada
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-app-muted">Compras Pendientes</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
-              <FontAwesomeIcon icon={faClock} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-app-text">
-              {metrics.pendientes}
-            </span>
-            <span className="text-xs text-app-muted">en curso</span>
-          </div>
-          <p className="mt-1 text-xs text-app-muted">Pendientes de entrega o confirmación</p>
-        </div>
-
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-app-muted">Compras Canceladas</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400">
-              <FontAwesomeIcon icon={faBan} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-app-text">
-              {metrics.canceladas}
-            </span>
-            <span className="text-xs text-app-muted">anuladas</span>
-          </div>
-          <p className="mt-1 text-xs text-app-muted">Sin impacto en almacén</p>
-        </div>
-      </div>
 
       {/* Tabla Principal con formato compuesto Table */}
       <Table>
@@ -508,9 +412,6 @@ export default function Purchases() {
               >
                 Proveedor
               </Table.SortableCell>
-              <th className="px-4 py-3 font-bold select-none text-app-muted text-xs uppercase tracking-wider">
-                Caja / Cuenta
-              </th>
               <Table.SortableCell
                 sortKey="orderDate"
                 activeSortKey={sortKey}
@@ -538,14 +439,14 @@ export default function Purchases() {
             {isLoading ? (
               Array.from({ length: itemsPerPage }).map((_, rIdx) => (
                 <Table.Row key={`loading-${rIdx}`}>
-                  <Table.Cell rounded="left" colSpan={6} className="py-4">
+                  <Table.Cell rounded="left" colSpan={5} className="py-4">
                     <div className="h-4 w-full rounded-md bg-app-border/70 animate-pulse" />
                   </Table.Cell>
                 </Table.Row>
               ))
             ) : paginatedPurchases.length === 0 ? (
               <Table.Empty
-                colSpan={6}
+                colSpan={5}
                 message={
                   hasActiveFilters
                     ? "No se encontraron compras con los filtros seleccionados."
@@ -594,16 +495,6 @@ export default function Purchases() {
                             {row.supplier?.document ? `NIT: ${row.supplier.document}` : "Sin documento"}
                           </span>
                         </div>
-                      </div>
-                    </Table.Cell>
-
-                    {/* Caja */}
-                    <Table.Cell>
-                      <div className="flex items-center gap-1.5 text-xs">
-                        <FontAwesomeIcon icon={faCashRegister} className="text-app-muted text-[11px]" />
-                        <span className="font-medium text-app-text">
-                          {row.cashRegister?.name || "Caja Principal"}
-                        </span>
                       </div>
                     </Table.Cell>
 

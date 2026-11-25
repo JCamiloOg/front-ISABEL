@@ -22,7 +22,7 @@ html.dark {
   --app-surface: #0b1222; /* Navy oficial Isabel para tarjetas y paneles */
   --app-surface-alt: #0c1936; /* Navy alternativo más suave */
   --app-muted: #94a3b8; /* Texto secundario */
-  --app-border: #11234b; /* Bordes en dark */
+  --app-border: #122036; /* Bordes en dark */
 }
 
 @theme {

@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons";
 
-export type ButtonVariant = "primary" | "outline" | "ghost" | "accent";
+export type ButtonVariant = "primary" | "outline" | "ghost" | "accent" | "danger";
 export type ButtonSize = "sm" | "md" | "lg";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -40,6 +40,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       outline: "btn-outline",
       ghost: "btn-ghost",
       accent: "btn-accent",
+      danger:
+        "inline-flex items-center justify-center gap-2 font-semibold text-white bg-rose-600 hover:bg-rose-700 active:bg-rose-800 shadow-xs transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50 disabled:opacity-50 disabled:pointer-events-none cursor-pointer",
     };
 
     // Escalas de tamaño equilibradas
@@ -56,9 +58,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         type={type}
         disabled={isDisabled}
-        className={`${variantStyles[variant]} ${sizeStyles[size]} ${
-          fullWidth ? "w-full" : ""
-        } ${isLoading ? "cursor-wait opacity-80" : ""} ${className}`}
+        className={`${variantStyles[variant]} ${sizeStyles[size]} ${fullWidth ? "w-full" : ""
+          } ${isLoading ? "cursor-wait opacity-80" : ""} ${className}`}
         {...props}
       >
         {/* Spinner animado cuando está en estado de carga */}
