@@ -17,6 +17,7 @@ import {
 import { Button } from "../../../../shared/components/Button";
 import { Select } from "../../../../shared/components/Inputs/Select";
 import Table, { type SortDirection } from "../../../../shared/components/Table";
+import { Switcher } from "../../components/Switcher";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CashRegister, CashRegisterWithRelations } from "../../../../@types";
 import {
@@ -27,11 +28,10 @@ import {
   updateBox,
   type BoxPayload,
 } from "./services/boxesServices";
-import { Toast } from "../../../../shared/utils/alerts";
+import { MySwal, Toast } from "../../../../shared/utils/alerts";
 import { isAxiosError } from "axios";
 import { BoxDetailModal } from "./components/BoxDetailModal";
 import { BoxFormModal } from "./components/BoxFormModal";
-import { BoxStatusModal } from "./components/BoxStatusModal";
 
 export default function BoxesPage() {
   const [boxes, setBoxes] = useState<CashRegister[]>([]);
@@ -42,11 +42,6 @@ export default function BoxesPage() {
   const [selectedBox, setSelectedBox] = useState<CashRegisterWithRelations | null>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState<boolean>(false);
   const [isLoadingEdit, setIsLoadingEdit] = useState<boolean>(false);
-
-  // Estado para el modal de cambio de estado
-  const [isStatusModalOpen, setIsStatusModalOpen] = useState<boolean>(false);
-  const [statusTargetBox, setStatusTargetBox] = useState<CashRegister | null>(null);
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState<boolean>(false);
 
   // Estado para el modal de creación y edición
   const [isFormModalOpen, setIsFormModalOpen] = useState<boolean>(false);
@@ -139,41 +134,6 @@ export default function BoxesPage() {
     setCurrentPage(1);
   };
 
-  // Métricas calculadas en base a las cajas registradas
-  const metrics = useMemo(() => {
-    let totalLiquidez = 0;
-    let fondosBancos = 0;
-    let efectivo = 0;
-    let operativas = 0;
-    let inactivas = 0;
-
-    boxes.forEach((b) => {
-      const balance = Number(b.currentBalance) || 0;
-      if (b.status) {
-        totalLiquidez += balance;
-        operativas++;
-      } else {
-        inactivas++;
-      }
-
-      const typeLower = (b.registerType || "").toLowerCase();
-      if (typeLower.includes("banc") || typeLower.includes("cuenta")) {
-        fondosBancos += balance;
-      } else {
-        efectivo += balance;
-      }
-    });
-
-    return {
-      total: boxes.length,
-      operativas,
-      inactivas,
-      totalLiquidez,
-      fondosBancos,
-      efectivo,
-    };
-  }, [boxes]);
-
   // Filtrado
   const filteredBoxes = useMemo(() => {
     return boxes.filter((item) => {
@@ -250,47 +210,96 @@ export default function BoxesPage() {
     setSelectedBox(null);
   };
 
-  const handleOpenStatusModal = (box: CashRegister) => {
-    setStatusTargetBox(box);
-    setIsStatusModalOpen(true);
+  const handleToggleStatus = async (box: CashRegister, nextChecked: boolean) => {
+    const actionText = nextChecked ? "activar" : "desactivar";
+
+    const result = await MySwal.fire({
+      title: `¿${nextChecked ? "Activar" : "Desactivar"} caja?`,
+      html: `¿Estás seguro de que deseas ${actionText} la caja <b>"${box.name}"</b> (#${box.id})?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: `Sí, ${actionText}`,
+      cancelButtonText: "Cancelar",
+      reverseButtons: true,
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const res = await updateBox(box.id, { status: nextChecked });
+
+        if (res.status === 200 || res.status === 204) {
+          Toast.fire({
+            icon: "success",
+            title: nextChecked ? "Caja activada" : "Caja desactivada",
+            text: `La caja #${box.id} ahora está ${nextChecked ? "activa" : "inactiva"}.`,
+          });
+          await findBoxes();
+        }
+      } catch (error) {
+        if (isAxiosError(error)) {
+          Toast.fire({
+            icon: "error",
+            title: `Error al ${actionText} la caja.`,
+            text: error.response?.data?.message || "Por favor, intenta nuevamente",
+          });
+        }
+      }
+    }
   };
 
-  const handleCloseStatusModal = () => {
-    setIsStatusModalOpen(false);
-    setStatusTargetBox(null);
-  };
+  const handleDeleteBox = async (box: CashRegister) => {
+    const balance = Number(box.currentBalance) || 0;
+    const purchasesCount = box._count?.purchases ?? 0;
 
-  const handleToggleStatus = async (boxId: number, newStatus: boolean) => {
-    try {
-      setIsUpdatingStatus(true);
-      let res;
-      if (!newStatus) {
-        // En backend DELETE /boxes/:idBox pone status en false
-        res = await deleteBox(boxId);
-      } else {
-        // En backend PUT /boxes/:idBox actualiza status
-        res = await updateBox(boxId, { status: true });
+    // Validación preventiva: no se puede eliminar si tiene dinero o compras asociadas
+    if (balance > 0 || purchasesCount > 0) {
+      let razones: string[] = [];
+      if (balance > 0) {
+        razones.push(`tiene un saldo disponible de <b>${formatCurrency(balance)}</b>`);
+      }
+      if (purchasesCount > 0) {
+        razones.push(`tiene <b>${purchasesCount}</b> compra(s) asociada(s)`);
       }
 
-      if (res.status === 200 || res.status === 204) {
-        Toast.fire({
-          icon: "success",
-          title: "Estado actualizado",
-          text: `La caja #${boxId} ahora está ${newStatus ? "activa" : "inactiva"}.`,
-        });
-        handleCloseStatusModal();
-        await findBoxes();
+      await MySwal.fire({
+        title: "No se puede eliminar",
+        html: `La caja <b>"${box.name}"</b> no puede ser eliminada porque ${razones.join(" y ")}.<br/><span class="text-xs text-app-muted mt-2 inline-block">Para proteger la trazabilidad contable y patrimonial, puedes inactivar la caja usando el interruptor de estado.</span>`,
+        icon: "warning",
+        confirmButtonText: "Entendido",
+      });
+      return;
+    }
+
+    const result = await MySwal.fire({
+      title: "¿Eliminar caja o cuenta?",
+      html: `¿Estás seguro de que deseas eliminar permanentemente la caja <b>"${box.name}"</b> (#${box.id})?<br/><span class="text-xs text-rose-500 font-semibold mt-1 inline-block">Esta acción no se puede deshacer.</span>`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+      reverseButtons: true,
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const res = await deleteBox(box.id);
+        if (res.status === 200 || res.status === 204) {
+          Toast.fire({
+            icon: "success",
+            title: "Caja eliminada",
+            text: res.data.message || "La caja fue eliminada exitosamente.",
+          });
+          await findBoxes();
+        }
+      } catch (error) {
+        if (isAxiosError(error)) {
+          Toast.fire({
+            icon: "error",
+            title: "Error al eliminar caja",
+            text: error.response?.data?.message || "Por favor, intenta nuevamente",
+          });
+        }
       }
-    } catch (error) {
-      if (isAxiosError(error)) {
-        Toast.fire({
-          icon: "error",
-          title: error.response?.data?.message || "Error al actualizar el estado.",
-          text: "Por favor, intenta nuevamente",
-        });
-      }
-    } finally {
-      setIsUpdatingStatus(false);
     }
   };
 
@@ -395,83 +404,6 @@ export default function BoxesPage() {
           >
             Nueva Caja
           </Button>
-        </div>
-      </div>
-
-      {/* Tarjetas de Métricas */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Total Liquidez */}
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-app-muted">Liquidez Activa Total</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-brand-royal dark:bg-brand-royal/20 dark:text-brand-sky">
-              <FontAwesomeIcon icon={faCoins} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-black tracking-tight text-brand-royal dark:text-brand-sky">
-              {formatCurrency(metrics.totalLiquidez)}
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-app-muted">
-            En {metrics.operativas} cajas operativas
-          </p>
-        </div>
-
-        {/* Cuentas Bancarias */}
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">Fondos en Bancos</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
-              <FontAwesomeIcon icon={faBuildingColumns} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-black tracking-tight text-app-text">
-              {formatCurrency(metrics.fondosBancos)}
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-indigo-600 dark:text-indigo-400 font-medium">
-            Cuentas y bancos vinculados
-          </p>
-        </div>
-
-        {/* Efectivo en Bodega / Cajas Físicas */}
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Efectivo Disponible</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
-              <FontAwesomeIcon icon={faMoneyBillWave} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">
-              {formatCurrency(metrics.efectivo)}
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-app-muted">
-            Cajas menores y efectivo local
-          </p>
-        </div>
-
-        {/* Estado Operativo */}
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-app-muted">Total de Cajas</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
-              <FontAwesomeIcon icon={faCircleCheck} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-app-text">
-              {metrics.total}
-            </span>
-            <span className="text-xs text-app-muted">registradas</span>
-          </div>
-          <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
-            <FontAwesomeIcon icon={faCircleCheck} className="text-[10px]" />
-            {metrics.operativas} activas ({metrics.inactivas} inactivas)
-          </p>
         </div>
       </div>
 
@@ -680,29 +612,16 @@ export default function BoxesPage() {
                       </span>
                     </Table.Cell>
 
-                    {/* Estado */}
+                    {/* Estado con Switcher */}
                     <Table.Cell className="text-center">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenStatusModal(row);
-                        }}
-                        title="Haz clic para alternar el estado"
-                        className="group inline-flex items-center gap-1.5 rounded-full outline-none transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95"
-                      >
-                        {row.status ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 group-hover:bg-emerald-500/20 group-hover:border-emerald-500/40 transition-colors">
-                            <span className="size-1.5 rounded-full bg-emerald-500 shadow-xs" />
-                            Activa
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/25 bg-rose-500/10 px-3 py-1 text-xs font-bold text-rose-700 dark:text-rose-400 group-hover:bg-rose-500/20 group-hover:border-rose-500/40 transition-colors">
-                            <span className="size-1.5 rounded-full bg-rose-500 shadow-xs" />
-                            Inactiva
-                          </span>
-                        )}
-                      </button>
+                      <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                        <Switcher
+                          checked={Boolean(row.status)}
+                          onChange={(checked) => handleToggleStatus(row, checked)}
+                          size="sm"
+                          showLabel={true}
+                        />
+                      </div>
                     </Table.Cell>
 
                     {/* Acciones */}
@@ -729,6 +648,25 @@ export default function BoxesPage() {
                           }}
                           title="Editar Caja"
                           className="hover:text-brand-royal dark:hover:text-brand-sky hover:bg-brand-royal/10 dark:hover:bg-brand-sky/15"
+                        />
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          icon={faTrash}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteBox(row);
+                          }}
+                          title={
+                            (Number(row.currentBalance) || 0) > 0 || (row._count?.purchases ?? 0) > 0
+                              ? "No se puede eliminar: tiene saldo o compras asociadas"
+                              : "Eliminar Caja"
+                          }
+                          className={
+                            (Number(row.currentBalance) || 0) > 0 || (row._count?.purchases ?? 0) > 0
+                              ? "opacity-40 text-app-muted hover:bg-transparent cursor-not-allowed"
+                              : "hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-500/10"
+                          }
                         />
                       </div>
                     </Table.Cell>
@@ -770,15 +708,6 @@ export default function BoxesPage() {
         box={selectedBox}
         onSubmit={handleFormSubmit}
         isLoading={isLoadingEdit}
-      />
-
-      {/* Modal de Cambio de Estado */}
-      <BoxStatusModal
-        isOpen={isStatusModalOpen}
-        onClose={handleCloseStatusModal}
-        box={statusTargetBox}
-        onToggleStatus={handleToggleStatus}
-        isLoading={isUpdatingStatus}
       />
     </div>
   );
