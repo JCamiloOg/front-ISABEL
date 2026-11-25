@@ -141,31 +141,6 @@ export function ProveedoresPage() {
     setCurrentPage(1);
   };
 
-  // Métricas
-  const metrics = useMemo(() => {
-    let juridicos = 0;
-    let naturales = 0;
-    let importados = 0;
-    let activos = 0;
-
-    suppliers.forEach((s) => {
-      const t = (s.supplierType || "").toLowerCase();
-      if (t.includes("jur") || t.includes("empresa")) juridicos++;
-      else naturales++;
-
-      if (s.isImported) importados++;
-      if (s.status === "Active" || s.status === "Activo") activos++;
-    });
-
-    return {
-      total: suppliers.length,
-      activos,
-      juridicos,
-      naturales,
-      importados,
-    };
-  }, [suppliers]);
-
   // Filtrado
   const filteredSuppliers = useMemo(() => {
     return suppliers.filter((item) => {
@@ -266,16 +241,9 @@ export function ProveedoresPage() {
 
     if (result.isConfirmed) {
       try {
-        let res;
-        if (!nextChecked) {
-          // DELETE /supplier/:idSupplier pone status: 'Inactive'
-          res = await deleteSupplier(supplier.document);
-        } else {
-          // PUT /supplier/:idSupplier actualiza status: 'Active'
-          res = await updateSupplier(supplier.document, {
-            supplierInfo: { status: "Active" },
-          });
-        }
+        const res = await updateSupplier(supplier.document, {
+          supplierInfo: { status: nextStatus },
+        });
 
         if (res.status === 200 || res.status === 204) {
           Toast.fire({
@@ -290,6 +258,52 @@ export function ProveedoresPage() {
           Toast.fire({
             icon: "error",
             title: `Error al ${actionText} proveedor.`,
+            text: error.response?.data?.message || "Por favor, intenta nuevamente",
+          });
+        }
+      }
+    }
+  };
+
+  const handleDeleteSupplier = async (supplier: Supplier) => {
+    // Validación preventiva: no dejar eliminar si tiene compras asociadas
+    const purchasesCount = supplier._count?.purchases ?? 0;
+    if (purchasesCount > 0) {
+      await MySwal.fire({
+        title: "No se puede eliminar",
+        html: `El proveedor <b>"${supplier.businessName}"</b> tiene <b>${purchasesCount}</b> compra(s) asociada(s).<br/><span class="text-xs text-app-muted mt-2 inline-block">Para proteger el histórico contable y de inventario, puedes inactivarlo usando el interruptor de estado.</span>`,
+        icon: "warning",
+        confirmButtonText: "Entendido",
+      });
+      return;
+    }
+
+    const result = await MySwal.fire({
+      title: "¿Eliminar proveedor?",
+      html: `¿Estás seguro de que deseas eliminar permanentemente a <b>"${supplier.businessName}"</b> (NIT: ${supplier.document})?<br/><span class="text-xs text-rose-500 font-semibold mt-1 inline-block">Esta acción no se puede deshacer.</span>`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+      reverseButtons: true,
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const res = await deleteSupplier(supplier.document);
+        if (res.status === 200 || res.status === 204) {
+          Toast.fire({
+            icon: "success",
+            title: "Proveedor eliminado",
+            text: res.data.message || "El proveedor fue eliminado exitosamente.",
+          });
+          await findData();
+        }
+      } catch (error) {
+        if (isAxiosError(error)) {
+          Toast.fire({
+            icon: "error",
+            title: "Error al eliminar proveedor.",
             text: error.response?.data?.message || "Por favor, intenta nuevamente",
           });
         }
@@ -378,79 +392,6 @@ export function ProveedoresPage() {
           >
             Nuevo Proveedor
           </Button>
-        </div>
-      </div>
-
-      {/* Métricas Ejecutivas */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Total Proveedores */}
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-app-muted">Total Proveedores</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-brand-royal dark:bg-brand-royal/20 dark:text-brand-sky">
-              <FontAwesomeIcon icon={faIndustry} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-app-text">
-              {metrics.total}
-            </span>
-            <span className="text-xs text-app-muted">registrados</span>
-          </div>
-          <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-            {metrics.activos} en estado activo
-          </p>
-        </div>
-
-        {/* Empresas / Jurídicas */}
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">Personas Jurídicas</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
-              <FontAwesomeIcon icon={faBuilding} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-indigo-600 dark:text-indigo-400">
-              {metrics.juridicos}
-            </span>
-            <span className="text-xs text-app-muted">empresas</span>
-          </div>
-          <p className="mt-1 text-xs text-app-muted">Con NIT y Razón Social</p>
-        </div>
-
-        {/* Personas Naturales */}
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Personas Naturales</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
-              <FontAwesomeIcon icon={faUserTie} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">
-              {metrics.naturales}
-            </span>
-            <span className="text-xs text-app-muted">artesanos</span>
-          </div>
-          <p className="mt-1 text-xs text-app-muted">Contratistas independientes</p>
-        </div>
-
-        {/* Importados */}
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-amber-600 dark:text-amber-400">Origen Importado</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
-              <FontAwesomeIcon icon={faGlobe} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-amber-600 dark:text-amber-400">
-              {metrics.importados}
-            </span>
-            <span className="text-xs text-app-muted">internacionales</span>
-          </div>
-          <p className="mt-1 text-xs text-app-muted">Comercio exterior y aduanas</p>
         </div>
       </div>
 
@@ -709,6 +650,25 @@ export function ProveedoresPage() {
                           }}
                           title="Editar Proveedor"
                           className="hover:text-brand-royal dark:hover:text-brand-sky hover:bg-brand-royal/10 dark:hover:bg-brand-sky/15"
+                        />
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          icon={faTrash}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteSupplier(row);
+                          }}
+                          title={
+                            (row._count?.purchases ?? 0) > 0
+                              ? "No se puede eliminar: tiene compras asociadas"
+                              : "Eliminar Proveedor"
+                          }
+                          className={
+                            (row._count?.purchases ?? 0) > 0
+                              ? "opacity-40 text-app-muted hover:bg-transparent cursor-not-allowed"
+                              : "hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-500/10"
+                          }
                         />
                       </div>
                     </Table.Cell>

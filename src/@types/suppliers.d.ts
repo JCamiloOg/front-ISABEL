@@ -27,6 +27,9 @@ export interface Supplier {
   email: string;
   address?: string | null;
   status: string;
+  _count?: {
+    purchases?: number;
+  };
 }
 
 export interface SupplierWithRelations extends Supplier {

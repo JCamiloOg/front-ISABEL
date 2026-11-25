@@ -14,6 +14,11 @@ export interface CashRegister {
   currentBalance: number | string;
   details: string;
   status: boolean;
+  _count?: {
+    purchases?: number;
+    expenses?: number;
+    payments?: number;
+  };
 }
 
 export interface CashRegisterWithRelations extends CashRegister {

@@ -148,39 +148,6 @@ export default function BillsPage() {
     setCurrentPage(1);
   };
 
-  // Métricas calculadas en base a los gastos
-  const metrics = useMemo(() => {
-    let totalMonto = 0;
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    let montoMesActual = 0;
-    let gastosMesActual = 0;
-
-    expenses.forEach((e) => {
-      const amt = Number(e.amount) || 0;
-      totalMonto += amt;
-
-      if (e.date) {
-        const d = new Date(e.date);
-        if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
-          montoMesActual += amt;
-          gastosMesActual++;
-        }
-      }
-    });
-
-    const promedio = expenses.length > 0 ? totalMonto / expenses.length : 0;
-
-    return {
-      totalGastos: expenses.length,
-      totalMonto,
-      montoMesActual,
-      gastosMesActual,
-      promedio,
-    };
-  }, [expenses]);
-
   // Filtrado
   const filteredExpenses = useMemo(() => {
     return expenses.filter((item) => {
@@ -397,82 +364,6 @@ export default function BillsPage() {
           >
             Nuevo Gasto
           </Button>
-        </div>
-      </div>
-
-      {/* Tarjetas de Métricas */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Total Egresos */}
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-app-muted">Total Egresos Históricos</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400">
-              <FontAwesomeIcon icon={faMoneyBillWave} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-black tracking-tight text-rose-600 dark:text-rose-400">
-              {formatCurrency(metrics.totalMonto)}
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-app-muted">
-            En {metrics.totalGastos} registros totales
-          </p>
-        </div>
-
-        {/* Egresos del Mes */}
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">Gastos Mes Actual</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
-              <FontAwesomeIcon icon={faCalendarDay} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-black tracking-tight text-app-text">
-              {formatCurrency(metrics.montoMesActual)}
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-indigo-600 dark:text-indigo-400 font-medium">
-            {metrics.gastosMesActual} gastos este mes
-          </p>
-        </div>
-
-        {/* Promedio de Egresos */}
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-app-muted">Gasto Promedio</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
-              <FontAwesomeIcon icon={faWallet} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-black tracking-tight text-app-text">
-              {formatCurrency(metrics.promedio)}
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-app-muted">
-            Por registro operativo
-          </p>
-        </div>
-
-        {/* Cajas Vinculadas */}
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Cajas Disponibles</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
-              <FontAwesomeIcon icon={faBuildingColumns} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-app-text">
-              {cashRegisters.length}
-            </span>
-            <span className="text-xs text-app-muted">cuentas</span>
-          </div>
-          <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-            Habilitadas para débitos
-          </p>
         </div>
       </div>
 
