@@ -7,14 +7,14 @@ import {
   faBuilding,
   faUserTie,
   faGlobe,
-  faPhone,
-  faEnvelope,
+  // faPhone,
+  // faEnvelope,
   faEye,
   faPenToSquare,
   faTrash,
-  faTag,
-  faCircleCheck,
-  faBan,
+  // faTag,
+  // faCircleCheck,
+  // faBan,
 } from "@fortawesome/free-solid-svg-icons";
 
 import { Button } from "../../../../shared/components/Button";
@@ -115,6 +115,7 @@ export function ProveedoresPage() {
   }, []);
 
   useEffect(() => {
+   // eslint-disable-next-line 
     findData();
   }, [findData]);
 

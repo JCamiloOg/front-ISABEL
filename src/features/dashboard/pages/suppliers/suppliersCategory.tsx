@@ -4,8 +4,8 @@ import {
   faTags,
   faPlus,
   faArrowRotateRight,
-  faBan,
-  faBuilding,
+  // faBan,
+  // faBuilding,
   faPenToSquare,
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
@@ -106,8 +106,8 @@ export default function CategoriaProveedor() {
     [filteredCategories, activePage, itemsPerPage],
   );
 
-  const categoriesWithSuppliers = categories.filter((category) => (category.suppliers?.length ?? 0) > 0).length;
-  const categoriesWithoutSuppliers = categories.length - categoriesWithSuppliers;
+  // const categoriesWithSuppliers = categories.filter((category) => (category.suppliers?.length ?? 0) > 0).length;
+  // const categoriesWithoutSuppliers = categories.length - categoriesWithSuppliers;
 
   const resetFilters = () => {
     setSearchTerm("");
@@ -296,8 +296,8 @@ export default function CategoriaProveedor() {
       </div>
 
       {/* ─── Métricas ─── */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="isabel-card p-5">
+      {/* <div className="grid grid-cols-1 gap-4 sm:grid-cols-3"> */}
+        {/* <div className="isabel-card p-5">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-app-muted">Total Categorías</p>
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-brand-royal dark:bg-brand-royal/20 dark:text-brand-sky">
@@ -306,9 +306,9 @@ export default function CategoriaProveedor() {
           </div>
           <p className="text-3xl font-black text-app-text mt-2">{categories.length}</p>
           <p className="mt-1 text-xs text-app-muted">Clasificaciones registradas</p>
-        </div>
+        </div>  */}
 
-        <div className="isabel-card p-5">
+        {/* <div className="isabel-card p-5">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-app-muted">Con proveedores</p>
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
@@ -317,9 +317,9 @@ export default function CategoriaProveedor() {
           </div>
           <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-2">{categoriesWithSuppliers}</p>
           <p className="mt-1 text-xs text-app-muted">Con proveedores asociados</p>
-        </div>
+        </div> */}
 
-        <div className="isabel-card p-5">
+        {/* <div className="isabel-card p-5">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-app-muted">Sin proveedores</p>
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400">
@@ -328,8 +328,8 @@ export default function CategoriaProveedor() {
           </div>
           <p className="text-3xl font-black text-rose-600 dark:text-rose-400 mt-2">{categoriesWithoutSuppliers}</p>
           <p className="mt-1 text-xs text-app-muted">Disponibles para asignar</p>
-        </div>
-      </div>
+        </div> */}
+      {/* </div> */}
 
       {/* ─── Filtros ─── */}
       <div className="isabel-card p-4">

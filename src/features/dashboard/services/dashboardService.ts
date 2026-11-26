@@ -8,14 +8,17 @@ export interface VentasActuales {
   ingresos_totales: number;
 }
 
+/** `mes` trae la etiqueta del período: "YYYY-MM-DD" (día), "YYYY-MM" (mes) o "YYYY" (año) */
 export interface GastosMes {
   mes: string;
   total_gastos: number;
 }
 
+/** `mes_actual` trae la etiqueta del período; `ingresos_actual` sirve para calcular el margen neto */
 export interface GananciaNetaMes {
   mes_actual: string;
   ganancia_neta_actual: number;
+  ingresos_actual: number;
   ganancia_neta_anterior: number;
   diferencia_monto: number;
   porcentaje_incremento: number;
@@ -69,52 +72,38 @@ export interface ProductoVendido {
   total_unidades_vendidas: number;
 }
 
-export function getVentasActuales(periodo: DashboardPeriodo) {
-  return api.get<{ message: string; ventas: VentasActuales }>("/dashboard/ventas-actuales", {
-    params: { periodo },
+/** Tarjetas que dependen del período (Ventas, Gastos, Ganancia neta) + compras pendientes */
+export interface KpisDashboard {
+  ventas: VentasActuales;
+  gastos: GastosMes;
+  ganancia: GananciaNetaMes;
+  pedidosPendientes: number;
+}
+
+/** Gráficos y rankings que no dependen del período */
+export interface ResumenDashboard {
+  ganancias: GananciaSeisMeses[];
+  ventasVsGastos: VentasVsGastos[];
+  productosMasStock: ProductoStock[];
+  productosMenosStock: ProductoStock[];
+  topClientes: ClienteTop[];
+  topDeudores: DeudorTop[];
+  productoMasVendido: ProductoVendido | null;
+  productosMenosVendidos: ProductoVendido[];
+}
+
+export interface PeriodosKpis {
+  ventas: DashboardPeriodo;
+  gastos: DashboardPeriodo;
+  ganancia: DashboardPeriodo;
+}
+
+export function getKpis(periodos: PeriodosKpis) {
+  return api.get<{ message: string } & KpisDashboard>("/dashboard/kpis", {
+    params: periodos,
   });
 }
 
-export function getGastosMes() {
-  return api.get<{ message: string; gastos: GastosMes }>("/dashboard/gastos-mes");
-}
-
-export function getGananciaNetaMes() {
-  return api.get<{ message: string; ganancia: GananciaNetaMes }>("/dashboard/ganancia-neta-mes");
-}
-
-export function getGananciasSeisMeses() {
-  return api.get<{ message: string; ganancias: GananciaSeisMeses[] }>("/dashboard/ganancias-6-meses");
-}
-
-export function getVentasVsGastos() {
-  return api.get<{ message: string; ventasVsGastos: VentasVsGastos[] }>("/dashboard/ventas-vs-gastos");
-}
-
-export function getProductosMasStock() {
-  return api.get<{ message: string; productos: ProductoStock[] }>("/dashboard/productos-mas-stock");
-}
-
-export function getProductosMenosStock() {
-  return api.get<{ message: string; productos: ProductoStock[] }>("/dashboard/productos-menos-stock");
-}
-
-export function getTopClientes() {
-  return api.get<{ message: string; topClientes: ClienteTop[] }>("/dashboard/top-clientes");
-}
-
-export function getTopDeudores() {
-  return api.get<{ message: string; topDeudores: DeudorTop[] }>("/dashboard/top-deudores");
-}
-
-export function getPedidosPendientes() {
-  return api.get<{ message: string; pedidosPendientes: number }>("/dashboard/pedidos-pendientes");
-}
-
-export function getProductoMasVendido() {
-  return api.get<{ message: string; producto: ProductoVendido | null }>("/dashboard/producto-mas-vendido");
-}
-
-export function getProductosMenosVendidos() {
-  return api.get<{ message: string; productos: ProductoVendido[] }>("/dashboard/productos-menos-vendidos");
+export function getResumen() {
+  return api.get<{ message: string } & ResumenDashboard>("/dashboard/resumen");
 }

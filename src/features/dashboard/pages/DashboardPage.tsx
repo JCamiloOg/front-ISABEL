@@ -24,34 +24,35 @@ import {
 } from "recharts";
 import { Toast } from "../../../shared/utils/alerts";
 import {
-  getGananciaNetaMes,
-  getGananciasSeisMeses,
-  getGastosMes,
-  getPedidosPendientes,
-  getProductosMasStock,
-  getProductosMenosStock,
-  getProductosMenosVendidos,
-  getProductoMasVendido,
-  getTopClientes,
-  getTopDeudores,
-  getVentasActuales,
-  getVentasVsGastos,
+  getKpis,
+  getResumen,
   type DashboardPeriodo,
-  type GananciaNetaMes,
-  type GananciaSeisMeses,
-  type GastosMes,
-  type ProductoStock,
-  type ProductoVendido,
-  type VentasActuales,
-  type VentasVsGastos,
-  type ClienteTop,
-  type DeudorTop,
+  type KpisDashboard,
+  type ResumenDashboard,
 } from "../services/dashboardService";
 
-const periodoApi: Record<"Día" | "Mes" | "Año", DashboardPeriodo> = {
+type PeriodoLabel = "Día" | "Mes" | "Año";
+type TarjetaConPeriodo = "ventas" | "gastos" | "ganancia";
+type Periodos = Record<TarjetaConPeriodo, PeriodoLabel>;
+
+const OPCIONES_PERIODO = ["Día", "Mes", "Año"] as const;
+
+const periodoApi: Record<PeriodoLabel, DashboardPeriodo> = {
   Día: "dia",
   Mes: "mes",
   Año: "anio",
+};
+
+const textoPeriodoAnterior: Record<PeriodoLabel, string> = {
+  Día: "ayer",
+  Mes: "mes anterior",
+  Año: "año anterior",
+};
+
+const textoEgresos: Record<PeriodoLabel, string> = {
+  Día: "egresos del día",
+  Mes: "egresos del mes",
+  Año: "egresos del año",
 };
 
 const formatearDinero = (valor: number) =>
@@ -76,81 +77,84 @@ function MensajeGrafica({ children }: { children: string }) {
   );
 }
 
-export default function DashboardPage() {
-  const [periodoVentas, setPeriodoVentas] = useState<"Día" | "Mes" | "Año">("Mes");
-  const [mostrarBanner, setMostrarBanner] = useState(true);
-  const [ventas, setVentas] = useState<VentasActuales | null>(null);
-  const [gastos, setGastos] = useState<GastosMes | null>(null);
-  const [gananciaNeta, setGananciaNeta] = useState<GananciaNetaMes | null>(null);
-  const [gananciasSeisMeses, setGananciasSeisMeses] = useState<GananciaSeisMeses[] | null>(null);
-  const [ventasVsGastos, setVentasVsGastos] = useState<VentasVsGastos[] | null>(null);
-  const [productosMasStock, setProductosMasStock] = useState<ProductoStock[] | null>(null);
-  const [productosMenosStock, setProductosMenosStock] = useState<ProductoStock[] | null>(null);
-  const [clientesTop, setClientesTop] = useState<ClienteTop[] | null>(null);
-  const [deudoresTop, setDeudoresTop] = useState<DeudorTop[] | null>(null);
-  const [pedidosPendientes, setPedidosPendientes] = useState<number | null>(null);
-  const [productoMasVendido, setProductoMasVendido] = useState<ProductoVendido | null | undefined>(undefined);
-  const [productosMenosVendidos, setProductosMenosVendidos] = useState<ProductoVendido[] | undefined>(undefined);
+/** Selector Día / Mes / Año reutilizado por las tarjetas Ventas, Ganancias Netas y Gastos */
+function PeriodoSelector({
+  value,
+  onChange,
+}: {
+  value: PeriodoLabel;
+  onChange: (periodo: PeriodoLabel) => void;
+}) {
+  return (
+    <div className="mt-3 flex w-fit gap-1 rounded-xl border border-app-border bg-app-surface-alt p-1 text-xs">
+      {OPCIONES_PERIODO.map((periodo) => (
+        <button
+          key={periodo}
+          type="button"
+          onClick={() => onChange(periodo)}
+          className={`rounded-lg px-3 py-1 font-bold transition-colors cursor-pointer ${value === periodo
+            ? "bg-brand-royal text-white shadow-xs"
+            : "text-app-muted hover:bg-app-surface hover:text-app-text"
+            }`}
+        >
+          {periodo}
+        </button>
+      ))}
+    </div>
+  );
+}
 
+export default function DashboardPage() {
+  const [periodos, setPeriodos] = useState<Periodos>({ ventas: "Mes", gastos: "Mes", ganancia: "Mes" });
+  const [mostrarBanner, setMostrarBanner] = useState(true);
+  const [kpis, setKpis] = useState<KpisDashboard | null>(null);
+  const [resumen, setResumen] = useState<ResumenDashboard | null>(null);
+
+  const cambiarPeriodo = (tarjeta: TarjetaConPeriodo, valor: PeriodoLabel) =>
+    setPeriodos((prev) => (prev[tarjeta] === valor ? prev : { ...prev, [tarjeta]: valor }));
+
+  // Petición 1: gráficos y rankings (no dependen del período, se piden una sola vez)
   useEffect(() => {
     let activo = true;
 
-    const cargar = async <T,>(
-      nombre: string,
-      solicitud: Promise<{ data: T }>,
-      guardar: (data: T) => void,
-    ): Promise<string | null> => {
-      try {
-        const { data } = await solicitud;
-        if (activo) guardar(data);
-        return null;
-      } catch (error) {
-        console.error(`No se pudieron obtener ${nombre} del dashboard`, error);
-        return nombre;
-      }
-    };
-
-    void Promise.all([
-      cargar("los gastos", getGastosMes(), (data) => setGastos(data.gastos)),
-      cargar("la ganancia neta", getGananciaNetaMes(), (data) => setGananciaNeta(data.ganancia)),
-      cargar("las ganancias de seis meses", getGananciasSeisMeses(), (data) => setGananciasSeisMeses(data.ganancias)),
-      cargar("las ventas y gastos", getVentasVsGastos(), (data) => setVentasVsGastos(data.ventasVsGastos)),
-      cargar("los productos con más stock", getProductosMasStock(), (data) => setProductosMasStock(data.productos)),
-      cargar("los productos con menos stock", getProductosMenosStock(), (data) => setProductosMenosStock(data.productos)),
-      cargar("los clientes principales", getTopClientes(), (data) => setClientesTop(data.topClientes)),
-      cargar("los clientes deudores", getTopDeudores(), (data) => setDeudoresTop(data.topDeudores)),
-      cargar("las compras pendientes", getPedidosPendientes(), (data) => setPedidosPendientes(data.pedidosPendientes)),
-      cargar("el producto más vendido", getProductoMasVendido(), (data) => setProductoMasVendido(data.producto)),
-      cargar("los productos menos vendidos", getProductosMenosVendidos(), (data) => setProductosMenosVendidos(data.productos)),
-    ]).then((fallos) => {
-      const fallosCarga = fallos.filter((fallo): fallo is string => fallo !== null);
-      if (activo && fallosCarga.length > 0) {
-        void Toast.fire({
-          icon: "error",
-          title: "No se pudieron obtener algunos datos",
-          text: fallosCarga.join(", "),
-        });
-      }
-    });
+    getResumen()
+      .then(({ data }) => {
+        if (activo) setResumen(data);
+      })
+      .catch((error: unknown) => {
+        console.error("No se pudo obtener el resumen del dashboard", error);
+        if (activo) {
+          void Toast.fire({
+            icon: "error",
+            title: "No se pudieron obtener algunos datos",
+            text: "Gráficas y rankings no disponibles. Intenta de nuevo más tarde.",
+          });
+        }
+      });
 
     return () => {
       activo = false;
     };
   }, []);
 
+  // Petición 2: tarjetas (se repite solo cuando cambia el período de alguna tarjeta)
   useEffect(() => {
     let activo = true;
 
-    getVentasActuales(periodoApi[periodoVentas])
+    getKpis({
+      ventas: periodoApi[periodos.ventas],
+      gastos: periodoApi[periodos.gastos],
+      ganancia: periodoApi[periodos.ganancia],
+    })
       .then(({ data }) => {
-        if (activo) setVentas(data.ventas);
+        if (activo) setKpis(data);
       })
       .catch((error: unknown) => {
-        console.error("No se pudieron obtener las ventas del dashboard", error);
+        console.error("No se pudieron obtener los indicadores del dashboard", error);
         if (activo) {
           void Toast.fire({
             icon: "error",
-            title: "No se pudieron obtener las ventas",
+            title: "No se pudieron obtener los indicadores",
             text: "Intenta de nuevo más tarde.",
           });
         }
@@ -159,7 +163,7 @@ export default function DashboardPage() {
     return () => {
       activo = false;
     };
-  }, [periodoVentas]);
+  }, [periodos]);
 
   const tooltipStyle = {
     backgroundColor: "var(--color-app-surface, #1e293b)",
@@ -171,9 +175,26 @@ export default function DashboardPage() {
 
   const formatearMillones = (val: number) =>
     val >= 1000000 ? `$${(val / 1000000).toFixed(1)}M` : `$${(val / 1000).toFixed(0)}K`;
-  const datosFinancieros = ventasVsGastos && gananciasSeisMeses
-    ? ventasVsGastos.flatMap((item) => {
-      const ganancia = gananciasSeisMeses.find(({ mes }) => mes === item.anio_mes);
+
+  // --- Tarjetas ---
+  const ventas = kpis?.ventas ?? null;
+  const gastos = kpis?.gastos ?? null;
+  const gananciaNeta = kpis?.ganancia ?? null;
+  const pedidosPendientes = kpis?.pedidosPendientes ?? null;
+
+  // Margen neto del mismo período que muestra la tarjeta de Ganancias Netas
+  const margenNeto = gananciaNeta && gananciaNeta.ingresos_actual !== 0
+    ? (gananciaNeta.ganancia_neta_actual / gananciaNeta.ingresos_actual) * 100
+    : null;
+
+  // --- Gráficas y rankings (null = no se pudo cargar; undefined = aún sin datos) ---
+  const gananciasSeisMeses = resumen?.ganancias ?? null;
+  const productoMasVendido = resumen ? resumen.productoMasVendido : undefined;
+  const productosMenosVendidos = resumen?.productosMenosVendidos;
+
+  const datosFinancieros = resumen
+    ? resumen.ventasVsGastos.flatMap((item) => {
+      const ganancia = resumen.ganancias.find(({ mes }) => mes === item.anio_mes);
       return ganancia
         ? [{
           mes: formatearMes(item.anio_mes),
@@ -184,20 +205,16 @@ export default function DashboardPage() {
         : [];
     })
     : null;
-  const datosProductosMasStock = productosMasStock?.map(({ producto, stock_total }) => ({ producto, stock: stock_total })) ?? null;
-  const datosProductosMenosStock = productosMenosStock?.map(({ producto, stock_total }) => ({ producto, stock: stock_total })) ?? null;
-  const datosClientesMasDeben = deudoresTop?.map(({ nombre, apellido, deuda_pendiente }) => ({
+  const datosProductosMasStock = resumen?.productosMasStock.map(({ producto, stock_total }) => ({ producto, stock: stock_total })) ?? null;
+  const datosProductosMenosStock = resumen?.productosMenosStock.map(({ producto, stock_total }) => ({ producto, stock: stock_total })) ?? null;
+  const datosClientesMasDeben = resumen?.topDeudores.map(({ nombre, apellido, deuda_pendiente }) => ({
     cliente: `${nombre} ${apellido}`,
     deuda: deuda_pendiente,
   })) ?? null;
-  const datosClientesMasCompran = clientesTop?.map(({ nombre, apellido, total_comprado }) => ({
+  const datosClientesMasCompran = resumen?.topClientes.map(({ nombre, apellido, total_comprado }) => ({
     cliente: `${nombre} ${apellido}`,
     total: total_comprado,
   })) ?? null;
-  const gananciaActualSeisMeses = gananciasSeisMeses?.[gananciasSeisMeses.length - 1];
-  const margenNeto = gananciaActualSeisMeses && gananciaActualSeisMeses.total_ingresos !== 0
-    ? (gananciaActualSeisMeses.ganancia_neta / gananciaActualSeisMeses.total_ingresos) * 100
-    : null;
 
   return (
     <div className="space-y-8 animate-fadeIn">
@@ -239,24 +256,10 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="mt-3 flex w-fit gap-1 rounded-xl border border-app-border bg-app-surface-alt p-1 text-xs">
-            {(["Día", "Mes", "Año"] as const).map((periodo) => (
-              <button
-                key={periodo}
-                type="button"
-                onClick={() => setPeriodoVentas(periodo)}
-                className={`rounded-lg px-3 py-1 font-bold transition-colors cursor-pointer ${periodoVentas === periodo
-                  ? "bg-brand-royal text-white shadow-xs"
-                  : "text-app-muted hover:bg-app-surface hover:text-app-text"
-                  }`}
-              >
-                {periodo}
-              </button>
-            ))}
-          </div>
+          <PeriodoSelector value={periodos.ventas} onChange={(p) => cambiarPeriodo("ventas", p)} />
         </div>
 
-        {/* KPI 2 (Compuesta): Ganancias Netas [Juan Camilo Osorio] */}
+        {/* KPI 2 (Compuesta): Ganancias Netas por Día / Mes / Año [Juan Camilo Osorio] */}
         <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
@@ -271,20 +274,24 @@ export default function DashboardPage() {
               </span>
               <span className="text-xs text-app-muted">
                 {gananciaNeta
-                  ? `${gananciaNeta.porcentaje_incremento >= 0 ? "+" : ""}${gananciaNeta.porcentaje_incremento.toFixed(1)}% vs mes anterior`
+                  ? `${gananciaNeta.porcentaje_incremento >= 0 ? "+" : ""}${gananciaNeta.porcentaje_incremento.toFixed(1)}% vs ${textoPeriodoAnterior[periodos.ganancia]}`
                   : "Cargando ganancia…"}
               </span>
             </div>
           </div>
-          <p className="mt-3 text-xs text-app-muted">
-            Margen neto:{" "}
-            <strong className="text-emerald-600 dark:text-emerald-400">
-              {margenNeto === null ? "—" : `${margenNeto.toFixed(1)}%`}
-            </strong>
-          </p>
+
+          <div>
+            <PeriodoSelector value={periodos.ganancia} onChange={(p) => cambiarPeriodo("ganancia", p)} />
+            <p className="mt-2 text-xs text-app-muted">
+              Margen neto:{" "}
+              <strong className="text-emerald-600 dark:text-emerald-400">
+                {margenNeto === null ? "—" : `${margenNeto.toFixed(1)}%`}
+              </strong>
+            </p>
+          </div>
         </div>
 
-        {/* KPI 3 (Simple): Gastos [Juan Camilo Osorio] */}
+        {/* KPI 3 (Compuesta): Gastos por Día / Mes / Año [Juan Camilo Osorio] */}
         <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-xs transition-all hover:border-brand-sky/40 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
@@ -297,10 +304,14 @@ export default function DashboardPage() {
               <span className="text-3xl font-black tracking-tight text-app-text">
                 {gastos ? formatearDinero(gastos.total_gastos) : "—"}
               </span>
-              <span className="text-xs text-app-muted">egresos del mes</span>
+              <span className="text-xs text-app-muted">{textoEgresos[periodos.gastos]}</span>
             </div>
           </div>
-          <p className="mt-3 text-xs text-app-muted">Compras de mercancía y gastos operativos</p>
+
+          <div>
+            <PeriodoSelector value={periodos.gastos} onChange={(p) => cambiarPeriodo("gastos", p)} />
+            <p className="mt-2 text-xs text-app-muted">Compras de mercancía y gastos operativos</p>
+          </div>
         </div>
 
         {/* KPI 4 (Simple): Pedidos Pendientes [Cristian Stiwar Cardona] */}
