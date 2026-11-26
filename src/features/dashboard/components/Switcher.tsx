@@ -123,8 +123,8 @@ export const Switcher: React.FC<SwitcherProps> = ({
             {showLabel && (
                 <span
                     className={`font-bold transition-colors duration-200 ${sizeConfig.text} ${checked
-                            ? "text-[#065F46] dark:text-[#34D399]" // Verde bosque para Activo
-                            : "text-[#64748B] dark:text-[#94A3B8]" // Gris neutro para Inactivo
+                        ? "text-[#065F46] dark:text-[#34D399]" // Verde bosque para Activo
+                        : "text-isabel-muted dark:text-[#94A3B8]" // Gris neutro para Inactivo
                         }`}
                 >
                     {checked ? activeLabel : inactiveLabel}

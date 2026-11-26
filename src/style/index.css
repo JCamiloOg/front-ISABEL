@@ -35,6 +35,7 @@ html.dark {
   --color-brand-royal: #2b62d9; /* Azul Real: Acciones primarias y botones */
   --color-brand-sky: #52a5e8; /* Azul Celeste: Acentos, bordes y foco */
   --color-brand-white: #ffffff; /* Blanco: Superficie y respiro */
+  --color-brand-navy-soft: #0b1222;
 
   /* Variaciones estáticas */
   --color-isabel-primary: #2b62d9;

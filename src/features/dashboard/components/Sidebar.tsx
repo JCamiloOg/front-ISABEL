@@ -10,7 +10,6 @@ import {
     faChevronLeft,
     faChevronRight,
     faChevronDown,
-    faBell,
     faSun,
     faMoon,
     faTruckRampBox,
@@ -25,6 +24,7 @@ import {
     faArrowUpRightFromSquare,
     faBars,
     faXmark,
+    faUser,
 } from "@fortawesome/free-solid-svg-icons";
 import { useTheme } from "../../../shared/hooks/useTheme";
 import { Link, useRouterState } from "@tanstack/react-router";
@@ -496,14 +496,14 @@ export default function Sidebar() {
                                 >
                                     <FontAwesomeIcon icon={theme === "dark" ? faSun : faMoon} className="text-xs" />
                                 </button>
-                                <button
-                                    type="button"
+                                <Link
+                                    to={"/dashboard/profile"}
                                     className="p-1.5 rounded-lg text-brand-royal dark:text-brand-sky/70 hover:text-brand-navy dark:hover:text-white hover:bg-brand-sky/15 dark:hover:bg-white/5 transition-colors cursor-pointer"
-                                    title="Notificaciones"
-                                    aria-label="Ver notificaciones"
+                                    title="Mi perfil"
+                                    aria-label="Ver mi perfil"
                                 >
-                                    <FontAwesomeIcon icon={faBell} className="text-xs" />
-                                </button>
+                                    <FontAwesomeIcon icon={faUser} className="text-xs" />
+                                </Link>
                                 <button
                                     type="button"
                                     className="p-1.5 rounded-lg text-brand-royal dark:text-brand-sky/70 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
@@ -555,10 +555,10 @@ export default function Sidebar() {
                 <button
                     type="button"
                     onClick={() => setMobileOpen(true)}
-                    className="lg:hidden fixed bottom-6 left-5 z-50 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-royal text-white shadow-xl shadow-brand-royal/30 hover:bg-brand-sky hover:text-brand-navy active:scale-90 transition-all cursor-pointer border-2 border-white/20"
+                    className="lg:hidden fixed top-4 left-4 z-50 flex h-11 w-11 items-center justify-center rounded-xl bg-app-surface/45 backdrop-blur-md text-app-text border border-app-border/60 shadow-sm hover:bg-app-surface/75 active:scale-90 transition-all cursor-pointer"
                     aria-label="Abrir menú de navegación"
                 >
-                    <FontAwesomeIcon icon={faBars} className="text-xl" />
+                    <FontAwesomeIcon icon={faBars} className="text-lg" />
                 </button>
             )}
 

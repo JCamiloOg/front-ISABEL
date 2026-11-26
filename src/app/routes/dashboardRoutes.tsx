@@ -21,6 +21,7 @@ import CategoriaProveedor from "../../features/dashboard/pages/suppliers/supplie
 import Purchases from "../../features/dashboard/pages/Purchases/Purchases";
 import RolesPage from "../../features/dashboard/pages/Roles/RolesPage";
 import PermissionsPage from "../../features/dashboard/pages/Permissions/PermissionsPage";
+import MyProfileDashboard from "../../features/dashboard/pages/MyProfileDashboard";
 
 export const dashboardLayout = createRoute({
   getParentRoute: () => rootRoute,
@@ -33,6 +34,12 @@ export const dashboardRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/",
   component: () => <DashboardPage />,
+});
+
+export const myProfileDashboardRoute = createRoute({
+  getParentRoute: () => dashboardLayout,
+  path: "/profile",
+  component: () => <MyProfileDashboard />
 });
 
 export const billsRoute = createRoute({
@@ -155,6 +162,7 @@ export const permissionsRoute = createRoute({
 
 export const dashboardRoutes = dashboardLayout.addChildren([
   dashboardRoute,
+  myProfileDashboardRoute,
   productsDashboardRoute,
   productColorsRoute,
   productSizesRoute,

@@ -15,7 +15,6 @@ import { Toast } from "../../../shared/utils/alerts";
 export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [rememberMe, setRememberMe] = useState(false);
     const { setUser, setAccessToken } = useUser();
     const navigate = useNavigate();
 
@@ -128,19 +127,6 @@ export default function LoginPage() {
                                 placeholder="••••••••••••"
                                 icon={faLock}
                             />
-                        </div>
-
-                        {/* Recordar sesión */}
-                        <div className="flex items-center justify-between pt-1">
-                            <label className="flex items-center gap-2 cursor-pointer select-none">
-                                <input
-                                    type="checkbox"
-                                    checked={rememberMe}
-                                    onChange={(e) => setRememberMe(e.target.checked)}
-                                    className="w-4 h-4 rounded border-app-border text-brand-royal focus:ring-brand-sky cursor-pointer"
-                                />
-                                <span className="text-xs text-app-muted">Recordar mi dispositivo</span>
-                            </label>
                         </div>
 
                         {/* Botón de Enviar */}

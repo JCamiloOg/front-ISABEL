@@ -246,6 +246,17 @@ export default function Navbar() {
                                                 <span className="flex-1 truncate">Mis pedidos</span>
                                             </Link>
 
+                                            <Link
+                                                to="/profile"
+                                                onClick={() => setIsMenuOpen(false)}
+                                                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-app-text hover:bg-brand-royal hover:text-white dark:hover:bg-brand-royal transition-all duration-200 group cursor-pointer"
+                                            >
+                                                <div className="w-7 h-7 rounded-lg bg-brand-royal/10 dark:bg-white/10 group-hover:bg-white/20 text-brand-royal dark:text-brand-sky group-hover:text-white flex items-center justify-center shrink-0 transition-colors">
+                                                    <FontAwesomeIcon icon={faUser} className="text-xs" />
+                                                </div>
+                                                <span className="flex-1 truncate">Mi perfil</span>
+                                            </Link>
+
                                             <button
                                                 type="button"
                                                 onClick={() => {
@@ -264,10 +275,21 @@ export default function Navbar() {
                                 )}
                             </div>
                         ) : (
-                            <Link to="/login" className="btn-ghost">
-                                <FontAwesomeIcon icon={faUser} className="text-brand-royal dark:text-brand-sky" />
-                                <span className="hidden sm:inline">Iniciar Sesión</span>
-                            </Link>
+                            <div className="inline-flex items-center rounded-full border border-app-border bg-app-surface/80 p-0.5 shadow-2xs">
+                                <Link
+                                    to="/login"
+                                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-app-text hover:text-brand-royal dark:hover:text-brand-sky transition-colors"
+                                >
+                                    <FontAwesomeIcon icon={faUser} className="text-brand-royal dark:text-brand-sky text-[11px]" />
+                                    <span className="hidden sm:inline">Iniciar Sesión</span>
+                                </Link>
+                                <Link
+                                    to="/register"
+                                    className="inline-flex items-center rounded-full bg-brand-royal px-3.5 py-1.5 text-xs font-bold text-white shadow-2xs hover:bg-brand-sky hover:text-brand-navy transition-colors"
+                                >
+                                    Registrarse
+                                </Link>
+                            </div>
                         )}
                     </div>
 
@@ -392,6 +414,23 @@ export default function Navbar() {
                                                     <span>Ir al Dashboard</span>
                                                 </Link>
                                             )}
+                                            <Link
+                                                to="/orders"
+                                                onClick={() => setIsMobileNavOpen(false)}
+                                                className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-app-text hover:bg-brand-royal hover:text-white dark:hover:bg-brand-royal transition-all duration-200"
+                                            >
+                                                <FontAwesomeIcon icon={faBoxesStacked} className="text-brand-royal dark:text-brand-sky" />
+                                                <span>Mis pedidos</span>
+                                            </Link>
+
+                                            <Link
+                                                to="/profile"
+                                                onClick={() => setIsMobileNavOpen(false)}
+                                                className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-app-text hover:bg-brand-royal hover:text-white dark:hover:bg-brand-royal transition-all duration-200"
+                                            >
+                                                <FontAwesomeIcon icon={faUser} className="text-brand-royal dark:text-brand-sky" />
+                                                <span>Mi perfil</span>
+                                            </Link>
 
                                             <button
                                                 type="button"

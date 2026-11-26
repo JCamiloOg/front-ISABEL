@@ -1,5 +1,5 @@
 import { createContext, type Dispatch, type SetStateAction } from "react";
-import type { LoggedUser } from "../../@types/Users";
+import type { LoggedUser } from "../../@types";
 
 export type UserContextType = {
     user: LoggedUser | null;

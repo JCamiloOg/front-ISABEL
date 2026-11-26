@@ -60,7 +60,7 @@ export default function RegisterPage() {
             {/* =========================================
                 COLUMNA IZQUIERDA: FORMULARIO DE REGISTRO
             ========================================= */}
-            <div data-aos="fade-right" className="w-full lg:w-1/2 flex flex-col justify-between p-6 sm:p-10 lg:p-12 z-10 overflow-y-auto max-h-screen scrollbar-thin scrollbar-thumb-brand-royal/30">
+            <div data-aos="fade-right" className="w-full lg:w-1/2 flex flex-col justify-between p-6 sm:p-10 lg:p-12 z-10  max-h-screen scrollbar-thumb-brand-royal/30 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none">
                 {/* Cabecera / Volver */}
                 <div className="flex items-center justify-between">
                     <div className="flex flex-row items-center gap-2">
@@ -247,14 +247,10 @@ export default function RegisterPage() {
                                     className="w-4 h-4 mt-0.5 rounded border-app-border text-brand-royal focus:ring-brand-sky cursor-pointer"
                                 />
                                 <span className="text-xs text-app-muted leading-relaxed">
-                                    Acepto los{" "}
-                                    <a href="#" className="font-semibold text-brand-royal dark:text-brand-sky hover:underline">
-                                        Términos de Servicio
-                                    </a>{" "}
-                                    y la{" "}
-                                    <a href="#" className="font-semibold text-brand-royal dark:text-brand-sky hover:underline">
+                                    Acepto la{" "}
+                                    <Link to="/privacy-policy" className="font-semibold text-brand-royal dark:text-brand-sky hover:underline">
                                         Política de Privacidad
-                                    </a>{" "}
+                                    </Link>{" "}
                                     de Calzado Isabel.
                                 </span>
                             </label>
@@ -323,7 +319,7 @@ export default function RegisterPage() {
 
                 {/* Tarjeta Flotante Inferior con Declaración de Marca */}
                 <div className="relative z-10 max-w-lg mt-auto">
-                    <div className="dark:bg-brand-navy/80 bg-white backdrop-blur-xl rounded-3xl p-6 sm:p-8 border border-white/15 shadow-2xl space-y-4">
+                    <div className="dark:bg-brand-navy/80 bg-brand-navy backdrop-blur-xl rounded-3xl p-6 sm:p-8 border border-white/15 shadow-2xl space-y-4">
                         <div className="flex items-center gap-2 text-brand-sky">
                             <FontAwesomeIcon icon={faQuoteLeft} className="text-xl opacity-80" />
                             <span className="text-[11px] font-extrabold uppercase tracking-widest">
@@ -331,13 +327,13 @@ export default function RegisterPage() {
                             </span>
                         </div>
 
-                        <p className="text-lg sm:text-xl font-bold dark:text-white text-brand-navy leading-snug">
+                        <p className="text-lg sm:text-xl font-bold text-white  leading-snug">
                             "El diseño clásico nunca pasa de moda cuando está respaldado por costuras hechas a mano y materiales auténticos."
                         </p>
 
                         <div className="pt-2 border-t border-white/10 flex items-center justify-between text-xs text-white/75">
                             <div>
-                                <span className="font-extrabold dark:text-white text-brand-navy block">Black & White Edition</span>
+                                <span className="font-extrabold text-white block">Black & White Edition</span>
                                 <span className="text-brand-sky text-[11px]">Acabados de cuero genuino</span>
                             </div>
                             <span className="px-2.5 py-1 rounded-lg bg-brand-royal/80 text-white font-semibold text-[10px]">

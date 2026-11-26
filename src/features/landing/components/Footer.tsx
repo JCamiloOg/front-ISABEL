@@ -1,10 +1,11 @@
 import { faFacebookF, faInstagram, faWhatsapp } from "@fortawesome/free-brands-svg-icons";
 import { faEnvelope, faLocationDot, faPhone } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Link } from "@tanstack/react-router";
 
 export default function Footer() {
     return (
-        <footer id="contacto" className="bg-brand-navy text-white pt-16 pb-12 border-t-4 border-brand-royal">
+        <footer id="contacto" className="bg-brand-navy-soft text-white pt-16 pb-12 border-t-4 border-brand-royal">
             <div className="section-container">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-white/10">
                     {/* Columna Marca & Identidad */}
@@ -57,40 +58,6 @@ export default function Footer() {
                         </div>
                     </div>
 
-                    {/* Enlaces de Exploración */}
-                    <div data-aos="fade-up" data-aos-delay="150">
-                        <h4 className="text-sm font-bold uppercase tracking-wider text-brand-sky mb-4">
-                            Líneas de Calzado
-                        </h4>
-                        <ul className="space-y-2.5 text-sm text-white/80">
-                            <li>
-                                <a href="#catalogo" className="hover:text-brand-sky transition-colors">
-                                    Línea Formal & Oficina
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#catalogo" className="hover:text-brand-sky transition-colors">
-                                    Casual & Confort
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#catalogo" className="hover:text-brand-sky transition-colors">
-                                    Sneakers & Urbanos
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#catalogo" className="hover:text-brand-sky transition-colors">
-                                    Botas y Botines
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#catalogo" className="hover:text-brand-sky transition-colors">
-                                    Lotes en Liquidación
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-
                     {/* Ayuda y Soporte */}
                     <div data-aos="fade-up" data-aos-delay="250">
                         <h4 className="text-sm font-bold uppercase tracking-wider text-brand-sky mb-4">
@@ -103,14 +70,9 @@ export default function Footer() {
                                 </a>
                             </li>
                             <li>
-                                <a href="#" className="hover:text-brand-sky transition-colors">
-                                    Tiempos y Fletes de Bodega
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" className="hover:text-brand-sky transition-colors">
+                                <Link to="/warrant-policy" className="hover:text-brand-sky transition-colors">
                                     Política de Garantías
-                                </a>
+                                </Link>
                             </li>
                             <li>
                                 <a href="#" className="hover:text-brand-sky transition-colors">

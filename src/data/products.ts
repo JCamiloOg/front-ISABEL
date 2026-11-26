@@ -2,14 +2,50 @@
 // Tipos Auxiliares para Creación (sin ID)
 // ==========================================
 
-import type { ProductoConRelaciones } from "../@types/Products";
 
 // ==========================================
 // Datos de Prueba (10 Zapatos en Pesos Colombianos - COP)
 // Descuentos configurados como porcentaje (ej: 10 = 10%)
 // ==========================================
 
-export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
+export interface ProductoConRelaciones {
+    idProducto: number;
+    nombre: string;
+    sku: string;
+    idCategoriaProducto: number;
+    idMarca: number;
+    idTipoZapato: number;
+    precioCompra: number;
+    precioVenta: number;
+    publico: boolean;
+    genero: string;
+    estado: string;
+    colores: {
+        idProductoColor: number;
+        idProducto: number;
+        idColor: number;
+        nombre?: string;
+        hex?: string;
+        imagenes: string[];
+        estado: string;
+        variantes: {
+            idVariante: number;
+            idProductoColor: number;
+            idTalla: number;
+            stockActual: number;
+            descuento: number;
+            estado: string;
+            talla: {
+                idTalla: number;
+                numeroTalla: string;
+                genero: string;
+                tallaInternacional: string;
+            };
+        }[];
+    }[];
+}
+
+export const MOCK_PRODUCTOS_PRISMA = [
     {
         idProducto: 1,
         nombre: "Nike Air Force 1 '07",
@@ -27,6 +63,8 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
                 idProductoColor: 1,
                 idProducto: 1,
                 idColor: 101,
+                nombre: 'Blanco',
+                hex: '#FFFFFF',
                 imagenes: [
                     'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=1000&q=80',
                     'https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?auto=format&fit=crop&w=1000&q=80',
@@ -58,6 +96,8 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
                 idProductoColor: 2,
                 idProducto: 1,
                 idColor: 102,
+                nombre: 'Negro',
+                hex: '#111827',
                 imagenes: [
                     '/shoesBlackWhite.jpg',
                     'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?auto=format&fit=crop&w=1000&q=80',
@@ -94,6 +134,8 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
                 idProductoColor: 3,
                 idProducto: 2,
                 idColor: 102,
+                nombre: 'Negro',
+                hex: '#111827',
                 imagenes: [
                     'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1000&q=80',
                     'https://images.unsplash.com/photo-1551107696-a4b0c5a0d9a2?auto=format&fit=crop&w=1000&q=80',
@@ -130,6 +172,8 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
                 idProductoColor: 4,
                 idProducto: 3,
                 idColor: 103,
+                nombre: 'Rojo',
+                hex: '#DC2626',
                 imagenes: [
                     'https://images.unsplash.com/photo-1608256246200-53e635b5b65f?auto=format&fit=crop&w=1000&q=80',
                     'https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&fit=crop&w=1000&q=80',
@@ -166,6 +210,8 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
                 idProductoColor: 5,
                 idProducto: 4,
                 idColor: 104,
+                nombre: 'Azul Marino',
+                hex: '#1E3A8A',
                 imagenes: [
                     'https://images.unsplash.com/photo-1539185441755-769473a23570?auto=format&fit=crop&w=1000&q=80',
                     'https://images.unsplash.com/photo-1582588678413-dbf45f4823e9?auto=format&fit=crop&w=1000&q=80',
@@ -202,6 +248,8 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
                 idProductoColor: 6,
                 idProducto: 5,
                 idColor: 102,
+                nombre: 'Negro',
+                hex: '#111827',
                 imagenes: [
                     'https://images.unsplash.com/photo-1607522370275-f14206abe5d3?auto=format&fit=crop&w=1000&q=80',
                     '/login-shoes.jpg',
@@ -238,6 +286,8 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
                 idProductoColor: 7,
                 idProducto: 6,
                 idColor: 102,
+                nombre: 'Negro',
+                hex: '#111827',
                 imagenes: [
                     '/shoesGreenSplash.jpg',
                     '/shoesBlackWhite.jpg',
@@ -274,6 +324,8 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
                 idProductoColor: 8,
                 idProducto: 7,
                 idColor: 105,
+                nombre: 'Beige',
+                hex: '#D6C7B2',
                 imagenes: [
                     'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?auto=format&fit=crop&w=1000&q=80',
                 ],
@@ -309,6 +361,8 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
                 idProductoColor: 9,
                 idProducto: 8,
                 idColor: 102,
+                nombre: 'Negro',
+                hex: '#111827',
                 imagenes: [
                     'https://images.unsplash.com/photo-1551107696-a4b0c5a0d9a2?auto=format&fit=crop&w=1000&q=80',
                 ],
@@ -344,6 +398,8 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
                 idProductoColor: 10,
                 idProducto: 9,
                 idColor: 106,
+                nombre: 'Gris',
+                hex: '#6B7280',
                 imagenes: [
                     'https://images.unsplash.com/photo-1520639888713-7851133b1ed0?auto=format&fit=crop&w=1000&q=80',
                 ],
@@ -379,6 +435,8 @@ export const MOCK_PRODUCTOS_PRISMA: ProductoConRelaciones[] = [
                 idProductoColor: 11,
                 idProducto: 10,
                 idColor: 107,
+                nombre: 'Verde Oliva',
+                hex: '#4D7C0F',
                 imagenes: [
                     'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=1000&q=80',
                 ],

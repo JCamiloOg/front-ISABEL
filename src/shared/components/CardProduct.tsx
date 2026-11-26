@@ -6,7 +6,7 @@ import {
     faEye,
     faArrowRight,
 } from "@fortawesome/free-solid-svg-icons";
-import type { ProductoConRelaciones } from "../../@types/Products";
+import type { ProductoConRelaciones } from "../../data/products";
 
 interface CardProductProps {
     producto: ProductoConRelaciones;
@@ -105,12 +105,24 @@ export default function CardProduct({ producto, className = "" }: CardProductPro
             {/* Contenido / Información Comercial */}
             <div className="p-4 flex flex-col flex-1 justify-between gap-3">
                 <div className="space-y-1">
-                    <div className="flex items-center justify-between text-[11px] text-app-muted">
-                        <span className="font-semibold uppercase tracking-wider text-brand-royal dark:text-brand-sky">
-                            {producto.colores.length} {producto.colores.length === 1 ? "Color" : "Colores"}
-                        </span>
+                    <div className="flex items-center justify-between gap-2 text-[11px] text-app-muted h-5">
+                        <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+                            {producto.colores.slice(0, 5).map((color, idx) => (
+                                <span
+                                    key={color.idProductoColor || idx}
+                                    className="size-3.5 rounded-full border border-app-border/80 shadow-2xs shrink-0"
+                                    style={{ backgroundColor: color.hex || "#94a3b8" }}
+                                    title={color.nombre || `Color #${color.idColor}`}
+                                />
+                            ))}
+                            {producto.colores.length > 5 && (
+                                <span className="text-[10px] font-bold text-app-muted shrink-0">
+                                    +{producto.colores.length - 5}
+                                </span>
+                            )}
+                        </div>
 
-                        <span className="inline-flex items-center gap-1 font-medium">
+                        <span className="inline-flex items-center gap-1 font-medium shrink-0">
                             <FontAwesomeIcon icon={faBoxesStacked} className="text-[10px]" />
                             <span>{stockTotal} pares disp.</span>
                         </span>

@@ -6,6 +6,9 @@ import CatalogPage from "../../features/landing/pages/CatalogPage";
 import ProductPage from "../../features/landing/pages/ProductPage";
 import CreateOrder from "../../features/landing/pages/CreateOrder";
 import OrdersPageByUser from "../../features/landing/pages/OrdersPageByUser";
+import MyProfile from "../../features/landing/pages/MyProfile";
+import PrivacyPolicy from "../../features/landing/pages/PrivacyPolicy";
+import WarrantyPolicy from "../../features/landing/pages/WarrantyPolicy";
 
 export const indexLayout = createRoute({
   getParentRoute: () => rootRoute,
@@ -43,10 +46,31 @@ export const getOrdersRoute = createRoute({
   component: () => <OrdersPageByUser />
 });
 
+export const myProfileRoute = createRoute({
+  getParentRoute: () => indexLayout,
+  path: "/profile",
+  component: () => <MyProfile />,
+});
+
+export const privacyPolicyRoute = createRoute({
+  getParentRoute: () => indexLayout,
+  path: "/privacy-policy",
+  component: () => <PrivacyPolicy />,
+});
+
+export const warrantyPolicy = createRoute({
+  getParentRoute: () => indexLayout,
+  path: "/warrant-policy",
+  component: () => <WarrantyPolicy />
+});
+
 export const landingRoutes = indexLayout.addChildren([
   indexRoute,
   catalogRoute,
   productRoute,
+  myProfileRoute,
+  privacyPolicyRoute,
+  warrantyPolicy,
   getOrdersRoute
 ]);
 
