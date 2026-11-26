@@ -15,6 +15,15 @@ export interface Role {
   description: string;
 }
 
+export interface LoggedUser {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  createdAt: string;
+  status: boolean;
+}
+
 export interface RoleWithRelations extends Role {
   users?: User[];
   rolePrivileges?: RolePrivilege[];
