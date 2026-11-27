@@ -6,7 +6,7 @@ import ProductsDashboardPage from "../../features/dashboard/pages/products/Produ
 import OrdersPage from "../../features/dashboard/pages/orders/OrdersPage";
 import BillsPage from "../../features/dashboard/pages/bills/BillsPage";
 import ProveedoresPage from "../../features/dashboard/pages/suppliers/ProveedoresPage";
-import VentasPage from "../../features/dashboard/pages/Ventas/VentasPage";
+import SalesPage from "../../features/dashboard/pages/sales/SalesPage";
 import ClientesPage from "../../features/dashboard/pages/clients/ClientsPage";
 import ReturnsPage from "../../features/dashboard/pages/Returns/ReturnsPage";
 import SaleReturnDetailPage from "../../features/dashboard/pages/Returns/SaleReturnDetailPage";
@@ -126,7 +126,7 @@ export const ordersRoute = createRoute({
 export const salesRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/sales",
-  component: () => <VentasPage />,
+  component: () => <SalesPage />,
 });
 
 export const returnsRoute = createRoute({
