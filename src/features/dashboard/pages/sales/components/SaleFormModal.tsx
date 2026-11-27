@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTrashCan, faCartPlus } from "@fortawesome/free-solid-svg-icons";
 import Modal from "../../../../../shared/components/Modal";
 import { Input } from "../../../../../shared/components/Inputs/Input";
