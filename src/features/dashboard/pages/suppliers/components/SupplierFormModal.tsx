@@ -12,9 +12,9 @@ import Modal from "../../../../../shared/components/Modal";
 import { Button } from "../../../../../shared/components/Button";
 import { Input } from "../../../../../shared/components/Inputs/Input";
 import { Select } from "../../../../../shared/components/Inputs/Select";
-import type { Supplier, SupplierWithRelations } from "../../../../../@types";
 import type { CreateSupplierData, UpdateSupplierData } from "../services/suppliersServices";
 import type { SupplierCategoryRecord } from "../services/suppliersCategoryServices";
+import type { Supplier, SupplierWithRelations } from "../../../../../@types/suppliers";
 
 interface SupplierFormModalProps {
   isOpen: boolean;

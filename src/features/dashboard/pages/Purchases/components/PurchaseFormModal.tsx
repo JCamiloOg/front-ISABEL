@@ -25,17 +25,13 @@ import Modal from "../../../../../shared/components/Modal";
 import { Button } from "../../../../../shared/components/Button";
 import { Input } from "../../../../../shared/components/Inputs/Input";
 import SelectBySearch, { type SelectBySearchOption } from "../../../../../shared/components/Inputs/SelectBySearch";
-import type {
-  ProductColorWithRelations,
-  ProductVariantWithRelations,
-  ProductWithRelations,
-  PurchaseWithRelations,
-  Supplier,
-  CashRegister,
-} from "../../../../../@types";
 import { addVariantShopping, changePaymentsInfo, deletePaymentInfo, deleteVariantInShopping, getProducts, getSupplier, updateVariantInShopping } from "../services/shoppingsServices";
 import { Toast } from "../../../../../shared/utils/alerts";
 import { isAxiosError } from "axios";
+import type { PurchaseWithRelations } from "../../../../../@types/purchases";
+import type { CashRegister } from "../../../../../@types/cash-registers";
+import type { ProductColorWithRelations, ProductVariantWithRelations, ProductWithRelations } from "../../../../../@types/products";
+import type { Supplier } from "../../../../../@types/suppliers";
 
 // Fila añadida a la tabla de detalle
 export interface PurchaseDetailRow {

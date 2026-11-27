@@ -15,7 +15,7 @@ import {
 
 import Modal from "../../../../../shared/components/Modal";
 import { Button } from "../../../../../shared/components/Button";
-import type { SaleReturnWithRelations } from "../../../../../@types";
+import type { SaleReturnWithRelations } from "../../../../../@types/sales";
 
 interface ReturnDetailModalProps {
   isOpen: boolean;

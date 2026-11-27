@@ -9,9 +9,6 @@ import {
   faMagnifyingGlass,
   faUserPlus,
   faUsers,
-  faUserShield,
-  faBoxesPacking,
-  faCheckCircle,
   faEye,
   faPenToSquare,
   faTrashCan,
@@ -92,6 +89,7 @@ export const UsersPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchUsers();
   }, [fetchUsers]);
 
@@ -107,19 +105,6 @@ export const UsersPage: React.FC = () => {
     return roles.filter((r) => r.name.trim().toLowerCase() !== "cliente");
   }, [roles]);
 
-  // ── Métricas dinámicas ──
-  const metrics = useMemo(() => {
-    const totalEmpleados = internalUsers.length;
-    const administradores = internalUsers.filter(
-      (u) => u.role?.name.toLowerCase() === "administrador"
-    ).length;
-    const bodegueros = internalUsers.filter(
-      (u) => u.role?.name.toLowerCase() === "bodeguero"
-    ).length;
-    const activos = internalUsers.filter((u) => u.status).length;
-
-    return { totalEmpleados, administradores, bodegueros, activos };
-  }, [internalUsers]);
 
   // ── GET /users/:identityDocument ──
   const handleOpenDetail = async (identityDocument: string) => {
@@ -419,53 +404,6 @@ export const UsersPage: React.FC = () => {
         </div>
       </div>
 
-      {/* ─── Métricas ─── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="isabel-card p-4">
-          <div className="flex items-center justify-between text-app-muted mb-1">
-            <span className="text-xs font-semibold">Total Empleados</span>
-            <FontAwesomeIcon icon={faUsers} className="text-brand-royal dark:text-brand-sky" />
-          </div>
-          <p className="text-2xl font-black text-app-text">{metrics.totalEmpleados}</p>
-          <span className="text-[11px] text-app-muted">Colaboradores</span>
-        </div>
-
-        <div className="isabel-card p-4">
-          <div className="flex items-center justify-between text-app-muted mb-1">
-            <span className="text-xs font-semibold">Administradores</span>
-            <FontAwesomeIcon icon={faUserShield} className="text-indigo-500" />
-          </div>
-          <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400">
-            {metrics.administradores}
-          </p>
-          <span className="text-[11px] text-app-muted">Acceso total</span>
-        </div>
-
-        <div className="isabel-card p-4">
-          <div className="flex items-center justify-between text-app-muted mb-1">
-            <span className="text-xs font-semibold">Bodegueros</span>
-            <FontAwesomeIcon icon={faBoxesPacking} className="text-amber-500" />
-          </div>
-          <p className="text-2xl font-black text-amber-600 dark:text-amber-400">
-            {metrics.bodegueros}
-          </p>
-          <span className="text-[11px] text-app-muted">Inventario</span>
-        </div>
-
-        <div className="isabel-card p-4">
-          <div className="flex items-center justify-between text-app-muted mb-1">
-            <span className="text-xs font-semibold">Activos</span>
-            <FontAwesomeIcon icon={faCheckCircle} className="text-emerald-500" />
-          </div>
-          <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-            {metrics.activos}
-          </p>
-          <span className="text-[11px] text-emerald-600 dark:text-emerald-400">
-            En nómina activa
-          </span>
-        </div>
-      </div>
-
       {/* ─── Filtros ─── */}
       <div className="isabel-card p-4">
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
@@ -631,11 +569,10 @@ export const UsersPage: React.FC = () => {
 
                     <Table.Cell className="text-center">
                       <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                          isAdmin
-                            ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300"
-                            : "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
-                        }`}
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ${isAdmin
+                          ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300"
+                          : "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+                          }`}
                       >
                         {user.role?.name || "Sin rol"}
                       </span>

@@ -12,7 +12,7 @@ import {
 import Modal from "../../../../../shared/components/Modal";
 import { Button } from "../../../../../shared/components/Button";
 import { Select } from "../../../../../shared/components/Inputs/Select";
-import type { PurchaseWithRelations } from "../../../../../@types";
+import type { PurchaseWithRelations } from "../../../../../@types/purchases";
 
 export type PurchaseStatus = "Pendiente" | "Recibida" | "Cancelada";
 

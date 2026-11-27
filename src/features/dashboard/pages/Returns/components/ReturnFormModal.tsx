@@ -37,9 +37,9 @@ import {
   type SaleOptionItem,
 } from "../services/salesReturnsServices";
 import { getProducts } from "../../Purchases/services/shoppingsServices";
-import type { ProductWithRelations } from "../../../../../@types";
 import { Toast } from "../../../../../shared/utils/alerts";
 import { isAxiosError } from "axios";
+import type { ProductWithRelations } from "../../../../../@types/products";
 
 interface ReturnFormModalProps {
   isOpen: boolean;
@@ -734,8 +734,8 @@ export function ReturnFormModal({
                         type="button"
                         onClick={() => handleSelectColor(col.id)}
                         className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${isSelected
-                            ? "border-brand-royal bg-brand-royal/10 text-brand-royal dark:border-brand-sky dark:text-brand-sky ring-1 ring-brand-royal/30"
-                            : "border-app-border bg-app-surface-alt hover:border-brand-royal/40 text-app-text"
+                          ? "border-brand-royal bg-brand-royal/10 text-brand-royal dark:border-brand-sky dark:text-brand-sky ring-1 ring-brand-royal/30"
+                          : "border-app-border bg-app-surface-alt hover:border-brand-royal/40 text-app-text"
                           }`}
                       >
                         {col.hex && (
@@ -773,10 +773,10 @@ export function ReturnFormModal({
                         disabled={remaining <= 0}
                         onClick={() => handleSelectVariant(v.variantId)}
                         className={`p-2.5 rounded-xl border text-left flex flex-col justify-between transition-all ${remaining <= 0
-                            ? "opacity-40 cursor-not-allowed bg-app-surface-alt border-app-border"
-                            : isSelected
-                              ? "border-brand-royal bg-brand-royal/10 text-brand-royal dark:border-brand-sky dark:text-brand-sky ring-2 ring-brand-royal/20"
-                              : "border-app-border bg-app-surface hover:border-brand-royal/40"
+                          ? "opacity-40 cursor-not-allowed bg-app-surface-alt border-app-border"
+                          : isSelected
+                            ? "border-brand-royal bg-brand-royal/10 text-brand-royal dark:border-brand-sky dark:text-brand-sky ring-2 ring-brand-royal/20"
+                            : "border-app-border bg-app-surface hover:border-brand-royal/40"
                           }`}
                       >
                         <div className="flex items-center justify-between">
@@ -851,8 +851,8 @@ export function ReturnFormModal({
                   return (
                     <label
                       className={`flex items-center gap-3 p-3 rounded-xl border border-app-border bg-app-surface-alt/40 transition-colors ${isDamagedReason
-                          ? "opacity-70 cursor-not-allowed"
-                          : "cursor-pointer hover:border-brand-royal/40"
+                        ? "opacity-70 cursor-not-allowed"
+                        : "cursor-pointer hover:border-brand-royal/40"
                         }`}
                     >
                       <input

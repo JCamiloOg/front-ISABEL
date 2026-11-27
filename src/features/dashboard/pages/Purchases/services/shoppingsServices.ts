@@ -1,4 +1,7 @@
-import type { CashRegister, ProductWithRelations, Purchase, PurchaseDetail, PurchaseWithRelations, Supplier } from "../../../../../@types";
+import type { CashRegister } from "../../../../../@types/cash-registers";
+import type { ProductWithRelations } from "../../../../../@types/products";
+import type { Purchase, PurchaseDetail, PurchaseWithRelations } from "../../../../../@types/purchases";
+import type { Supplier } from "../../../../../@types/suppliers";
 import api from "../../../../../app/api/api";
 
 

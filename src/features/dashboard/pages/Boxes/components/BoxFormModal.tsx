@@ -12,7 +12,7 @@ import { Button } from "../../../../../shared/components/Button";
 import { Input } from "../../../../../shared/components/Inputs/Input";
 import { Select } from "../../../../../shared/components/Inputs/Select";
 import { Textarea } from "../../../../../shared/components/Inputs/Textarea";
-import type { CashRegister, CashRegisterWithRelations } from "../../../../../@types";
+import type { CashRegister, CashRegisterWithRelations } from "../../../../../@types/cash-registers";
 import type { BoxPayload } from "../services/boxesServices";
 
 interface BoxFormModalProps {
@@ -219,8 +219,8 @@ export function BoxFormModal({
                 type="button"
                 onClick={() => setStatus(!status)}
                 className={`px-3 py-1 rounded-full text-xs font-bold transition-colors ${status
-                    ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30"
-                    : "bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30"
+                  ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30"
+                  : "bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30"
                   }`}
               >
                 {status ? "Activa" : "Inactiva"}

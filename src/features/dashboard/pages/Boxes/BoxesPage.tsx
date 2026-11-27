@@ -16,7 +16,7 @@ import { Select } from "../../../../shared/components/Inputs/Select";
 import Table, { type SortDirection } from "../../../../shared/components/Table";
 import { Switcher } from "../../components/Switcher";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { CashRegister, CashRegisterWithRelations } from "../../../../@types";
+import type { CashRegister, CashRegisterWithRelations } from "../../../../@types/cash-registers";
 import {
   createBox,
   deleteBox,

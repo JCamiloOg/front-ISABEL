@@ -1,4 +1,4 @@
-import type { Expense, ExpenseWithRelations } from "../../../../../@types";
+import type { Expense, ExpenseWithRelations } from "../../../../../@types/cash-registers";
 import api from "../../../../../app/api/api";
 
 export interface ExpensePayload {

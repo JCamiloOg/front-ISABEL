@@ -22,7 +22,7 @@ import { Select } from "../../../../shared/components/Inputs/Select";
 import Table, { type SortDirection } from "../../../../shared/components/Table";
 import { Switcher } from "../../components/Switcher";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { Supplier, SupplierWithRelations } from "../../../../@types";
+import type { Supplier, SupplierWithRelations } from "../../../../@types/suppliers";
 import {
   createSupplier,
   deleteSupplier,
@@ -115,7 +115,7 @@ export function ProveedoresPage() {
   }, []);
 
   useEffect(() => {
-   // eslint-disable-next-line 
+    // eslint-disable-next-line 
     findData();
   }, [findData]);
 

@@ -203,6 +203,7 @@ export async function createProduct(data: CreateProductDTO) {
 }
 
 export async function updateProduct(id: number, data: UpdateProductDTO) {
+  console.log(data);
   return await api.put<{
     message: string;
     product: ProductRecord;

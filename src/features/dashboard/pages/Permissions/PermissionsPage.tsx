@@ -2,9 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faMagnifyingGlass,
-  faKey,
   faShieldHalved,
-  faLayerGroup,
   faArrowRotateRight,
   faEye,
 } from "@fortawesome/free-solid-svg-icons";
@@ -66,22 +64,10 @@ export default function PermissionsPage() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchPermissions();
   }, [fetchPermissions]);
 
-  // ── Métricas dinámicas ──
-  const metrics = useMemo(() => {
-    const totalModulos = permissions.length;
-    const totalPrivilegios = permissions.reduce(
-      (acc, p) => acc + (p.privileges?.length || 0),
-      0
-    );
-    const operacionesDistintas = new Set(
-      permissions.flatMap((p) => p.privileges.map((priv) => priv.name))
-    ).size;
-
-    return { totalModulos, totalPrivilegios, operacionesDistintas };
-  }, [permissions]);
 
   const handleOpenDetail = (permiso: PermissionPayload) => {
     setDetailPermiso(permiso);
@@ -198,56 +184,6 @@ export default function PermissionsPage() {
         </div>
       </div>
 
-      {/* ─── Tarjetas de Métricas ─── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="isabel-card p-5">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-app-muted">Total Módulos</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-brand-royal dark:bg-brand-royal/20 dark:text-brand-sky">
-              <FontAwesomeIcon icon={faLayerGroup} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-app-text">
-              {metrics.totalModulos}
-            </span>
-            <span className="text-xs text-app-muted">módulos</span>
-          </div>
-          <p className="mt-1 text-xs text-app-muted">Controlados por RBAC</p>
-        </div>
-
-        <div className="isabel-card p-5">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-app-muted">Total Privilegios</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
-              <FontAwesomeIcon icon={faKey} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-indigo-600 dark:text-indigo-400">
-              {metrics.totalPrivilegios}
-            </span>
-            <span className="text-xs text-app-muted">acciones</span>
-          </div>
-          <p className="mt-1 text-xs text-app-muted">Acciones granulares</p>
-        </div>
-
-        <div className="isabel-card p-5">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-app-muted">Operaciones Distintas</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
-              <FontAwesomeIcon icon={faShieldHalved} className="text-xs" />
-            </span>
-          </div>
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">
-              {metrics.operacionesDistintas}
-            </span>
-            <span className="text-xs text-app-muted">tipos</span>
-          </div>
-          <p className="mt-1 text-xs text-app-muted">Alcance de acceso</p>
-        </div>
-      </div>
 
       {/* ─── Filtro ─── */}
       <div className="isabel-card p-4">

@@ -6,9 +6,6 @@ import {
   faArrowRotateRight,
   faEye,
   faUser,
-  faReceipt,
-  faSackDollar,
-  faCircleCheck,
   faBan,
 } from "@fortawesome/free-solid-svg-icons";
 import { isAxiosError } from "axios";
@@ -223,23 +220,10 @@ export default function SalesPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchSales();
   }, [fetchSales]);
 
-  // Métricas
-  const metrics = useMemo(() => {
-    const activeSales = sales.filter((s) => s.status !== "Cancelada");
-    const totalIngresos = activeSales.reduce((acc, s) => acc + calculateSaleTotal(s), 0);
-    const entregadas = sales.filter((s) => s.status === "Entregada").length;
-    const pendientes = sales.filter((s) => s.status === "Pendiente").length;
-
-    return {
-      totalVentas: sales.length,
-      totalIngresos,
-      entregadas,
-      pendientes,
-    };
-  }, [sales, calculateSaleTotal]);
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
@@ -350,52 +334,6 @@ export default function SalesPage() {
         </div>
       </div>
 
-      {/* ─── Métricas Ejecutivas ─── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="isabel-card p-4">
-          <div className="flex items-center justify-between text-app-muted mb-1">
-            <span className="text-xs font-semibold">Ingresos Totales</span>
-            <FontAwesomeIcon icon={faSackDollar} className="text-brand-royal dark:text-brand-sky" />
-          </div>
-          <p className="text-xl font-black text-app-text font-mono">
-            {formatCurrency(metrics.totalIngresos)}
-          </p>
-          <span className="text-[11px] text-app-muted">Ventas activas</span>
-        </div>
-
-        <div className="isabel-card p-4">
-          <div className="flex items-center justify-between text-app-muted mb-1">
-            <span className="text-xs font-semibold">Total Facturas</span>
-            <FontAwesomeIcon icon={faReceipt} className="text-indigo-500" />
-          </div>
-          <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400">
-            {metrics.totalVentas}
-          </p>
-          <span className="text-[11px] text-app-muted">Comprobantes</span>
-        </div>
-
-        <div className="isabel-card p-4">
-          <div className="flex items-center justify-between text-app-muted mb-1">
-            <span className="text-xs font-semibold">Entregadas</span>
-            <FontAwesomeIcon icon={faCircleCheck} className="text-emerald-500" />
-          </div>
-          <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-            {metrics.entregadas}
-          </p>
-          <span className="text-[11px] text-emerald-600 dark:text-emerald-400">Saldadas</span>
-        </div>
-
-        <div className="isabel-card p-4">
-          <div className="flex items-center justify-between text-app-muted mb-1">
-            <span className="text-xs font-semibold">Pendientes / Crédito</span>
-            <FontAwesomeIcon icon={faBan} className="text-amber-500" />
-          </div>
-          <p className="text-2xl font-black text-amber-600 dark:text-amber-400">
-            {metrics.pendientes}
-          </p>
-          <span className="text-[11px] text-app-muted">Con saldo por cobrar</span>
-        </div>
-      </div>
 
       {/* ─── Tabla Principal ─── */}
       <Table>
@@ -563,11 +501,10 @@ export default function SalesPage() {
 
                     <Table.Cell className="text-center">
                       <span
-                        className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-bold ${
-                          row.isCredit
-                            ? "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
-                            : "bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300"
-                        }`}
+                        className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-bold ${row.isCredit
+                          ? "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+                          : "bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300"
+                          }`}
                       >
                         {row.isCredit ? "Crédito" : "Contado"}
                       </span>

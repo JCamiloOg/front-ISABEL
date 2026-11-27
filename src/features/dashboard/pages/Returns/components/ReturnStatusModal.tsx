@@ -18,7 +18,6 @@ import { Button } from "../../../../../shared/components/Button";
 import { Input } from "../../../../../shared/components/Inputs/Input";
 import { Select } from "../../../../../shared/components/Inputs/Select";
 import { Textarea } from "../../../../../shared/components/Inputs/Textarea";
-import type { CashRegister } from "../../../../../@types";
 import { getAllBoxes } from "../../Boxes/services/boxesServices";
 import {
   TYPE_RESOLUTION_LABELS,
@@ -26,6 +25,7 @@ import {
   type ReturnPaymentInput,
   type SaleReturnDetailItem,
 } from "../services/salesReturnsServices";
+import type { CashRegister } from "../../../../../@types/cash-registers";
 
 interface ReturnStatusModalProps {
   isOpen: boolean;
@@ -269,8 +269,8 @@ export function ReturnStatusModal({
               setError("");
             }}
             className={`p-3.5 rounded-xl border text-left flex items-center gap-3 transition-all ${selectedStatus === "Aprobada"
-                ? "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 ring-2 ring-emerald-500/20"
-                : "border-app-border bg-app-surface hover:border-emerald-500/40 text-app-text"
+              ? "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 ring-2 ring-emerald-500/20"
+              : "border-app-border bg-app-surface hover:border-emerald-500/40 text-app-text"
               }`}
           >
             <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
@@ -289,8 +289,8 @@ export function ReturnStatusModal({
               setError("");
             }}
             className={`p-3.5 rounded-xl border text-left flex items-center gap-3 transition-all ${selectedStatus === "Rechazada"
-                ? "border-rose-500 bg-rose-500/10 text-rose-700 dark:text-rose-400 ring-2 ring-rose-500/20"
-                : "border-app-border bg-app-surface hover:border-rose-500/40 text-app-text"
+              ? "border-rose-500 bg-rose-500/10 text-rose-700 dark:text-rose-400 ring-2 ring-rose-500/20"
+              : "border-app-border bg-app-surface hover:border-rose-500/40 text-app-text"
               }`}
           >
             <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-rose-500/15 text-rose-600 dark:text-rose-400">

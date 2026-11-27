@@ -14,14 +14,14 @@ import { Button } from "../../../../shared/components/Button";
 import { Select } from "../../../../shared/components/Inputs/Select";
 import Table, { type SortDirection } from "../../../../shared/components/Table";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { PurchaseWithRelations } from "../../../../@types";
 import { createPurchase, getAllPurchases, getPurchaseByID, updatePurchase, updatePurchaseStatus } from "./services/shoppingsServices";
 import { Toast } from "../../../../shared/utils/alerts";
 import { isAxiosError } from "axios";
 import { PurchaseDetailModal } from "./components/PurchaseDetailModal";
 import { PurchaseFormModal, type PurchaFormDataEdit, type PurchaseFormDataCreate } from "./components/PurchaseFormModal";
 import { PurchaseStatusModal, type PurchaseStatus } from "./components/PurchaseStatusModal";
-import type { CashRegister } from "../../../../@types";
+import type { PurchaseWithRelations } from "../../../../@types/purchases";
+import type { CashRegister } from "../../../../@types/cash-registers";
 
 export default function Purchases() {
   const [purchases, setPurchases] = useState<Omit<PurchaseWithRelations, "purchaseDetails">[]>([]);

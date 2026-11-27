@@ -11,7 +11,7 @@ import Modal from "../../../../../shared/components/Modal";
 import { Button } from "../../../../../shared/components/Button";
 import { Input } from "../../../../../shared/components/Inputs/Input";
 import { CashRegisterSelector } from "../../../components/CashRegisterSelector";
-import type { CashRegister, Expense, ExpenseWithRelations } from "../../../../../@types";
+import type { CashRegister, Expense, ExpenseWithRelations } from "../../../../../@types/cash-registers";
 import type { ExpensePayload } from "../services/expensesServices";
 
 interface ExpenseFormModalProps {

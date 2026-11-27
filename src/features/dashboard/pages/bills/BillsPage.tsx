@@ -16,7 +16,6 @@ import { Button } from "../../../../shared/components/Button";
 import { Select } from "../../../../shared/components/Inputs/Select";
 import Table, { type SortDirection } from "../../../../shared/components/Table";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { CashRegister, Expense, ExpenseWithRelations } from "../../../../@types";
 import {
   createExpense,
   deleteExpense,
@@ -30,6 +29,7 @@ import { MySwal, Toast } from "../../../../shared/utils/alerts";
 import { isAxiosError } from "axios";
 import { ExpenseDetailModal } from "./components/ExpenseDetailModal";
 import { ExpenseFormModal } from "./components/ExpenseFormModal";
+import type { CashRegister, Expense, ExpenseWithRelations } from "../../../../@types/cash-registers";
 
 export default function BillsPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);

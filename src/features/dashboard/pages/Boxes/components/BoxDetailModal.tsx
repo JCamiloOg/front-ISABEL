@@ -12,7 +12,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 import Modal from "../../../../../shared/components/Modal";
-import type { CashRegisterWithRelations } from "../../../../../@types";
+import type { CashRegisterWithRelations } from "../../../../../@types/cash-registers";
 
 interface BoxDetailModalProps {
   isOpen: boolean;

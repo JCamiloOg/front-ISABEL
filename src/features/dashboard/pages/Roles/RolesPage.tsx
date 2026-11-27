@@ -6,7 +6,6 @@ import {
   faUserShield,
   faArrowRotateRight,
   faUsers,
-  faShieldHalved,
   faCircleCheck,
   faEye,
   faPenToSquare,
@@ -87,6 +86,7 @@ export default function RolesPage() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchRoles();
   }, [fetchRoles]);
 
@@ -95,14 +95,6 @@ export default function RolesPage() {
     [permissionsCatalog]
   );
 
-  // ── Métricas Ejecutivas ──
-  const metrics = useMemo(() => {
-    const totalRoles = roles.length;
-    const totalUsuarios = roles.reduce((acc, r) => acc + (r._count?.users || 0), 0);
-    const totalPrivilegios = allPrivilegeIds.length;
-
-    return { totalRoles, totalUsuarios, totalPrivilegios };
-  }, [roles, allPrivilegeIds]);
 
   // ── Abrir Modales ──
   const handleOpenDetail = (rol: RolePayload) => {
@@ -366,45 +358,6 @@ export default function RolesPage() {
         </div>
       </div>
 
-      {/* ─── Métricas Ejecutivas ─── */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="isabel-card p-5">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-app-muted">Total Roles</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-brand-royal dark:bg-brand-royal/20 dark:text-brand-sky">
-              <FontAwesomeIcon icon={faShieldHalved} className="text-xs" />
-            </span>
-          </div>
-          <p className="text-3xl font-black text-app-text mt-2">{metrics.totalRoles}</p>
-          <p className="mt-1 text-xs text-app-muted">Configurados en el sistema</p>
-        </div>
-
-        <div className="isabel-card p-5">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-app-muted">Usuarios Asignados</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
-              <FontAwesomeIcon icon={faUsers} className="text-xs" />
-            </span>
-          </div>
-          <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-2">
-            {metrics.totalUsuarios}
-          </p>
-          <p className="mt-1 text-xs text-app-muted">Cuentas con perfil asignado</p>
-        </div>
-
-        <div className="isabel-card p-5">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-app-muted">Privilegios Totales</p>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
-              <FontAwesomeIcon icon={faCircleCheck} className="text-xs" />
-            </span>
-          </div>
-          <p className="text-3xl font-black text-indigo-600 dark:text-indigo-400 mt-2">
-            {metrics.totalPrivilegios}
-          </p>
-          <p className="mt-1 text-xs text-app-muted">Operaciones permitidas</p>
-        </div>
-      </div>
 
       {/* ─── Filtros ─── */}
       <div className="isabel-card p-4">
@@ -611,9 +564,8 @@ export default function RolesPage() {
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
         title={detailRol?.name || "Detalle de Rol"}
-        description={`ID Rol: #${detailRol?.id || ""} · Usuarios asignados: ${
-          detailRol?._count?.users ?? 0
-        }`}
+        description={`ID Rol: #${detailRol?.id || ""} · Usuarios asignados: ${detailRol?._count?.users ?? 0
+          }`}
         size="lg"
         footer={
           <div className="flex w-full items-center justify-end gap-2">

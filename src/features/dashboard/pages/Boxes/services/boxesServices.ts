@@ -1,4 +1,4 @@
-import type { CashRegister, CashRegisterWithRelations } from "../../../../../@types";
+import type { CashRegister, CashRegisterWithRelations } from "../../../../../@types/cash-registers";
 import api from "../../../../../app/api/api";
 
 export interface BoxPayload {

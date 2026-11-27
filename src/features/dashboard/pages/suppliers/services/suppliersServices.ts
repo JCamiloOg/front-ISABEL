@@ -1,4 +1,4 @@
-import type { Supplier, SupplierWithRelations } from "../../../../../@types";
+import type { Supplier, SupplierWithRelations } from "../../../../../@types/suppliers";
 import api from "../../../../../app/api/api";
 
 export interface CreateSupplierData {

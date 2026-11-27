@@ -13,7 +13,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 import Modal from "../../../../../shared/components/Modal";
-import type { SupplierWithRelations } from "../../../../../@types";
+import type { SupplierWithRelations } from "../../../../../@types/suppliers";
 
 interface SupplierDetailModalProps {
   isOpen: boolean;
@@ -68,8 +68,8 @@ export function SupplierDetailModal({
                   <h3 className="text-lg font-black text-app-text">{supplier.businessName}</h3>
                   <span
                     className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${supplier.status === "Active" || supplier.status === "Activo"
-                        ? "border border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                        : "border border-rose-500/25 bg-rose-500/10 text-rose-700 dark:text-rose-400"
+                      ? "border border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                      : "border border-rose-500/25 bg-rose-500/10 text-rose-700 dark:text-rose-400"
                       }`}
                   >
                     <FontAwesomeIcon

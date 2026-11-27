@@ -9,7 +9,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 import Modal from "../../../../../shared/components/Modal";
-import type { ExpenseWithRelations } from "../../../../../@types";
+import type { ExpenseWithRelations } from "../../../../../@types/cash-registers";
 
 interface ExpenseDetailModalProps {
   isOpen: boolean;

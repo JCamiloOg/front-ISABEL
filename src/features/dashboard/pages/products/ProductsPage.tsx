@@ -682,16 +682,10 @@ export default function ProductsPage() {
               paginatedProducts.map((row) => (
                 <Table.Row key={row.id} onClick={() => handleViewDetail(row)}>
                   {/* Producto: Imagen + Nombre + SKU / Género */}
-<<<<<<< listo-
                   <Table.Cell rounded="left" className="max-w-56">
                     <div className="flex items-center gap-3 min-w-0">
                       <ProductThumbnail
                         key={`${row.id}-${row.image ?? ""}`}
-=======
-                  <Table.Cell rounded="left" className="max-w-[230px]">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <ProductThumbnail
->>>>>>> develop
                         src={row.image}
                         sku={row.sku}
                         alt={row.name}
@@ -739,11 +733,10 @@ export default function ProductsPage() {
                   {/* Tienda (isPublic) */}
                   <Table.Cell className="text-center whitespace-nowrap">
                     <span
-                      className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold border ${
-                        row.isPublic
+                      className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold border ${row.isPublic
                           ? "bg-brand-royal/10 dark:bg-brand-sky/15 border-brand-royal/20 dark:border-brand-sky/25 text-brand-royal dark:text-brand-sky"
                           : "bg-app-surface-alt border-app-border text-app-muted"
-                      }`}
+                        }`}
                     >
                       <FontAwesomeIcon
                         icon={row.isPublic ? faEye : faEyeSlash}
@@ -846,7 +839,6 @@ export default function ProductsPage() {
         isOpen={isUpdateModalOpen}
         onClose={handleCloseUpdateModal}
         productItem={productToEdit}
-<<<<<<< listo-
         productDetail={productDetailToEdit}
         isLoadingDetail={isLoadingEdit}
         categories={categories}
@@ -854,11 +846,6 @@ export default function ProductsPage() {
         shoeTypes={shoeTypes}
         colors={colors}
         sizes={sizes}
-=======
-        categories={categories}
-        brands={brands}
-        shoeTypes={shoeTypes}
->>>>>>> develop
         onSubmit={handleUpdateProduct}
         onSubmitLoading={isUpdating}
       />
@@ -923,11 +910,10 @@ export default function ProductsPage() {
                       {selectedProduct.name}
                     </h3>
                     <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
-                        selectedProduct.status
+                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${selectedProduct.status
                           ? "border border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                           : "border border-rose-500/25 bg-rose-500/10 text-rose-700 dark:text-rose-400"
-                      }`}
+                        }`}
                     >
                       <FontAwesomeIcon
                         icon={selectedProduct.status ? faCircleCheck : faBan}
@@ -995,11 +981,10 @@ export default function ProductsPage() {
                   Stock Total
                 </span>
                 <p
-                  className={`text-sm font-black font-mono ${
-                    selectedProductTotalStock > 0
+                  className={`text-sm font-black font-mono ${selectedProductTotalStock > 0
                       ? "text-emerald-600 dark:text-emerald-400"
                       : "text-rose-600 dark:text-rose-400"
-                  }`}
+                    }`}
                 >
                   {selectedProductTotalStock}{" "}
                   {selectedProductTotalStock === 1 ? "par" : "pares"}
