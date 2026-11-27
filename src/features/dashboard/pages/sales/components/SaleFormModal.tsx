@@ -25,6 +25,8 @@ interface FlattenedVariantOption {
   currentStock: number;
 }
 
+// hola compruebo algo
+
 interface SaleFormModalProps {
   isOpen: boolean;
   onClose: () => void;
