@@ -75,7 +75,7 @@ export default function CreateOrder() {
 
     // Datos quemados del usuario logueado con fallback enriquecido
     const clienteData = {
-        nombreCompleto: user?.name || "Juan Camilo Osorio",
+        nombreCompleto: user?.firstName || "Juan Camilo Osorio",
         email: user?.email || "osoriojuancamilo315@gmail.com",
         documento: "C.C. 1.025.894.321",
         telefono: "+57 312 458 9210",

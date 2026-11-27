@@ -682,10 +682,16 @@ export default function ProductsPage() {
               paginatedProducts.map((row) => (
                 <Table.Row key={row.id} onClick={() => handleViewDetail(row)}>
                   {/* Producto: Imagen + Nombre + SKU / Género */}
+<<<<<<< listo-
                   <Table.Cell rounded="left" className="max-w-56">
                     <div className="flex items-center gap-3 min-w-0">
                       <ProductThumbnail
                         key={`${row.id}-${row.image ?? ""}`}
+=======
+                  <Table.Cell rounded="left" className="max-w-[230px]">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <ProductThumbnail
+>>>>>>> develop
                         src={row.image}
                         sku={row.sku}
                         alt={row.name}
@@ -840,6 +846,7 @@ export default function ProductsPage() {
         isOpen={isUpdateModalOpen}
         onClose={handleCloseUpdateModal}
         productItem={productToEdit}
+<<<<<<< listo-
         productDetail={productDetailToEdit}
         isLoadingDetail={isLoadingEdit}
         categories={categories}
@@ -847,6 +854,11 @@ export default function ProductsPage() {
         shoeTypes={shoeTypes}
         colors={colors}
         sizes={sizes}
+=======
+        categories={categories}
+        brands={brands}
+        shoeTypes={shoeTypes}
+>>>>>>> develop
         onSubmit={handleUpdateProduct}
         onSubmitLoading={isUpdating}
       />

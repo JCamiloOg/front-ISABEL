@@ -22,10 +22,13 @@ export default function LoginPage() {
         e.preventDefault();
         setAccessToken("eaassas,a.sasaassasa");
         setUser({
+            userId: "12345678",
             email,
-            name: "Isabel",
+            firstName: "Isabel",
             lastName: "Rodriguez",
-            role: "Admin"
+            role: "Admin",
+            status: true,
+            createdAt: new Date().toString()
         });
         Toast.fire({
             icon: "success",

@@ -1,21 +1,15 @@
 import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faReceipt,
   faPenToSquare,
   faPlus,
   faXmark,
   faFloppyDisk,
-  faCalendarDay,
-  faMoneyBillWave,
-  faTag,
-  faUser,
 } from "@fortawesome/free-solid-svg-icons";
 
 import Modal from "../../../../../shared/components/Modal";
 import { Button } from "../../../../../shared/components/Button";
 import { Input } from "../../../../../shared/components/Inputs/Input";
-import { Select } from "../../../../../shared/components/Inputs/Select";
 import { CashRegisterSelector } from "../../../components/CashRegisterSelector";
 import type { CashRegister, Expense, ExpenseWithRelations } from "../../../../../@types";
 import type { ExpensePayload } from "../services/expensesServices";
@@ -31,7 +25,7 @@ interface ExpenseFormModalProps {
   onSubmitLoading?: boolean;
 }
 
-export const COMMON_EXPENSE_CONCEPTS = [
+const COMMON_EXPENSE_CONCEPTS = [
   "Servicios Públicos (Luz, Agua, Gas)",
   "Arriendo / Alquiler",
   "Nómina / Sueldos y Honorarios",
@@ -63,6 +57,7 @@ export function ExpenseFormModal({
 
   useEffect(() => {
     if (mode === "edit" && expense) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setConcept(expense.concept || "");
       setAmount(String(expense.amount ?? ""));
       setDate(
@@ -164,8 +159,8 @@ export function ExpenseFormModal({
             {onSubmitLoading
               ? "Guardando..."
               : mode === "create"
-              ? "Registrar Gasto"
-              : "Guardar Cambios"}
+                ? "Registrar Gasto"
+                : "Guardar Cambios"}
           </Button>
         </div>
       }

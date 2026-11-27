@@ -79,14 +79,14 @@ export default function Navbar() {
     // Iniciales para el avatar
     const getInitials = () => {
         if (!user) return "U";
-        const first = user.name?.charAt(0) || "";
+        const first = user.firstName?.charAt(0) || "";
         const last = user.lastName?.charAt(0) || "";
         return (first + last).toUpperCase() || user.email?.charAt(0).toUpperCase() || "U";
     };
 
     // Nombre completo a mostrar
     const fullName = user
-        ? `${user.name || ""} ${user.lastName || ""}`.trim() || user.email
+        ? `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email
         : "";
 
     // Rol normalizado (ej: Admin, Administrador)
@@ -185,7 +185,7 @@ export default function Navbar() {
 
                                     <div className="hidden sm:flex flex-col text-left max-w-30 lg:max-w-37.5">
                                         <span className="text-xs font-bold text-app-text truncate leading-tight">
-                                            {user.name || "Usuario"}
+                                            {user.firstName || "Usuario"}
                                         </span>
                                         <span className="text-[10px] text-app-muted truncate">
                                             {user.role || "Cliente"}

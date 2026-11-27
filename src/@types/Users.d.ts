@@ -21,6 +21,7 @@ export interface LoggedUser {
   lastName: string;
   email: string;
   createdAt: string;
+  role: string;
   status: boolean;
 }
 

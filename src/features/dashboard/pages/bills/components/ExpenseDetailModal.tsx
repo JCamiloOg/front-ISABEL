@@ -5,7 +5,6 @@ import {
   faMoneyBillWave,
   faBuildingColumns,
   faUser,
-  faTag,
   faInfoCircle,
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -64,7 +63,7 @@ export function ExpenseDetailModal({
       ) : (
         <div className="space-y-5">
           {/* Header Card con Monto y Concepto */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl border border-app-border bg-gradient-to-br from-app-surface to-rose-500/5 shadow-xs">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl border border-app-border bg-linear-to-br from-app-surface to-rose-500/5 shadow-xs">
             <div className="flex items-center gap-3.5">
               <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-600 dark:text-rose-400 shadow-inner">
                 <FontAwesomeIcon icon={faReceipt} className="text-2xl" />

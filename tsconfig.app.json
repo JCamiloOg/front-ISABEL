@@ -19,8 +19,10 @@
     /* Linting */
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
-    "noFallthroughCasesInSwitch": true
+    "erasableSyntaxOnly": false,
+    "noFallthroughCasesInSwitch": true,
+    "rootDir": "./src"
   },
-  "include": ["src"]
+
+  "include": ["./src/**/*"]
 }

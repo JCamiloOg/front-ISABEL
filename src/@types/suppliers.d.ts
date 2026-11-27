@@ -2,7 +2,7 @@
 // 3. MÓDULO DE PROVEEDORES
 // ============================================================================
 
-import type { DocumentType } from './Users';
+import type { DocumentType } from './users';
 import type { Purchase } from './purchases';
 
 /** Clasificación de proveedores (ej. Mayorista Nacional, Importador Directo, Fabricante) */
