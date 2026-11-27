@@ -22,28 +22,30 @@ import Modal from "../../../../shared/components/Modal";
 import Table, { type SortDirection } from "../../../../shared/components/Table";
 import { MySwal, Toast } from "../../../../shared/utils/alerts";
 import { Switcher } from "../../components/Switcher";
-import { getBrands, type BrandRecord } from "./brands/services/brandsServices";
-import {
-  getCategories,
-  type CategoryRecord,
-} from "./categories/services/categoriesServices";
-import { getColors, type ColorRecord } from "./colors/services/colorsServicies";
 import ProductCreateModal from "./product/components/ProductCreateModal";
 import ProductUpdateModal from "./product/components/ProductUpdateModal";
 import {
   createProduct,
   deleteProduct,
+  getProductBrands,
   getProductById,
+  getProductCategories,
+  getProductColors,
   getProducts,
+  getProductShoeTypes,
+  getProductSizes,
   updateProduct,
   updateProductStatus,
+  type BrandRecord,
+  type CategoryRecord,
+  type ColorRecord,
   type CreateProductDTO,
   type ProductDetailRecord,
   type ProductRecord,
+  type ShoeTypeRecord,
+  type SizeRecord,
   type UpdateProductDTO,
 } from "./product/services/ProductServices";
-import { getSizes, type SizeRecord } from "./sizes/services/SizesServices";
-import { getShoeTypes, type ShoeTypeRecord } from "./types/services/TypesServices";
 
 const FALLBACK_SHOE_IMAGES: Record<string, string> = {
   "NK-AF1-001":
@@ -104,6 +106,8 @@ export default function ProductsPage() {
   // Modal de edición
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState<boolean>(false);
   const [productToEdit, setProductToEdit] = useState<ProductRecord | null>(null);
+  const [productDetailToEdit, setProductDetailToEdit] = useState<ProductDetailRecord | null>(null);
+  const [isLoadingEdit, setIsLoadingEdit] = useState<boolean>(false);
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
 
   // Modal de detalle
@@ -136,11 +140,11 @@ export default function ProductsPage() {
     const [productsRes, categoriesRes, brandsRes, typesRes, colorsRes, sizesRes] =
       await Promise.all([
         getProducts(),
-        getCategories(),
-        getBrands(),
-        getShoeTypes(),
-        getColors(),
-        getSizes(),
+        getProductCategories(),
+        getProductBrands(),
+        getProductShoeTypes(),
+        getProductColors(),
+        getProductSizes(),
       ]);
 
     return {
@@ -274,14 +278,34 @@ export default function ProductsPage() {
   };
 
   // ── Petición PUT: Actualizar Producto ──
-  const handleOpenEditModal = (productItem: ProductRecord) => {
+  const handleOpenEditModal = async (productItem: ProductRecord) => {
     setProductToEdit(productItem);
+    setProductDetailToEdit(null);
     setIsUpdateModalOpen(true);
+    setIsLoadingEdit(true);
+
+    try {
+      const response = await getProductById(productItem.id);
+      if (response.status === 200) {
+        setProductDetailToEdit(response.data.product || null);
+      }
+    } catch (error) {
+      if (isAxiosError(error)) {
+        Toast.fire({
+          icon: "error",
+          title: error.response?.data?.message || "Error al cargar las variantes del producto.",
+          text: "Por favor, intenta nuevamente",
+        });
+      }
+    } finally {
+      setIsLoadingEdit(false);
+    }
   };
 
   const handleCloseUpdateModal = () => {
     setIsUpdateModalOpen(false);
     setProductToEdit(null);
+    setProductDetailToEdit(null);
   };
 
   const handleUpdateProduct = async (
@@ -658,9 +682,16 @@ export default function ProductsPage() {
               paginatedProducts.map((row) => (
                 <Table.Row key={row.id} onClick={() => handleViewDetail(row)}>
                   {/* Producto: Imagen + Nombre + SKU / Género */}
+<<<<<<< listo-
+                  <Table.Cell rounded="left" className="max-w-56">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <ProductThumbnail
+                        key={`${row.id}-${row.image ?? ""}`}
+=======
                   <Table.Cell rounded="left" className="max-w-[230px]">
                     <div className="flex items-center gap-3 min-w-0">
                       <ProductThumbnail
+>>>>>>> develop
                         src={row.image}
                         sku={row.sku}
                         alt={row.name}
@@ -681,7 +712,7 @@ export default function ProductsPage() {
                   </Table.Cell>
 
                   {/* Clasificación: Categoría + Marca / Tipo */}
-                  <Table.Cell className="max-w-[190px]">
+                  <Table.Cell className="max-w-48">
                     <div className="flex flex-col min-w-0">
                       <span className="text-xs font-semibold text-app-text truncate">
                         {row.productCategory?.name || "Sin categoría"}
@@ -815,9 +846,19 @@ export default function ProductsPage() {
         isOpen={isUpdateModalOpen}
         onClose={handleCloseUpdateModal}
         productItem={productToEdit}
+<<<<<<< listo-
+        productDetail={productDetailToEdit}
+        isLoadingDetail={isLoadingEdit}
         categories={categories}
         brands={brands}
         shoeTypes={shoeTypes}
+        colors={colors}
+        sizes={sizes}
+=======
+        categories={categories}
+        brands={brands}
+        shoeTypes={shoeTypes}
+>>>>>>> develop
         onSubmit={handleUpdateProduct}
         onSubmitLoading={isUpdating}
       />
@@ -864,9 +905,10 @@ export default function ProductsPage() {
         ) : (
           <div className="space-y-5">
             {/* Cabecera del producto */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl border border-app-border bg-gradient-to-br from-app-surface to-brand-royal/5 dark:to-brand-sky/5">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl border border-app-border bg-linear-to-br from-app-surface to-brand-royal/5 dark:to-brand-sky/5">
               <div className="flex items-center gap-3.5 min-w-0">
                 <ProductThumbnail
+                  key={`detail-${selectedProduct.id}-${selectedProduct.image ?? ""}`}
                   src={
                     selectedProduct.image ||
                     selectedProduct.productColors?.[0]?.colorImages?.[0]?.image

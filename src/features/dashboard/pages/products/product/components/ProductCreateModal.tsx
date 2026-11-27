@@ -8,10 +8,8 @@ import {
   faFloppyDisk,
   faImage,
   faLayerGroup,
-  faPalette,
   faPlus,
   faShoePrints,
-  faTrash,
   faVenusMars,
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
@@ -21,24 +19,17 @@ import { Button } from "../../../../../../shared/components/Button";
 import { Input } from "../../../../../../shared/components/Inputs/Input";
 import { Select } from "../../../../../../shared/components/Inputs/Select";
 import { Switcher } from "../../../../components/Switcher";
-import type { BrandRecord } from "../../brands/services/brandsServices";
-import type { CategoryRecord } from "../../categories/services/categoriesServices";
-import type { ColorRecord } from "../../colors/services/colorsServicies";
-import type { SizeRecord } from "../../sizes/services/SizesServices";
-import type { ShoeTypeRecord } from "../../types/services/TypesServices";
-import type { CreateProductDTO } from "../services/ProductServices";
-
-interface DraftSizeVariant {
-  sizeId: string;
-  currentStock: string;
-  discount: string;
-}
-
-interface DraftColorBlock {
-  colorId: string;
-  imageUrl: string;
-  sizes: DraftSizeVariant[];
-}
+import {
+  serializeColorBlocks,
+  type BrandRecord,
+  type CategoryRecord,
+  type ColorRecord,
+  type CreateProductDTO,
+  type DraftColorBlock,
+  type ShoeTypeRecord,
+  type SizeRecord,
+} from "../services/ProductServices";
+import ProductColorsEditor from "./ProductColorsEditor";
 
 export interface ProductCreateModalProps {
   isOpen: boolean;
@@ -103,73 +94,6 @@ export const ProductCreateModal: React.FC<ProductCreateModalProps> = ({
     setTrackedOpen(false);
   }
 
-  const handleAddColorBlock = () => {
-    const defaultColor = colors[0] ? String(colors[0].id) : "";
-    const defaultSize = sizes[0] ? String(sizes[0].id) : "";
-    setColorBlocks((prev) => [
-      ...prev,
-      {
-        colorId: defaultColor,
-        imageUrl: "",
-        sizes: defaultSize ? [{ sizeId: defaultSize, currentStock: "0", discount: "0" }] : [],
-      },
-    ]);
-  };
-
-  const handleRemoveColorBlock = (index: number) => {
-    setColorBlocks((prev) => prev.filter((_, idx) => idx !== index));
-  };
-
-  const handleColorBlockChange = (index: number, field: "colorId" | "imageUrl", value: string) => {
-    setColorBlocks((prev) =>
-      prev.map((block, idx) => (idx === index ? { ...block, [field]: value } : block))
-    );
-  };
-
-  const handleAddSizeToBlock = (colorIndex: number) => {
-    const defaultSize = sizes[0] ? String(sizes[0].id) : "";
-    setColorBlocks((prev) =>
-      prev.map((block, idx) =>
-        idx === colorIndex
-          ? {
-              ...block,
-              sizes: [...block.sizes, { sizeId: defaultSize, currentStock: "0", discount: "0" }],
-            }
-          : block
-      )
-    );
-  };
-
-  const handleRemoveSizeFromBlock = (colorIndex: number, sizeIndex: number) => {
-    setColorBlocks((prev) =>
-      prev.map((block, idx) =>
-        idx === colorIndex
-          ? { ...block, sizes: block.sizes.filter((_, sIdx) => sIdx !== sizeIndex) }
-          : block
-      )
-    );
-  };
-
-  const handleSizeChange = (
-    colorIndex: number,
-    sizeIndex: number,
-    field: keyof DraftSizeVariant,
-    value: string
-  ) => {
-    setColorBlocks((prev) =>
-      prev.map((block, idx) =>
-        idx === colorIndex
-          ? {
-              ...block,
-              sizes: block.sizes.map((sz, sIdx) =>
-                sIdx === sizeIndex ? { ...sz, [field]: value } : sz
-              ),
-            }
-          : block
-      )
-    );
-  };
-
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -215,21 +139,7 @@ export const ProductCreateModal: React.FC<ProductCreateModalProps> = ({
     e.preventDefault();
     if (!validate()) return;
 
-    const preparedColors = colorBlocks
-      .filter((b) => Boolean(b.colorId))
-      .map((b) => ({
-        colorId: Number(b.colorId),
-        colorImages: b.imageUrl.trim() ? [b.imageUrl.trim()] : undefined,
-        status: true,
-        sizes: b.sizes
-          .filter((s) => Boolean(s.sizeId))
-          .map((s) => ({
-            sizeId: Number(s.sizeId),
-            currentStock: Math.max(0, Number(s.currentStock) || 0),
-            discount: Math.max(0, Number(s.discount) || 0),
-            status: true,
-          })),
-      }));
+    const preparedColors = serializeColorBlocks(colorBlocks);
 
     await onSubmit(
       {
@@ -255,7 +165,7 @@ export const ProductCreateModal: React.FC<ProductCreateModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title="Nuevo Producto"
-      description="Registra un nuevo modelo de calzado, precios y variantes opcionales de color y talla."
+      description="Registra un nuevo modelo de calzado, precios y variantes opcionales de color, imágenes y tallas."
       icon={faPlus}
       size="lg"
       footer={
@@ -352,7 +262,7 @@ export const ProductCreateModal: React.FC<ProductCreateModalProps> = ({
               onError={(e) => {
                 e.currentTarget.src = "/shoesGreenSplash.jpg";
               }}
-              className="h-[42px] w-[42px] shrink-0 rounded-xl object-cover border border-app-border bg-app-surface-alt"
+              className="size-10.5 shrink-0 rounded-xl object-cover border border-app-border bg-app-surface-alt"
             />
           )}
         </div>
@@ -497,153 +407,15 @@ export const ProductCreateModal: React.FC<ProductCreateModalProps> = ({
           </div>
         </div>
 
-        {/* Sección Opcional de Colores y Tallas */}
-        <div className="space-y-3 rounded-2xl border border-app-border bg-app-surface-alt/50 p-4">
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-app-text block">
-                Variantes de Color y Tallas (Opcional)
-              </span>
-              <p className="text-[11px] text-app-muted">
-                Asigna combinaciones iniciales de color, imagen y tallas con stock
-              </p>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              icon={faPlus}
-              onClick={handleAddColorBlock}
-              disabled={colors.length === 0}
-            >
-              Agregar Color
-            </Button>
-          </div>
-
-          {colorBlocks.length > 0 && (
-            <div className="space-y-3">
-              {colorBlocks.map((block, cIdx) => (
-                <div
-                  key={`color-block-${cIdx}`}
-                  className="rounded-xl border border-app-border bg-app-surface p-3.5 space-y-3"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-end gap-2.5">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 flex-1 min-w-0">
-                      <Select
-                        label="Color"
-                        size="sm"
-                        value={block.colorId}
-                        onChange={(e) => handleColorBlockChange(cIdx, "colorId", e.target.value)}
-                        iconLeft={faPalette}
-                        options={colors.map((c) => ({
-                          value: String(c.id),
-                          label: `${c.color} (${c.hex})`,
-                        }))}
-                      />
-
-                      <Input
-                        label="URL Imagen (Opcional)"
-                        size="sm"
-                        type="text"
-                        value={block.imageUrl}
-                        onChange={(e) => handleColorBlockChange(cIdx, "imageUrl", e.target.value)}
-                        placeholder="https://..."
-                        iconLeft={faImage}
-                      />
-                    </div>
-
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      icon={faTrash}
-                      onClick={() => handleRemoveColorBlock(cIdx)}
-                      className="shrink-0 h-[34px] self-end text-rose-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/30"
-                      title="Quitar color"
-                    />
-                  </div>
-
-                  {/* Tallas del color */}
-                  <div className="space-y-2.5 border-t border-app-border/60 pt-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-app-muted">
-                        Tallas y Stock
-                      </span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        icon={faPlus}
-                        onClick={() => handleAddSizeToBlock(cIdx)}
-                        disabled={sizes.length === 0}
-                      >
-                        Talla
-                      </Button>
-                    </div>
-
-                    {block.sizes.map((sz, sIdx) => (
-                      <div
-                        key={`size-${cIdx}-${sIdx}`}
-                        className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_96px_96px_auto] gap-2.5 items-end"
-                      >
-                        <div className="min-w-0">
-                          <Select
-                            label={sIdx === 0 ? "Talla" : undefined}
-                            size="sm"
-                            value={sz.sizeId}
-                            onChange={(e) =>
-                              handleSizeChange(cIdx, sIdx, "sizeId", e.target.value)
-                            }
-                            options={sizes.map((item) => ({
-                              value: String(item.id),
-                              label: `${item.sizeNumber} (${item.internationalSize}) · ${item.gender}`,
-                            }))}
-                          />
-                        </div>
-                        <div className="min-w-0">
-                          <Input
-                            label={sIdx === 0 ? "Stock" : undefined}
-                            size="sm"
-                            type="number"
-                            min="0"
-                            value={sz.currentStock}
-                            onChange={(e) =>
-                              handleSizeChange(cIdx, sIdx, "currentStock", e.target.value)
-                            }
-                          />
-                        </div>
-                        <div className="min-w-0">
-                          <Input
-                            label={sIdx === 0 ? "Desc. %" : undefined}
-                            size="sm"
-                            type="number"
-                            min="0"
-                            max="100"
-                            value={sz.discount}
-                            onChange={(e) =>
-                              handleSizeChange(cIdx, sIdx, "discount", e.target.value)
-                            }
-                          />
-                        </div>
-                        <div className="flex justify-end">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            icon={faTrash}
-                            onClick={() => handleRemoveSizeFromBlock(cIdx, sIdx)}
-                            className="shrink-0 h-[34px] text-rose-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/30"
-                            title="Quitar talla"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Variantes de Color, Múltiples Imágenes y Tallas */}
+        <ProductColorsEditor
+          colorBlocks={colorBlocks}
+          onChange={setColorBlocks}
+          colors={colors}
+          sizes={sizes}
+          title="Variantes de Color, Imágenes y Tallas (Opcional)"
+          subtitle="Asigna combinaciones iniciales de color, múltiples URLs de imagen y tallas con stock"
+        />
       </form>
     </Modal>
   );
