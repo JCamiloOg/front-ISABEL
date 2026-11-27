@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import type { LoggedUser } from "../../@types/Users";
+import type { LoggedUser } from "../../@types/users";
 import UserContext from "../context/user.context";
 
 export default function UserProvider({ children }: { children: React.ReactNode }) {

@@ -1,9 +1,9 @@
 import { RouterProvider } from "@tanstack/react-router";
-import { router } from "./app/routes/";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { useEffect } from "react";
 import AOS from 'aos';
 import 'aos/dist/aos.css';
+import { router } from "./app/routes/index";
 function App() {
   useEffect(() => {
     AOS.init({

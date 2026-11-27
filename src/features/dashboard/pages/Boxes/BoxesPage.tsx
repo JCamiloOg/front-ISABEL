@@ -4,13 +4,10 @@ import {
   faPlus,
   faArrowRotateRight,
   faChartPie,
-  faCircleCheck,
-  faBan,
   faEye,
   faPenToSquare,
   faBuildingColumns,
   faMoneyBillWave,
-  faCoins,
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -109,6 +106,7 @@ export default function BoxesPage() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     findBoxes();
   }, [findBoxes]);
 
@@ -253,7 +251,7 @@ export default function BoxesPage() {
 
     // Validación preventiva: no se puede eliminar si tiene dinero o compras asociadas
     if (balance > 0 || purchasesCount > 0) {
-      let razones: string[] = [];
+      const razones: string[] = [];
       if (balance > 0) {
         razones.push(`tiene un saldo disponible de <b>${formatCurrency(balance)}</b>`);
       }
@@ -584,11 +582,10 @@ export default function BoxesPage() {
                     {/* Tipo */}
                     <Table.Cell>
                       <span
-                        className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-semibold ${
-                          isBank
-                            ? "bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-500/20"
-                            : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20"
-                        }`}
+                        className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-semibold ${isBank
+                          ? "bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-500/20"
+                          : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20"
+                          }`}
                       >
                         <FontAwesomeIcon icon={isBank ? faBuildingColumns : faMoneyBillWave} className="text-[10px]" />
                         {row.registerType}

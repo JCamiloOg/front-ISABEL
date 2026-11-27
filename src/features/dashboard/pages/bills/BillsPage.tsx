@@ -10,9 +10,6 @@ import {
   faEye,
   faPenToSquare,
   faTrash,
-  faWallet,
-  faUser,
-  faFilter,
 } from "@fortawesome/free-solid-svg-icons";
 
 import { Button } from "../../../../shared/components/Button";
@@ -51,7 +48,7 @@ export default function BillsPage() {
   const [onSubmitLoading, setOnSubmitLoading] = useState<boolean>(false);
 
   // Filtros y búsqueda
-  const [searchTerm, setSearchTerm] = useState<string>("" );
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [cashRegisterFilter, setCashRegisterFilter] = useState<string>("all");
 
   // Paginación y ordenación
@@ -117,6 +114,7 @@ export default function BillsPage() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     findData();
   }, [findData]);
 
@@ -551,10 +549,10 @@ export default function BillsPage() {
                         <span>
                           {date && !isNaN(date.getTime())
                             ? date.toLocaleDateString("es-CO", {
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric",
-                              })
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            })
                             : "Sin fecha"}
                         </span>
                       </div>

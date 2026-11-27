@@ -7,9 +7,7 @@ import {
   faPhone,
   faEnvelope,
   faLocationDot,
-  faIdCard,
   faTag,
-  faCartShopping,
   faCircleCheck,
   faBan,
 } from "@fortawesome/free-solid-svg-icons";
@@ -60,7 +58,7 @@ export function SupplierDetailModal({
       ) : (
         <div className="space-y-6">
           {/* Header Card con Razón Social y Estado */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl border border-app-border bg-gradient-to-br from-app-surface to-brand-royal/5 dark:to-brand-sky/5 shadow-xs">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl border border-app-border bg-linear-to-br from-app-surface to-brand-royal/5 dark:to-brand-sky/5 shadow-xs">
             <div className="flex items-center gap-3.5">
               <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-brand-royal/10 text-brand-royal dark:bg-brand-sky/15 dark:text-brand-sky shadow-inner">
                 <FontAwesomeIcon icon={isCompany ? faBuilding : faUserTie} className="text-2xl" />
@@ -69,11 +67,10 @@ export function SupplierDetailModal({
                 <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="text-lg font-black text-app-text">{supplier.businessName}</h3>
                   <span
-                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
-                      supplier.status === "Active" || supplier.status === "Activo"
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${supplier.status === "Active" || supplier.status === "Activo"
                         ? "border border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                         : "border border-rose-500/25 bg-rose-500/10 text-rose-700 dark:text-rose-400"
-                    }`}
+                      }`}
                   >
                     <FontAwesomeIcon
                       icon={supplier.status === "Active" || supplier.status === "Activo" ? faCircleCheck : faBan}

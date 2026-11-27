@@ -1,14 +1,10 @@
 import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faIndustry,
   faPenToSquare,
   faPlus,
   faXmark,
   faFloppyDisk,
-  faBuilding,
-  faUserTie,
-  faGlobe,
   faTag,
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -55,6 +51,7 @@ export function SupplierFormModal({
 
   useEffect(() => {
     if (mode === "edit" && supplier) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDocument(supplier.document || "");
       setDocumentTypeId(String(supplier.documentTypeId || 1));
       setSupplierType(supplier.supplierType || "Jurídica");
@@ -192,8 +189,8 @@ export function SupplierFormModal({
             {onSubmitLoading
               ? "Guardando..."
               : mode === "create"
-              ? "Registrar Proveedor"
-              : "Guardar Cambios"}
+                ? "Registrar Proveedor"
+                : "Guardar Cambios"}
           </Button>
         </div>
       }
@@ -336,11 +333,10 @@ export function SupplierFormModal({
                       key={cat.id}
                       type="button"
                       onClick={() => toggleCategory(cat.id)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
-                        isSelected
-                          ? "bg-brand-royal text-white border-brand-royal dark:bg-brand-sky dark:text-brand-royal"
-                          : "bg-app-surface text-app-muted border-app-border hover:border-brand-sky"
-                      }`}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${isSelected
+                        ? "bg-brand-royal text-white border-brand-royal dark:bg-brand-sky dark:text-brand-royal"
+                        : "bg-app-surface text-app-muted border-app-border hover:border-brand-sky"
+                        }`}
                     >
                       <FontAwesomeIcon icon={faTag} className="text-[10px]" />
                       {cat.name}
@@ -360,11 +356,10 @@ export function SupplierFormModal({
               <button
                 type="button"
                 onClick={() => setStatus(status === "Active" ? "Inactive" : "Active")}
-                className={`px-3 py-1 rounded-full text-xs font-bold transition-colors ${
-                  status === "Active"
-                    ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30"
-                    : "bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30"
-                }`}
+                className={`px-3 py-1 rounded-full text-xs font-bold transition-colors ${status === "Active"
+                  ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30"
+                  : "bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30"
+                  }`}
               >
                 {status === "Active" ? "Activo" : "Inactivo"}
               </button>

@@ -1,13 +1,10 @@
 import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faVault,
   faPenToSquare,
   faPlus,
   faXmark,
   faFloppyDisk,
-  faBuildingColumns,
-  faMoneyBillWave,
 } from "@fortawesome/free-solid-svg-icons";
 
 import Modal from "../../../../../shared/components/Modal";
@@ -46,6 +43,7 @@ export function BoxFormModal({
 
   useEffect(() => {
     if (mode === "edit" && box) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setName(box.name || "");
       setRegisterType(box.registerType || "Efectivo");
       setCurrentBalance(String(box.currentBalance ?? 0));
@@ -139,8 +137,8 @@ export function BoxFormModal({
             {onSubmitLoading
               ? "Guardando..."
               : mode === "create"
-              ? "Crear Caja"
-              : "Guardar Cambios"}
+                ? "Crear Caja"
+                : "Guardar Cambios"}
           </Button>
         </div>
       }
@@ -220,11 +218,10 @@ export function BoxFormModal({
               <button
                 type="button"
                 onClick={() => setStatus(!status)}
-                className={`px-3 py-1 rounded-full text-xs font-bold transition-colors ${
-                  status
+                className={`px-3 py-1 rounded-full text-xs font-bold transition-colors ${status
                     ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30"
                     : "bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30"
-                }`}
+                  }`}
               >
                 {status ? "Activa" : "Inactiva"}
               </button>
