@@ -13,7 +13,7 @@ import {
     faChevronLeft,
     faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
-import { productRoute } from "../../../app/Routes";
+import { productRoute } from "../../../app/routes";
 import { MOCK_PRODUCTOS_PRISMA } from "../../../data/products";
 import Button from "../../../shared/components/Button";
 import { Toast } from "../../../shared/utils/alerts";
