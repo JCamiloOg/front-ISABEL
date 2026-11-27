@@ -15,7 +15,7 @@ import { Button } from "../../../../shared/components/Button";
 import { Input } from "../../../../shared/components/Inputs/Input";
 import { Select } from "../../../../shared/components/Inputs/Select";
 import Modal from "../../../../shared/components/Modal";
-import { Table, type TableColumn } from "../../../../shared/components/Table";
+import Table from "../../../../shared/components/Table";
 import { MySwal, Toast } from "../../../../shared/utils/alerts";
 import {
   createSupplierCategory,
@@ -202,59 +202,7 @@ export default function CategoriaProveedor() {
     }
   };
 
-  const columns: TableColumn<SupplierCategoryRecord>[] = [
-    {
-      key: "name",
-      header: "Categoría",
-      render: (category) => <span className="font-semibold">{category.name}</span>,
-    },
-    {
-      key: "description",
-      header: "Descripción",
-      render: (category) => (
-        <span className="block max-w-md text-app-muted">
-          {category.description || "Sin descripción"}
-        </span>
-      ),
-    },
-    {
-      key: "suppliers",
-      header: "Proveedores",
-      render: (category) => (
-        <span className="text-app-muted">
-          <strong className="text-app-text">{category.suppliers?.length ?? 0}</strong> asociados
-        </span>
-      ),
-    },
-    {
-      key: "actions",
-      header: "Acciones",
-      align: "right",
-      render: (category) => (
-        <div className="flex justify-end gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            icon={faPenToSquare}
-            onClick={() => openEditModal(category)}
-            aria-label={`Editar ${category.name}`}
-          >
-            Editar
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            icon={faTrash}
-            className="text-rose-600 hover:text-rose-700"
-            onClick={() => void handleDelete(category)}
-            aria-label={`Eliminar ${category.name}`}
-          >
-            Eliminar
-          </Button>
-        </div>
-      ),
-    },
-  ];
+  const hasActiveFilters = searchTerm.trim() !== "" || supplierFilter !== "all";
 
   return (
     <div className="space-y-8 animate-fadeIn">
@@ -297,7 +245,7 @@ export default function CategoriaProveedor() {
 
       {/* ─── Métricas ─── */}
       {/* <div className="grid grid-cols-1 gap-4 sm:grid-cols-3"> */}
-        {/* <div className="isabel-card p-5">
+      {/* <div className="isabel-card p-5">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-app-muted">Total Categorías</p>
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-brand-royal dark:bg-brand-royal/20 dark:text-brand-sky">
@@ -308,7 +256,7 @@ export default function CategoriaProveedor() {
           <p className="mt-1 text-xs text-app-muted">Clasificaciones registradas</p>
         </div>  */}
 
-        {/* <div className="isabel-card p-5">
+      {/* <div className="isabel-card p-5">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-app-muted">Con proveedores</p>
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
@@ -319,7 +267,7 @@ export default function CategoriaProveedor() {
           <p className="mt-1 text-xs text-app-muted">Con proveedores asociados</p>
         </div> */}
 
-        {/* <div className="isabel-card p-5">
+      {/* <div className="isabel-card p-5">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-app-muted">Sin proveedores</p>
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400">
@@ -331,17 +279,22 @@ export default function CategoriaProveedor() {
         </div> */}
       {/* </div> */}
 
-      {/* ─── Filtros ─── */}
-      <div className="isabel-card p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      {/* ─── Tabla Principal (mismo formato que ColoresProducts) ─── */}
+      <Table>
+        <Table.Header
+          title="Categorías Registradas"
+          description="Listado maestro de categorías y proveedores asociados"
+        />
+
+        <div className="mb-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="sm:col-span-2">
-            <Input
-              placeholder="Buscar por nombre o descripción..."
+            <Table.Search
               value={searchTerm}
-              onChange={(event) => {
-                setSearchTerm(event.target.value);
+              onChange={(val) => {
+                setSearchTerm(val);
                 setCurrentPage(1);
               }}
+              placeholder="Buscar por nombre o descripción..."
             />
           </div>
           <div>
@@ -359,33 +312,121 @@ export default function CategoriaProveedor() {
             />
           </div>
         </div>
-      </div>
 
-      {/* ─── Tabla Principal ─── */}
-      <Table<SupplierCategoryRecord>
-        columns={columns}
-        data={paginatedCategories}
-        rowKey="id"
-        isLoading={isLoading}
-        emptyTitle={categories.length === 0 ? "No hay categorías registradas" : "Sin coincidencias"}
-        emptyDescription={
-          categories.length === 0
-            ? "Crea una categoría para comenzar a clasificar proveedores."
-            : "Prueba con otro término de búsqueda o cambia los filtros."
-        }
-        pagination={{
-          currentPage: activePage,
-          totalPages,
-          totalItems: filteredCategories.length,
-          itemsPerPage,
-          onPageChange: setCurrentPage,
-          onItemsPerPageChange: (pageSize) => {
+        {hasActiveFilters && (
+          <div className="mb-3 flex items-center justify-between text-xs text-app-muted">
+            <span>
+              Mostrando {filteredCategories.length} de {categories.length} categorías encontradas
+            </span>
+            <Button
+              size="sm"
+              variant="ghost"
+              icon={faArrowRotateRight}
+              onClick={resetFilters}
+            >
+              Restablecer filtros
+            </Button>
+          </div>
+        )}
+
+        <Table.Table>
+          <Table.Thead>
+            <Table.Row head>
+              <th className="px-4 py-3 font-bold select-none text-left text-app-muted text-xs uppercase tracking-wider">
+                Categoría
+              </th>
+              <th className="px-4 py-3 font-bold select-none text-left text-app-muted text-xs uppercase tracking-wider">
+                Descripción
+              </th>
+              <th className="px-4 py-3 font-bold select-none text-center text-app-muted text-xs uppercase tracking-wider">
+                Proveedores
+              </th>
+              <th className="px-4 py-3 font-bold select-none text-right text-app-muted text-xs uppercase tracking-wider">
+                Acciones
+              </th>
+            </Table.Row>
+          </Table.Thead>
+
+          <Table.Tbody>
+            {isLoading ? (
+              Array.from({ length: itemsPerPage }).map((_, rIdx) => (
+                <Table.Row key={`loading-${rIdx}`}>
+                  <Table.Cell rounded="left" colSpan={4} className="py-4">
+                    <div className="h-4 w-full rounded-md bg-app-border/70 animate-pulse" />
+                  </Table.Cell>
+                </Table.Row>
+              ))
+            ) : paginatedCategories.length === 0 ? (
+              <Table.Row>
+                <Table.Cell colSpan={4} className="py-10 text-center text-sm text-app-muted">
+                  <p className="font-semibold text-app-text">
+                    {categories.length === 0 ? "No hay categorías registradas" : "Sin coincidencias"}
+                  </p>
+                  <p className="text-xs mt-1">
+                    {categories.length === 0
+                      ? "Crea una categoría para comenzar a clasificar proveedores."
+                      : "Prueba con otro término de búsqueda o cambia los filtros."}
+                  </p>
+                </Table.Cell>
+              </Table.Row>
+            ) : (
+              paginatedCategories.map((category) => (
+                <Table.Row key={category.id}>
+                  <Table.Cell rounded="left">
+                    <span className="font-semibold text-app-text">{category.name}</span>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <span className="block max-w-md text-app-muted">
+                      {category.description || "Sin descripción"}
+                    </span>
+                  </Table.Cell>
+                  <Table.Cell className="text-center">
+                    <span className="text-app-muted">
+                      <strong className="text-app-text">{category.suppliers?.length ?? 0}</strong> asociados
+                    </span>
+                  </Table.Cell>
+                  <Table.Cell rounded="right" className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        icon={faPenToSquare}
+                        onClick={() => openEditModal(category)}
+                        aria-label={`Editar ${category.name}`}
+                      >
+                        Editar
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        icon={faTrash}
+                        className="text-rose-600 hover:text-rose-700"
+                        onClick={() => void handleDelete(category)}
+                        aria-label={`Eliminar ${category.name}`}
+                      >
+                        Eliminar
+                      </Button>
+                    </div>
+                  </Table.Cell>
+                </Table.Row>
+              ))
+            )}
+          </Table.Tbody>
+        </Table.Table>
+
+        <Table.Pagination
+          currentPage={activePage}
+          totalPages={totalPages}
+          totalItems={filteredCategories.length}
+          pageSize={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={(pageSize) => {
             setItemsPerPage(pageSize);
             setCurrentPage(1);
-          },
-          pageSizeOptions: [5, 8, 10, 20],
-        }}
-      />
+          }}
+          pageSizeOptions={[5, 8, 10, 20]}
+        />
+      </Table>
 
       <Modal
         isOpen={isModalOpen}
